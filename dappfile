@@ -1,5 +1,14 @@
-name: "feedbase"
+name: feedbase
 version: 0.0.1
+ignore:
+  - '*_test.sol'
 layout:
-    sol_sources: "contracts"
-    build_dir: "build"
+  sol_sources: src/sol
+  build_dir: .build/dapple-build/
+environments:
+  default:
+    rpcURL: 'http://localhost:8545'
+    objects:
+      feedbase:
+        class: FeedBase
+        address: '0xde3358c5d11860a2c434809d82be6f6e69870e1e'
