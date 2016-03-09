@@ -1,6 +1,8 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ACCOUNT_PASSWORD="$(cat "${DIR}/password")"
 
+# TODO randomize the network?
+
 # create start scripts
 baseCommand="geth \
 --datadir=${DIR}/tmp/ --logfile=${DIR}/tmp/blockchain.log \
@@ -20,7 +22,7 @@ if [[ "$(${accountList})" =~ {(.*)} ]]; then
   ETH_ACCOUNT="${BASH_REMATCH[1]}"
 else
   echo "No Accounts found, creating a new one"
-  $accountNew
+  eval $accountNew
   # try agian
   if [[ "$(${accountList})" =~ {(.*)} ]]; then
     ETH_ACCOUNT="${BASH_REMATCH[1]}"
@@ -35,4 +37,4 @@ miningScript="${baseCommand} --unlock ${ETH_ACCOUNT} js ${DIR}/miner.js"
 echo $miningScript
 
 # start the mining script
-$miningScript
+eval $miningScript
