@@ -16,6 +16,7 @@ var livereload = require('gulp-livereload')
 var debug = require('gulp-debug')
 var sass = require('gulp-ruby-sass')
 var gulpsync = require('gulp-sync')(gulp)
+var plumber = require('gulp-plumber')
 
 var config = {
   production: util.env.production
@@ -96,6 +97,7 @@ gulp.task('clean-imba', function () {
 
 gulp.task('build-imba', ['clean-imba'], function () {
   return gulp.src(paths.src.imba)
+  .pipe(plumber())
   .pipe(imba())
   .pipe(config.production ? uglify() : util.noop())
   .pipe(gulp.dest(paths.build.imba))
@@ -129,17 +131,6 @@ gulp.task('test-dapple', function(cb){
       process.stdout.write(failed)
     } else {
       process.stdout.write("\u001b[32mPassed all tests! \n")
-    }
-    cb()
-  })
-})
-
-gulp.task('deploy-dapple', function(cb){
-  exec('dapple run deploy.ds', function(err,res,failed){
-    if(err){
-      console.log(err)
-    } else if (failed) {
-      process.stdout.write(failed)
     }
     cb()
   })
