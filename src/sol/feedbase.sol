@@ -9,7 +9,6 @@ contract FeedBase is MakerUser
     {}
 
     struct FeedEntry {
-        bytes32 value;
         address owner;
         uint timestamp;
         uint expiration;
@@ -20,10 +19,11 @@ contract FeedBase is MakerUser
     event FeedUpdate( uint64 indexed id );
 
     uint32 last_id;
-    mapping( uint64 => FeedEntry ) _feeds;
+    mapping( uint64 => bytes32 ) _values;
+    mapping( uint64 => FeedEntry ) public feeds;
 
     modifier feed_owner( uint64 id ) {
-        if( msg.sender != _feeds[id].owner ) {
+        if( msg.sender != feeds[id].owner ) {
             throw;
         }
         _
@@ -31,8 +31,8 @@ contract FeedBase is MakerUser
     function setFeed(uint64 id, bytes32 value, uint expiration)
              feed_owner( id )
     {
-        var entry = _feeds[id];
-        entry.value = value;
+        _values[id] = value;
+        var entry = feeds[id];
         entry.timestamp = block.timestamp;
         entry.expiration = expiration;
         entry.paid = false;
@@ -41,7 +41,7 @@ contract FeedBase is MakerUser
     function setFeedCost(uint64 id, uint cost)
              feed_owner( id )
     {
-        _feeds[id].cost = cost;
+        feeds[id].cost = cost;
         FeedUpdate( id );
     }
     function claim() returns (uint64 id) {
@@ -49,19 +49,19 @@ contract FeedBase is MakerUser
         if( last_id == 0 ) { // ran out of IDs
             throw;
         }
-        _feeds[last_id].owner = msg.sender;
+        feeds[last_id].owner = msg.sender;
         FeedUpdate(last_id);
         return last_id;
     }
     function transfer(uint64 id, address to)
              feed_owner( id )
     {
-        _feeds[id].owner = to;
+        feeds[id].owner = to;
         FeedUpdate( id );
     }
 
     function get( uint64 id ) returns (bytes32 value) {
-        var entry = _feeds[id];
+        var entry = feeds[id];
         if( block.timestamp > entry.expiration ) {
             throw;
         }
@@ -69,7 +69,7 @@ contract FeedBase is MakerUser
             transferFrom(msg.sender, this, entry.cost, "DAI");
             entry.paid = true;
         }
-        return entry.value;
+        return _values[id];
     }
 }
 
