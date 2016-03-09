@@ -1,3 +1,36 @@
-$button-color: purple;
-
+@import "variableOverrides";
 @import "materialize";
+
+body{
+  background:#e2e2e2;
+}
+.wrapper{
+  margin-top:3em;
+}
+.title-header{
+  font-weight:100;
+  margin:0;
+  height:1.5em;
+  img{
+    height:100%;
+    vertical-align:middle;
+    margin-right:0.2em;
+  }
+  overflow:hidden;
+  white-space: nowrap;
+  @media #{$medium-and-down} {
+    font-size:2.6rem;
+  }
+}
+
+table.connection-info{
+  display:table;
+  width:100%;
+  table-layout:fixed;
+  td{
+    display:table-cell;
+    width:5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

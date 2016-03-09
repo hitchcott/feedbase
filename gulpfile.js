@@ -49,7 +49,6 @@ var paths = {
 
 gulp.task('copy-index', function () {
   return gulp.src(paths.src.index)
-  .pipe(htmlmin({collapseWhitespace: true}))
   .pipe(gulp.dest(paths.dest.index))
   .pipe(livereload())
 })
@@ -146,8 +145,8 @@ gulp.task('webserver', function() {
 
 var mergeJsSource = function() {
   return gulp.src([
-    paths.build.js+'*.js',
     paths.build.dapple+'**/*.js',
+    paths.build.js+'*.js',
     paths.build.imba+'*.js'
   ])
   .pipe(concat('app.js'))

@@ -1,16 +1,27 @@
 extern dapple
 
+window:onload = do
+	($$(#app)).append <app>
+
 tag app
 
+	prop fbContract
+	prop fbId
+
 	def build
-		console.log dapple:objects
+		@fbContract = dapple:objects:feedbase
+		@fbId = 0
 		schedule
 
 	def render
 		<self>
-			<h1> 'Materialized'
-			<img .alt='Maker' src='https://makerdao.com/splash/images/logo.svg'>
-			<div.btn> 'test'
-
-window:onload = do
-	($$(#app)).append <app>
+			<.wrapper>
+				<.row>
+					<.col.s12.m8.offset-m2.l6.offset-l3>
+						<.card-panel>
+							<titleHeader>
+							<connectionInfo>
+							if fbId > 0
+								<feedbaseDetails>
+							else
+								<feedbaseNav[fbContract]>
