@@ -1,0 +1,16 @@
+{
+  "name": "feedbase",
+  "license": "MIT",
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "Materialize": "materialize#^0.97.5",
+    "jquery": "^2.2.1"
+  }
+}

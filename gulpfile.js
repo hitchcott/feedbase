@@ -1,6 +1,7 @@
 var del = require('del')
 var exec = require('child_process').exec
 var browserify = require('browserify')
+var bower = require('gulp-bower')
 
 var gulp = require('gulp')
 var source = require('vinyl-source-stream')
@@ -13,7 +14,8 @@ var util = require('gulp-util')
 var webserver = require('gulp-webserver')
 var livereload = require('gulp-livereload')
 var debug = require('gulp-debug')
-var sass = require('gulp-sass')
+var sass = require('gulp-ruby-sass')
+var gulpsync = require('gulp-sync')(gulp)
 
 var config = {
   production: util.env.production
@@ -23,10 +25,12 @@ var paths = {
   src:{
     imba: 'src/imba/**/*.imba',
     js: 'src/js/**/*.js',
-    solContracts: ['src/sol/**/*.sol'],
+    solContracts: 'src/sol/**/*.sol',
     solTests: 'src/sol/test/**/*.sol',
     index: 'src/index.html',
-    sass: 'src/sass/**/*.scss'
+    sassRoot: 'src/style/main.scss',
+    sass: 'src/style/**/*.scss',
+    bower: 'bower_components'
   },
   build:{
     js: '.build/js/',
@@ -49,13 +53,27 @@ gulp.task('copy-index', function () {
   .pipe(livereload())
 })
 
+gulp.task('bower', function() {
+  return bower().pipe(gulp.dest(paths.src.bower))
+})
+
+gulp.task('font', function() {
+    return gulp.src(paths.src.bower + '/materialize/font/**/*', { "base" : paths.src.bower + '/materialize/font' })
+    .pipe(gulp.dest(paths.dest.root + '/font'));
+});
+
 gulp.task('build-sass', function () {
-  return gulp.src(paths.src.sass)
-  .pipe(sass().on('error', sass.logError))
+  return sass(paths.src.sassRoot, {
+    style: 'compressed',
+    loadPath: [
+      paths.src.sass,
+      paths.src.bower + '/materialize/sass'
+    ]
+  })
+  .on('error', util.log)
   .pipe(concat('app.css'))
   .pipe(gulp.dest(paths.dest.css))
   .pipe(livereload())
-
 });
 
 gulp.task('clean-js', function () {
@@ -63,7 +81,11 @@ gulp.task('clean-js', function () {
 })
 
 gulp.task('copy-js', ['clean-js'], function (){
-  return gulp.src(paths.src.js)
+  return gulp.src([
+      paths.src.bower + '/jquery/dist/jquery.min.js',
+      paths.src.bower + '/materialize/dist/js/materialize.min.js',
+      paths.src.js
+  ])
   .pipe(config.production ? uglify() : util.noop())
   .pipe(gulp.dest(paths.build.js))
 })
@@ -112,7 +134,7 @@ gulp.task('test-dapple', function(cb){
   })
 })
 
-gulp.task('deploy', function(cb){
+gulp.task('deploy-dapple', function(cb){
   exec('dapple run deploy.ds', function(err,res,failed){
     if(err){
       console.log(err)
@@ -123,7 +145,7 @@ gulp.task('deploy', function(cb){
   })
 })
 
-gulp.task('clean-public', function () {
+gulp.task('clean-dest', function () {
   return del([paths.dest.root+'/*'])
 })
 
@@ -159,4 +181,4 @@ gulp.task('watch', ['default', 'webserver'], function() {
 
 gulp.task('test', ['test-dapple'])
 
-gulp.task('default', ['clean-public', 'merge-all', 'build-sass', 'copy-index'])
+gulp.task('default', gulpsync.sync(['bower','clean-dest', 'font', 'build-sass', 'merge-all', 'copy-index']))
