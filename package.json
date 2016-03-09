@@ -1,5 +1,11 @@
 {
   "name": "Feedbase",
+  "scripts" : {
+    "deploy": "dapple run deploy.ds",
+    "watch" : "gulp watch",
+    "build" : "gulp build",
+    "blockchain" : "./scripts/blockchain/start-blockchain.sh"
+  },
   "devDependencies": {
     "browserify": "^13.0.0",
     "del": "^2.2.0",
