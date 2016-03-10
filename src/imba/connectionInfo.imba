@@ -4,8 +4,11 @@ extern dapple
 tag connectionInfo < table
 	def render
 		var ethStats = [
-			text: 'Block #'
-			value: web3:eth:blockNumber
+			text: 'Latest Block'
+			value: """
+			#{web3:eth:blockNumber} :
+			{Date.new(web3:eth.getBlock(web3:eth:blockNumber):timestamp*1000).toLocaleString}
+			"""
 		,
 			text: 'Hashrate'
 			value: web3:eth:hashrate

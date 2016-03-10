@@ -4,12 +4,16 @@ tag feedbaseNav
 		object.claim do |err,tx|
 			console.log 'done', err, tx
 
+	def setFeedId e
+		up(%app).fbId = e.target.value
+
 	def render
 		<self>
-			<.btn :click='claimNew'> 'Claim new feed'
+			<select.browser-default :change='setFeedId'>
+				<option> 'Select existing feed'
+				for i in [1..object:claim.call.toNumber - 1]
+					<option value=i> i + ' - ' + object:feeds.call(i)[0].toString
 			<br>
-			<ul>
-			for i in [0..object:claim.call.toNumber]
-				<li> i
+			<.btn :click='claimNew'> 'Claim new feed'
 
 

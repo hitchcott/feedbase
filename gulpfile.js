@@ -123,7 +123,7 @@ gulp.task('build-dapple', function (cb) {
 
 gulp.task('test-dapple', function(cb){
   process.stdout.write('Testing...\r')
-  exec('dapple test', function(err,res,failed){
+  exec('dapple test -e evm', function(err,res,failed){
     if(err){
       console.log(err)
     } else if (failed) {

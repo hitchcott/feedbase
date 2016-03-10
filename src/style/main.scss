@@ -6,7 +6,11 @@ body{
 }
 .wrapper{
   margin-top:3em;
+  @media #{$medium-and-down} {
+    margin-top:1em;
+  }
 }
+
 .title-header{
   font-weight:100;
   margin:0;
