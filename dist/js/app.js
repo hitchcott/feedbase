@@ -1,4112 +1,3 @@
-/******/ (function(modules) { // webpackBootstrap
-/******/  // The module cache
-/******/  var installedModules = {};
-
-/******/  // The require function
-/******/  function __webpack_require__(moduleId) {
-
-/******/    // Check if module is in cache
-/******/    if(installedModules[moduleId])
-/******/      return installedModules[moduleId].exports;
-
-/******/    // Create a new module (and put it into the cache)
-/******/    var module = installedModules[moduleId] = {
-/******/      exports: {},
-/******/      id: moduleId,
-/******/      loaded: false
-/******/    };
-
-/******/    // Execute the module function
-/******/    modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-
-/******/    // Flag the module as loaded
-/******/    module.loaded = true;
-
-/******/    // Return the exports of the module
-/******/    return module.exports;
-/******/  }
-
-
-/******/  // expose the modules object (__webpack_modules__)
-/******/  __webpack_require__.m = modules;
-
-/******/  // expose the module cache
-/******/  __webpack_require__.c = installedModules;
-
-/******/  // __webpack_public_path__
-/******/  __webpack_require__.p = "";
-
-/******/  // Load entry module and return exports
-/******/  return __webpack_require__(0);
-/******/ })
-/************************************************************************/
-/******/ ([
-/* 0 */
-/***/ function(module, exports, __webpack_require__) {
-
-  (function(){
-    
-    if (typeof Imba === 'undefined') {
-      __webpack_require__(1);
-      __webpack_require__(2);
-      __webpack_require__(3);
-      __webpack_require__(4);
-      __webpack_require__(5);
-      __webpack_require__(6);
-      __webpack_require__(7);
-      
-      if (false) {
-        require('./dom.server');
-      };
-      
-      if (true) {
-        __webpack_require__(8);
-        __webpack_require__(9);
-        __webpack_require__(10);
-      };
-      
-      return __webpack_require__(11);
-    } else {
-      return console.warn(("Imba v" + (Imba.VERSION) + " is already loaded"));
-    };
-
-  })()
-
-/***/ },
-/* 1 */
-/***/ function(module, exports, __webpack_require__) {
-
-  (function(){
-    var isClient = (typeof window == 'object' && this == window);
-    
-    if (isClient) {
-      // should not go there
-      window.global || (window.global = window);
-    };
-    
-    /*
-    Imba is the namespace for all runtime related utilities
-    @namespace
-    */
-    
-    Imba = {
-      VERSION: '0.14.4',
-      CLIENT: isClient,
-      SERVER: !isClient,
-      DEBUG: false
-    };
-    
-    var reg = /-./g;
-    
-    /*
-    True if running in client environment.
-    @return {bool}
-    */
-    
-    Imba.isClient = function (){
-      return (true) == true;
-    };
-    
-    /*
-    True if running in server environment.
-    @return {bool}
-    */
-    
-    Imba.isServer = function (){
-      return (false) == true;
-    };
-    
-    Imba.subclass = function (obj,sup){
-      ;
-      for (var k in sup){
-        if (sup.hasOwnProperty(k)) { obj[k] = sup[k] };
-      };
-      
-      obj.prototype = Object.create(sup.prototype);
-      obj.__super__ = obj.prototype.__super__ = sup.prototype;
-      obj.prototype.initialize = obj.prototype.constructor = obj;
-      return obj;
-    };
-    
-    /*
-    Lightweight method for making an object iterable in imbas for/in loops.
-    If the compiler cannot say for certain that a target in a for loop is an
-    array, it will cache the iterable version before looping.
-    
-    ```imba
-    # this is the whole method
-    def Imba.iterable o
-      return o ? (o:toArray ? o.toArray : o) : []
-    
-    class CustomIterable
-      def toArray
-        [1,2,3]
-    
-    # will return [2,4,6]
-    for x in CustomIterable.new
-      x * 2
-    
-    ```
-    */
-    
-    Imba.iterable = function (o){
-      return o ? ((o.toArray ? (o.toArray()) : (o))) : ([]);
-    };
-    
-    /*
-    Coerces a value into a promise. If value is array it will
-    call `Promise.all(value)`, or if it is not a promise it will
-    wrap the value in `Promise.resolve(value)`. Used for experimental
-    await syntax.
-    @return {Promise}
-    */
-    
-    Imba.await = function (value){
-      if (value instanceof Array) {
-        return Promise.all(value);
-      } else if (value && value.then) {
-        return value;
-      } else {
-        return Promise.resolve(value);
-      };
-    };
-    
-    Imba.toCamelCase = function (str){
-      return str.replace(reg,function(m) { return m.charAt(1).toUpperCase(); });
-    };
-    
-    Imba.toCamelCase = function (str){
-      return str.replace(reg,function(m) { return m.charAt(1).toUpperCase(); });
-    };
-    
-    Imba.indexOf = function (a,b){
-      return (b && b.indexOf) ? (b.indexOf(a)) : ([].indexOf.call(a,b));
-    };
-    
-    Imba.prop = function (scope,name,opts){
-      if (scope.defineProperty) {
-        return scope.defineProperty(name,opts);
-      };
-      return;
-    };
-    
-    return Imba.attr = function (scope,name,opts){
-      if (scope.defineAttribute) {
-        return scope.defineAttribute(name,opts);
-      };
-      
-      var getName = Imba.toCamelCase(name);
-      var setName = Imba.toCamelCase('set-' + name);
-      
-      scope.prototype[getName] = function() {
-        return this.getAttribute(name);
-      };
-      
-      scope.prototype[setName] = function(value) {
-        this.setAttribute(name,value);
-        return this;
-      };
-      
-      return;
-    };
-
-  })()
-
-/***/ },
-/* 2 */
-/***/ function(module, exports) {
-
-  (function(){
-    
-    
-    function emit__(event,args,node){
-      // var node = cbs[event]
-      var prev,cb,ret;
-      
-      while ((prev = node) && (node = node.next)){
-        if (cb = node.listener) {
-          if (node.path && cb[node.path]) {
-            ret = args ? (cb[node.path].apply(cb,args)) : (cb[node.path]());
-          } else {
-            // check if it is a method?
-            ret = args ? (cb.apply(node,args)) : (cb.call(node));
-          };
-        };
-        
-        if (node.times && --node.times <= 0) {
-          prev.next = node.next;
-          node.listener = null;
-        };
-      };
-      return;
-    };
-    
-    // method for registering a listener on object
-    Imba.listen = function (obj,event,listener,path){
-      var $1;
-      var cbs,list,tail;
-      cbs = obj.__listeners__ || (obj.__listeners__ = {});
-      list = cbs[($1 = event)] || (cbs[$1] = {});
-      tail = list.tail || (list.tail = (list.next = {}));
-      tail.listener = listener;
-      tail.path = path;
-      list.tail = tail.next = {};
-      return tail;
-    };
-    
-    Imba.once = function (obj,event,listener){
-      var tail = Imba.listen(obj,event,listener);
-      tail.times = 1;
-      return tail;
-    };
-    
-    Imba.unlisten = function (obj,event,cb,meth){
-      var node,prev;
-      var meta = obj.__listeners__;
-      if (!meta) { return };
-      
-      if (node = meta[event]) {
-        while ((prev = node) && (node = node.next)){
-          if (node == cb || node.listener == cb) {
-            prev.next = node.next;
-            // check for correct path as well?
-            node.listener = null;
-            break;
-          };
-        };
-      };
-      return;
-    };
-    
-    Imba.emit = function (obj,event,params){
-      var cb;
-      if (cb = obj.__listeners__) {
-        if (cb[event]) { emit__(event,params,cb[event]) };
-        if (cb.all) { emit__(event,[event,params],cb.all) }; // and event != 'all'
-      };
-      return;
-    };
-    
-    return Imba.observeProperty = function (observer,key,trigger,target,prev){
-      if (prev && typeof prev == 'object') {
-        Imba.unlisten(prev,'all',observer,trigger);
-      };
-      if (target && typeof target == 'object') {
-        Imba.listen(target,'all',observer,trigger);
-      };
-      return this;
-    };
-
-  })()
-
-/***/ },
-/* 3 */
-/***/ function(module, exports) {
-
-  /* WEBPACK VAR INJECTION */(function(global) {(function(){
-    function idx$(a,b){
-      return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
-    };
-    
-    
-    var raf; // very simple raf polyfill
-    raf || (raf = global.requestAnimationFrame);
-    raf || (raf = global.webkitRequestAnimationFrame);
-    raf || (raf = global.mozRequestAnimationFrame);
-    raf || (raf = function(blk) { return setTimeout(blk,1000 / 60); });
-    
-    Imba.tick = function (d){
-      if (this._scheduled) { raf(Imba.ticker()) };
-      Imba.Scheduler.willRun();
-      this.emit(this,'tick',[d]);
-      Imba.Scheduler.didRun();
-      return;
-    };
-    
-    Imba.ticker = function (){
-      var self = this;
-      return self._ticker || (self._ticker = function(e) { return self.tick(e); });
-    };
-    
-    /*
-    
-    Global alternative to requestAnimationFrame. Schedule a target
-    to tick every frame. You can specify which method to call on the
-    target (defaults to tick).
-    
-    */
-    
-    Imba.schedule = function (target,method){
-      if(method === undefined) method = 'tick';
-      this.listen(this,'tick',target,method);
-      // start scheduling now if this was the first one
-      if (!this._scheduled) {
-        this._scheduled = true;
-        raf(Imba.ticker());
-      };
-      return this;
-    };
-    
-    /*
-    
-    Unschedule a previously scheduled target
-    
-    */
-    
-    Imba.unschedule = function (target,method){
-      this.unlisten(this,'tick',target,method);
-      var cbs = this.__listeners__ || (this.__listeners__ = {});
-      if (!cbs.tick || !cbs.tick.next || !cbs.tick.next.listener) {
-        this._scheduled = false;
-      };
-      return this;
-    };
-    
-    /*
-    
-    Light wrapper around native setTimeout that expects the block / function
-    as last argument (instead of first). It also triggers an event to Imba
-    after the timeout to let schedulers update (to rerender etc) afterwards.
-    
-    */
-    
-    Imba.setTimeout = function (delay,block){
-      return setTimeout(function() {
-        block();
-        return Imba.Scheduler.markDirty();
-        // Imba.emit(Imba,'timeout',[block])
-      },delay);
-    };
-    
-    /*
-    
-    Light wrapper around native setInterval that expects the block / function
-    as last argument (instead of first). It also triggers an event to Imba
-    after every interval to let schedulers update (to rerender etc) afterwards.
-    
-    */
-    
-    Imba.setInterval = function (interval,block){
-      return setInterval(function() {
-        block();
-        return Imba.Scheduler.markDirty();
-        // Imba.emit(Imba,'interval',[block])
-      },interval);
-    };
-    
-    /*
-    Clear interval with specified id
-    */
-    
-    Imba.clearInterval = function (interval){
-      return clearInterval(interval);
-    };
-    
-    /*
-    Clear timeout with specified id
-    */
-    
-    Imba.clearTimeout = function (timeout){
-      return clearTimeout(timeout);
-    };
-    
-    // should add an Imba.run / setImmediate that
-    // pushes listener onto the tick-queue with times - once
-    
-    
-    /*
-    
-    Instances of Imba.Scheduler manages when to call `tick()` on their target,
-    at a specified framerate or when certain events occur. Root-nodes in your
-    applications will usually have a scheduler to make sure they rerender when
-    something changes. It is also possible to make inner components use their
-    own schedulers to control when they render.
-    
-    @iname scheduler
-    
-    */
-    
-    Imba.Scheduler = function Scheduler(target){
-      var self = this;
-      self._target = target;
-      self._marked = false;
-      self._active = false;
-      self._marker = function() { return self.mark(); };
-      self._ticker = function(e) { return self.tick(e); };
-      
-      self._events = true;
-      self._fps = 1;
-      
-      self._dt = 0;
-      self._timestamp = 0;
-      self._ticks = 0;
-      self._flushes = 0;
-    };
-    
-    Imba.Scheduler.markDirty = function (){
-      this._dirty = true;
-      return this;
-    };
-    
-    Imba.Scheduler.isDirty = function (){
-      return !!this._dirty;
-    };
-    
-    Imba.Scheduler.willRun = function (){
-      return this._active = true;
-    };
-    
-    Imba.Scheduler.didRun = function (){
-      this._active = false;
-      return this._dirty = false;
-    };
-    
-    Imba.Scheduler.isActive = function (){
-      return !!this._active;
-    };
-    
-    /*
-      Create a new Imba.Scheduler for specified target
-      @return {Imba.Scheduler}
-      */
-    
-    /*
-      Check whether the current scheduler is active or not
-      @return {bool}
-      */
-    
-    Imba.Scheduler.prototype.active = function (){
-      return this._active;
-    };
-    
-    /*
-      Delta time between the two last ticks
-      @return {Number}
-      */
-    
-    Imba.Scheduler.prototype.dt = function (){
-      return this._dt;
-    };
-    
-    /*
-      Configure the scheduler
-      @return {self}
-      */
-    
-    Imba.Scheduler.prototype.configure = function (pars){
-      if(!pars||pars.constructor !== Object) pars = {};
-      var fps = pars.fps !== undefined ? pars.fps : 1;
-      var events = pars.events !== undefined ? pars.events : true;
-      if (events != null) { this._events = events };
-      if (fps != null) { this._fps = fps };
-      return this;
-    };
-    
-    /*
-      Mark the scheduler as dirty. This will make sure that
-      the scheduler calls `target.tick` on the next frame
-      @return {self}
-      */
-    
-    Imba.Scheduler.prototype.mark = function (){
-      this._marked = true;
-      return this;
-    };
-    
-    /*
-      Instantly trigger target.tick and mark scheduler as clean (not dirty/marked).
-      This is called implicitly from tick, but can also be called manually if you
-      really want to force a tick without waiting for the next frame.
-      @return {self}
-      */
-    
-    Imba.Scheduler.prototype.flush = function (){
-      this._marked = false;
-      this._flushes++;
-      this._target.tick();
-      return this;
-    };
-    
-    /*
-      @fixme this expects raf to run at 60 fps 
-    
-      Called automatically on every frame while the scheduler is active.
-      It will only call `target.tick` if the scheduler is marked dirty,
-      or when according to @fps setting.
-    
-      If you have set up a scheduler with an fps of 1, tick will still be
-      called every frame, but `target.tick` will only be called once every
-      second, and it will *make sure* each `target.tick` happens in separate
-      seconds according to Date. So if you have a node that renders a clock
-      based on Date.now (or something similar), you can schedule it with 1fps,
-      never needing to worry about two ticks happening within the same second.
-      The same goes for 4fps, 10fps etc.
-    
-      @protected
-      @return {self}
-      */
-    
-    Imba.Scheduler.prototype.tick = function (delta){
-      this._ticks++;
-      this._dt = delta;
-      
-      var fps = this._fps;
-      
-      if (fps == 60) {
-        this._marked = true;
-      } else if (fps == 30) {
-        if (this._ticks % 2) { this._marked = true };
-      } else if (fps) {
-        // if it is less round - we trigger based
-        // on date, for consistent rendering.
-        // ie, if you want to render every second
-        // it is important that no two renders
-        // happen during the same second (according to Date)
-        var period = ((60 / fps) / 60) * 1000;
-        var beat = Math.floor(Date.now() / period);
-        
-        if (this._beat != beat) {
-          this._beat = beat;
-          this._marked = true;
-        };
-      };
-      
-      if (this._marked || (this._events && Imba.Scheduler.isDirty())) this.flush();
-      // reschedule if @active
-      return this;
-    };
-    
-    /*
-      Start the scheduler if it is not already active.
-      **While active**, the scheduler will override `target.commit`
-      to do nothing. By default Imba.tag#commit calls render, so
-      that rendering is cascaded through to children when rendering
-      a node. When a scheduler is active (for a node), Imba disables
-      this automatic rendering.
-      */
-    
-    Imba.Scheduler.prototype.activate = function (){
-      if (!this._active) {
-        this._active = true;
-        // override target#commit while this is active
-        this._commit = this._target.commit;
-        this._target.commit = function() { return this; };
-        Imba.schedule(this);
-        if (this._events) { Imba.listen(Imba,'event',this,'onevent') };
-        this._target && this._target.flag  &&  this._target.flag('scheduled_');
-        this.tick(0); // start ticking
-      };
-      return this;
-    };
-    
-    /*
-      Stop the scheduler if it is active.
-      */
-    
-    Imba.Scheduler.prototype.deactivate = function (){
-      if (this._active) {
-        this._active = false;
-        this._target.commit = this._commit;
-        Imba.unschedule(this);
-        Imba.unlisten(Imba,'event',this);
-        this._target && this._target.unflag  &&  this._target.unflag('scheduled_');
-      };
-      return this;
-    };
-    
-    Imba.Scheduler.prototype.track = function (){
-      return this._marker;
-    };
-    
-    Imba.Scheduler.prototype.onevent = function (event){
-      var $1;
-      if (this._marked) { return this };
-      
-      if (this._events instanceof Function) {
-        if (this._events(event)) this.mark();
-      } else if (this._events instanceof Array) {
-        if (idx$(($1 = event) && $1.type  &&  $1.type(),this._events) >= 0) this.mark();
-      } else if (this._events) {
-        if (event._responder) this.mark();
-      };
-      return this;
-    };
-    return Imba.Scheduler;
-
-  })()
-  /* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
-
-/***/ },
-/* 4 */
-/***/ function(module, exports) {
-
-  (function(){
-    function idx$(a,b){
-      return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
-    };
-    
-    Imba.static = function (items,nr){
-      items.static = nr;
-      return items;
-    };
-    
-    /*
-    This is the baseclass that all tags in imba inherit from.
-    @iname node
-    */
-    
-    Imba.Tag = function Tag(dom){
-      this.setDom(dom);
-    };
-    
-    Imba.Tag.createNode = function (){
-      throw "Not implemented";
-    };
-    
-    Imba.Tag.build = function (){
-      return new this(this.createNode());
-    };
-    
-    Imba.Tag.prototype.object = function(v){ return this._object; }
-    Imba.Tag.prototype.setObject = function(v){ this._object = v; return this; };
-    
-    Imba.Tag.prototype.dom = function (){
-      return this._dom;
-    };
-    
-    Imba.Tag.prototype.setDom = function (dom){
-      dom._tag = this;
-      this._dom = dom;
-      return this;
-    };
-    
-    /*
-      Setting references for tags like
-      `<div@header>` will compile to `tag('div').setRef('header',this).end()`
-      By default it adds the reference as a className to the tag.
-      @return {self}
-      */
-    
-    Imba.Tag.prototype.setRef = function (ref,ctx){
-      this.flag(this._ref = ref);
-      return this;
-    };
-    
-    /*
-      Method that is called by the compiled tag-chains, for
-      binding events on tags to methods etc.
-      `<a :tap=fn>` compiles to `tag('a').setHandler('tap',fn,this).end()`
-      where this refers to the context in which the tag is created.
-      @return {self}
-      */
-    
-    Imba.Tag.prototype.setHandler = function (event,handler,ctx){
-      var key = 'on' + event;
-      
-      if (handler instanceof Function) {
-        this[key] = handler;
-      } else if (handler instanceof Array) {
-        var fn = handler.shift();
-        this[key] = function(e) { return ctx[fn].apply(ctx,handler.concat(e)); };
-      } else {
-        this[key] = function(e) { return ctx[handler](e); };
-      };
-      return this;
-    };
-    
-    Imba.Tag.prototype.setId = function (id){
-      this.dom().id = id;
-      return this;
-    };
-    
-    Imba.Tag.prototype.id = function (){
-      return this.dom().id;
-    };
-    
-    /*
-      Adds a new attribute or changes the value of an existing attribute
-      on the specified tag. If the value is null or false, the attribute
-      will be removed.
-      @return {self}
-      */
-    
-    Imba.Tag.prototype.setAttribute = function (name,value){
-      // should this not return self?
-      var old = this.dom().getAttribute(name);
-      
-      if (old == value) {
-        return value;
-      } else if (value != null && value !== false) {
-        return this.dom().setAttribute(name,value);
-      } else {
-        return this.dom().removeAttribute(name);
-      };
-    };
-    
-    /*
-      removes an attribute from the specified tag
-      */
-    
-    Imba.Tag.prototype.removeAttribute = function (name){
-      return this.dom().removeAttribute(name);
-    };
-    
-    /*
-      returns the value of an attribute on the tag.
-      If the given attribute does not exist, the value returned
-      will either be null or "" (the empty string)
-      */
-    
-    Imba.Tag.prototype.getAttribute = function (name){
-      return this.dom().getAttribute(name);
-    };
-    
-    /*
-      Override this to provide special wrapping etc.
-      @return {self}
-      */
-    
-    Imba.Tag.prototype.setContent = function (content,type){
-      this.setChildren(content,type);
-      return this;
-    };
-    
-    /*
-      Set the children of node. type param is optional,
-      and should only be used by Imba when compiling tag trees. 
-      @return {self}
-      */
-    
-    Imba.Tag.prototype.setChildren = function (nodes,type){
-      throw "Not implemented";
-    };
-    
-    /*
-      Get text of node. Uses textContent behind the scenes (not innerText)
-      [https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent]()
-      @return {string} inner text of node
-      */
-    
-    Imba.Tag.prototype.text = function (v){
-      return this._dom.textContent;
-    };
-    
-    /*
-      Set text of node. Uses textContent behind the scenes (not innerText)
-      [https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent]()
-      */
-    
-    Imba.Tag.prototype.setText = function (txt){
-      this._empty = false;
-      this._dom.textContent = txt == null ? (txt = "") : (txt);
-      return this;
-    };
-    
-    
-    /*
-      Method for getting and setting data-attributes. When called with zero
-      arguments it will return the actual dataset for the tag.
-    
-        var node = <div data-name='hello'>
-        # get the whole dataset
-        node.dataset # {name: 'hello'}
-        # get a single value
-        node.dataset('name') # 'hello'
-        # set a single value
-        node.dataset('name','newname') # self
-    
-    
-      */
-    
-    Imba.Tag.prototype.dataset = function (key,val){
-      throw "Not implemented";
-    };
-    
-    /*
-      Empty placeholder. Override to implement custom render behaviour.
-      Works much like the familiar render-method in React.
-      @return {self}
-      */
-    
-    Imba.Tag.prototype.render = function (){
-      return this;
-    };
-    
-    /*
-      Called implicitly through Imba.Tag#end, upon creating a tag. All
-      properties will have been set before build is called, including
-      setContent.
-      @return {self}
-      */
-    
-    Imba.Tag.prototype.build = function (){
-      this.render();
-      return this;
-    };
-    
-    /*
-      Called implicitly through Imba.Tag#end, for tags that are part of
-      a tag tree (that are rendered several times).
-      @return {self}
-      */
-    
-    Imba.Tag.prototype.commit = function (){
-      this.render();
-      return this;
-    };
-    
-    /*
-    
-      Called by the tag-scheduler (if this tag is scheduled)
-      By default it will call this.render. Do not override unless
-      you really understand it.
-    
-      */
-    
-    Imba.Tag.prototype.tick = function (){
-      this.render();
-      return this;
-    };
-    
-    /*
-      
-      A very important method that you will practically never manually.
-      The tag syntax of Imba compiles to a chain of setters, which always
-      ends with .end. `<a.large>` compiles to `tag('a').flag('large').end()`
-      
-      You are highly adviced to not override its behaviour. The first time
-      end is called it will mark the tag as built and call Imba.Tag#build,
-      and call Imba.Tag#commit on subsequent calls.
-      @return {self}
-      */
-    
-    Imba.Tag.prototype.end = function (){
-      if (this._built) {
-        this.commit();
-      } else {
-        this._built = true;
-        this.build();
-      };
-      return this;
-    };
-    
-    /*
-      This is called instead of Imba.Tag#end for `<self>` tag chains.
-      Defaults to noop
-      @return {self}
-      */
-    
-    Imba.Tag.prototype.synced = function (){
-      return this;
-    };
-    
-    // called when the node is awakened in the dom - either automatically
-    // upon attachment to the dom-tree, or the first time imba needs the
-    // tag for a domnode that has been rendered on the server
-    Imba.Tag.prototype.awaken = function (){
-      return this;
-    };
-    
-    /*
-      List of flags for this node. 
-      */
-    
-    Imba.Tag.prototype.flags = function (){
-      return this._dom.classList;
-    };
-    
-    /*
-      Add speficied flag to current node.
-      If a second argument is supplied, it will be coerced into a Boolean,
-      and used to indicate whether we should remove the flag instead.
-      @return {self}
-      */
-    
-    Imba.Tag.prototype.flag = function (name,toggler){
-      // it is most natural to treat a second undefined argument as a no-switch
-      // so we need to check the arguments-length
-      if (arguments.length == 2) {
-        if (this._dom.classList.contains(name) != !!toggler) {
-          this._dom.classList.toggle(name);
-        };
-      } else {
-        this._dom.classList.add(name);
-      };
-      return this;
-    };
-    
-    /*
-      Remove specified flag from node
-      @return {self}
-      */
-    
-    Imba.Tag.prototype.unflag = function (name){
-      this._dom.classList.remove(name);
-      return this;
-    };
-    
-    /*
-      Toggle specified flag on node
-      @return {self}
-      */
-    
-    Imba.Tag.prototype.toggleFlag = function (name){
-      this._dom.classList.toggle(name);
-      return this;
-    };
-    
-    /*
-      Check whether current node has specified flag
-      @return {bool}
-      */
-    
-    Imba.Tag.prototype.hasFlag = function (name){
-      return this._dom.classList.contains(name);
-    };
-    
-    /*
-      Get the scheduler for this node. A new scheduler will be created
-      if it does not already exist.
-    
-      @return {Imba.Scheduler}
-      */
-    
-    Imba.Tag.prototype.scheduler = function (){
-      return this._scheduler == null ? (this._scheduler = new Imba.Scheduler(this)) : (this._scheduler);
-    };
-    
-    /*
-    
-      Shorthand to start scheduling a node. The method will basically
-      proxy the arguments through to scheduler.configure, and then
-      activate the scheduler.
-      
-      @return {self}
-      */
-    
-    Imba.Tag.prototype.schedule = function (options){
-      if(options === undefined) options = {};
-      this.scheduler().configure(options).activate();
-      return this;
-    };
-    
-    /*
-      Shorthand for deactivating scheduler (if tag has one).
-      @deprecated
-      */
-    
-    Imba.Tag.prototype.unschedule = function (){
-      if (this._scheduler) { this.scheduler().deactivate() };
-      return this;
-    };
-    
-    
-    /*
-      Get the parent of current node
-      @return {Imba.Tag} 
-      */
-    
-    Imba.Tag.prototype.parent = function (){
-      return tag$wrap(this.dom().parentNode);
-    };
-    
-    /*
-      Shorthand for console.log on elements
-      @return {self}
-      */
-    
-    Imba.Tag.prototype.log = function (){
-      var $0 = arguments, i = $0.length;
-      var args = new Array(i>0 ? i : 0);
-      while(i>0) args[i-1] = $0[--i];
-      args.unshift(console);
-      Function.prototype.call.apply(console.log,args);
-      return this;
-    };
-    
-    Imba.Tag.prototype.css = function (key,val){
-      if (key instanceof Object) {
-        for (var i = 0, keys = Object.keys(key), l = keys.length; i < l; i++){
-          this.css(keys[i],key[keys[i]]);
-        };
-      } else if (val == null) {
-        this.dom().style.removeProperty(key);
-      } else if (val == undefined) {
-        return this.dom().style[key];
-      } else {
-        if ((typeof val=='number'||val instanceof Number) && key.match(/width|height|left|right|top|bottom/)) {
-          val = val + "px";
-        };
-        this.dom().style[key] = val;
-      };
-      return this;
-    };
-    
-    Imba.Tag.prototype.trigger = function (event,data){
-      if(data === undefined) data = {};
-      return Imba.Events.trigger(event,this,{data: data});
-    };
-    
-    Imba.Tag.prototype.setTransform = function (value){
-      this.css('transform',value);
-      return this;
-    };
-    
-    Imba.Tag.prototype.transform = function (){
-      return this.css('transform');
-    };
-    
-    Imba.Tag.prototype.setStyle = function (style){
-      this.setAttribute('style',style);
-      return this;
-    };
-    
-    Imba.Tag.prototype.style = function (){
-      return this.getAttribute('style');
-    };
-    
-    Imba.Tag.prototype.toString = function (){
-      return this.dom().outerHTML;
-    };
-    
-    
-    Imba.Tag.prototype.initialize = Imba.Tag;
-    
-    HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ");
-    HTML_TAGS_UNSAFE = "article aside header section".split(" ");
-    SVG_TAGS = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan".split(" ");
-    
-    
-    function extender(obj,sup){
-      for (var i = 0, keys = Object.keys(sup), l = keys.length; i < l; i++){
-        obj[($1 = keys[i])] == null ? (obj[$1] = sup[keys[i]]) : (obj[$1]);
-      };
-      
-      obj.prototype = Object.create(sup.prototype);
-      obj.__super__ = obj.prototype.__super__ = sup.prototype;
-      obj.prototype.initialize = obj.prototype.constructor = obj;
-      if (sup.inherit) { sup.inherit(obj) };
-      return obj;
-    };
-    
-    function Tag(){
-      return function(dom) {
-        this.setDom(dom);
-        return this;
-      };
-    };
-    
-    function TagSpawner(type){
-      return function() { return type.build(); };
-    };
-    
-    Imba.Tags = function Tags(){
-      this;
-    };
-    
-    Imba.Tags.prototype.__clone = function (ns){
-      var clone = Object.create(this);
-      clone._parent = this;
-      return clone;
-    };
-    
-    Imba.Tags.prototype.ns = function (name){
-      return this[name.toUpperCase()] || this.defineNamespace(name);
-    };
-    
-    Imba.Tags.prototype.defineNamespace = function (name){
-      var clone = Object.create(this);
-      clone._parent = this;
-      clone._ns = name;
-      this[name.toUpperCase()] = clone;
-      return clone;
-    };
-    
-    Imba.Tags.prototype.baseType = function (name){
-      return idx$(name,HTML_TAGS) >= 0 ? ('htmlelement') : ('div');
-    };
-    
-    Imba.Tags.prototype.defineTag = function (name,supr,body){
-      if(body==undefined && typeof supr == 'function') body = supr,supr = '';
-      if(supr==undefined) supr = '';
-      supr || (supr = this.baseType(name));
-      var supertype = this[supr];
-      var tagtype = Tag();
-      var norm = name.replace(/\-/g,'_');
-      
-      
-      tagtype._name = name;
-      extender(tagtype,supertype);
-      
-      if (name[0] == '#') {
-        this[name] = tagtype;
-        Imba.SINGLETONS[name.slice(1)] = tagtype;
-      } else {
-        this[name] = tagtype;
-        this['$' + norm] = TagSpawner(tagtype);
-      };
-      
-      if (body) {
-        if (body.length == 2) {
-          // create clone
-          if (!tagtype.hasOwnProperty('TAGS')) {
-            tagtype.TAGS = (supertype.TAGS || this).__clone();
-          };
-        };
-        
-        body.call(tagtype,tagtype,tagtype.TAGS || this);
-      };
-      
-      return tagtype;
-    };
-    
-    Imba.Tags.prototype.defineSingleton = function (name,supr,body){
-      return this.defineTag(name,supr,body);
-    };
-    
-    Imba.Tags.prototype.extendTag = function (name,supr,body){
-      if(body==undefined && typeof supr == 'function') body = supr,supr = '';
-      if(supr==undefined) supr = '';
-      var klass = ((typeof name=='string'||name instanceof String) ? (this[name]) : (name));
-      // allow for private tags here as well?
-      if (body) { body && body.call(klass,klass,klass.prototype) };
-      return klass;
-    };
-    
-    
-    Imba.TAGS = new Imba.Tags();
-    Imba.TAGS.element = Imba.Tag;
-    
-    var svg = Imba.TAGS.defineNamespace('svg');
-    
-    svg.baseType = function (name){
-      return 'svgelement';
-    };
-    
-    
-    Imba.SINGLETONS = {};
-    
-    
-    Imba.defineTag = function (name,supr,body){
-      if(body==undefined && typeof supr == 'function') body = supr,supr = '';
-      if(supr==undefined) supr = '';
-      return Imba.TAGS.defineTag(name,supr,body);
-    };
-    
-    Imba.defineSingletonTag = function (id,supr,body){
-      if(body==undefined && typeof supr == 'function') body = supr,supr = 'div';
-      if(supr==undefined) supr = 'div';
-      return Imba.TAGS.defineTag(this.name(),supr,body);
-    };
-    
-    Imba.extendTag = function (name,body){
-      return Imba.TAGS.extendTag(name,body);
-    };
-    
-    Imba.tag = function (name){
-      var typ = Imba.TAGS[name];
-      if (!typ) { throw new Error(("tag " + name + " is not defined")) };
-      return new typ(typ.createNode());
-    };
-    
-    Imba.tagWithId = function (name,id){
-      var typ = Imba.TAGS[name];
-      if (!typ) { throw new Error(("tag " + name + " is not defined")) };
-      var dom = typ.createNode();
-      dom.id = id;
-      return new typ(dom);
-    };
-    
-    // TODO: Can we move these out and into dom.imba in a clean way?
-    // These methods depends on Imba.document.getElementById
-    
-    Imba.getTagSingleton = function (id){
-      var klass;
-      var dom,node;
-      
-      if (klass = Imba.SINGLETONS[id]) {
-        if (klass && klass.Instance) { return klass.Instance };
-        
-        // no instance - check for element
-        if (dom = Imba.document().getElementById(id)) {
-          // we have a live instance - when finding it through a selector we should awake it, no?
-          // console.log('creating the singleton from existing node in dom?',id,type)
-          node = klass.Instance = new klass(dom);
-          node.awaken(dom); // should only awaken
-          return node;
-        };
-        
-        dom = klass.createNode();
-        dom.id = id;
-        node = klass.Instance = new klass(dom);
-        node.end().awaken(dom);
-        return node;
-      } else if (dom = Imba.document().getElementById(id)) {
-        return Imba.getTagForDom(dom);
-      };
-    };
-    
-    var svgSupport = typeof SVGElement !== 'undefined';
-    
-    Imba.getTagForDom = function (dom){
-      var m;
-      if (!dom) { return null };
-      if (dom._dom) { return dom }; // could use inheritance instead
-      if (dom._tag) { return dom._tag };
-      if (!dom.nodeName) { return null };
-      
-      var ns = null;
-      var id = dom.id;
-      var type = dom.nodeName.toLowerCase();
-      var tags = Imba.TAGS;
-      var native$ = type;
-      var cls = dom.className;
-      
-      if (id && Imba.SINGLETONS[id]) {
-        // FIXME control that it is the same singleton?
-        // might collide -- not good?
-        return Imba.getTagSingleton(id);
-      };
-      // look for id - singleton
-      
-      // need better test here
-      if (svgSupport && (dom instanceof SVGElement)) {
-        ns = "svg";
-        cls = dom.className.baseVal;
-        tags = tags.SVG;
-      };
-      
-      var spawner;
-      
-      if (cls) {
-        // there can be several matches here - should choose the last
-        // should fall back to less specific later? - otherwise things may fail
-        // TODO rework this
-        if (m = cls.match(/\b_([a-z\-]+)\b(?!\s*_[a-z\-]+)/)) {
-          type = m[1]; // .replace(/-/g,'_')
-        };
-        
-        if (m = cls.match(/\b([A-Z\-]+)_\b/)) {
-          ns = m[1];
-        };
-      };
-      
-      
-      spawner = tags[type] || tags[native$];
-      return spawner ? (new spawner(dom).awaken(dom)) : (null);
-    };
-    
-    tag$ = Imba.TAGS;
-    t$ = Imba.tag;
-    tc$ = Imba.tagWithFlags;
-    ti$ = Imba.tagWithId;
-    tic$ = Imba.tagWithIdAndFlags;
-    id$ = Imba.getTagSingleton;
-    return tag$wrap = Imba.getTagForDom;
-    
-
-  })()
-
-/***/ },
-/* 5 */
-/***/ function(module, exports) {
-
-  (function(){
-    function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-    
-    Imba.document = function (){
-      return window.document;
-    };
-    
-    /*
-    Returns the body element wrapped in an Imba.Tag
-    */
-    
-    Imba.root = function (){
-      return tag$wrap(Imba.document().body);
-    };
-    
-    tag$.defineTag('htmlelement', 'element', function(tag){
-      
-      /*
-        Called when a tag type is being subclassed.
-        */
-      
-      tag.inherit = function (child){
-        child.prototype._empty = true;
-        child._protoDom = null;
-        
-        if (this._nodeType) {
-          child._nodeType = this._nodeType;
-          
-          var className = "_" + child._name.replace(/_/g,'-');
-          if (child._name[0] != '#') { return child._classes = this._classes.concat(className) };
-        } else {
-          child._nodeType = child._name;
-          return child._classes = [];
-        };
-      };
-      
-      tag.buildNode = function (){
-        var dom = Imba.document().createElement(this._nodeType);
-        var cls = this._classes.join(" ");
-        if (cls) { dom.className = cls };
-        return dom;
-      };
-      
-      tag.createNode = function (){
-        var proto = (this._protoDom || (this._protoDom = this.buildNode()));
-        return proto.cloneNode(false);
-      };
-      
-      tag.dom = function (){
-        return this._protoDom || (this._protoDom = this.buildNode());
-      };
-      
-      tag.prototype.tabindex = function(v){ return this.getAttribute('tabindex'); }
-      tag.prototype.setTabindex = function(v){ this.setAttribute('tabindex',v); return this; };
-      tag.prototype.title = function(v){ return this.getAttribute('title'); }
-      tag.prototype.setTitle = function(v){ this.setAttribute('title',v); return this; };
-      tag.prototype.role = function(v){ return this.getAttribute('role'); }
-      tag.prototype.setRole = function(v){ this.setAttribute('role',v); return this; };
-      tag.prototype.name = function(v){ return this.getAttribute('name'); }
-      tag.prototype.setName = function(v){ this.setAttribute('name',v); return this; };
-      
-      tag.prototype.id = function (){
-        return this.dom().id;
-      };
-      
-      tag.prototype.setId = function (id){
-        this.dom().id = id;
-        return this;
-      };
-      
-      tag.prototype.width = function (){
-        return this._dom.offsetWidth;
-      };
-      
-      tag.prototype.height = function (){
-        return this._dom.offsetHeight;
-      };
-      
-      tag.prototype.setChildren = function (nodes,type){
-        this._empty ? (this.append(nodes)) : (this.empty().append(nodes));
-        this._children = null;
-        return this;
-      };
-      
-      /*
-        Set inner html of node
-        */
-      
-      tag.prototype.setHtml = function (html){
-        this._dom.innerHTML = html;
-        return this;
-      };
-      
-      /*
-        Get inner html of node
-        */
-      
-      tag.prototype.html = function (){
-        return this._dom.innerHTML;
-      };
-      
-      /*
-        Remove all content inside node
-        */
-      
-      tag.prototype.empty = function (){
-        while (this._dom.firstChild){
-          this._dom.removeChild(this._dom.firstChild);
-        };
-        this._children = null;
-        this._empty = true;
-        return this;
-      };
-      
-      /*
-        Remove specified child from current node.
-        */
-      
-      tag.prototype.remove = function (child){
-        var par = this.dom();
-        var el = child && child.dom();
-        if (el && el.parentNode == par) { par.removeChild(el) };
-        return this;
-      };
-      
-      tag.prototype.emit = function (name,pars){
-        if(!pars||pars.constructor !== Object) pars = {};
-        var data = pars.data !== undefined ? pars.data : null;
-        var bubble = pars.bubble !== undefined ? pars.bubble : true;
-        Imba.Events.trigger(name,this,{data: data,bubble: bubble});
-        return this;
-      };
-      
-      tag.prototype.dataset = function (key,val){
-        if (key instanceof Object) {
-          for (var i = 0, keys = Object.keys(key), l = keys.length; i < l; i++){
-            this.dataset(keys[i],key[keys[i]]);
-          };
-          return this;
-        };
-        
-        if (arguments.length == 2) {
-          this.setAttribute(("data-" + key),val);
-          return this;
-        };
-        
-        if (key) {
-          return this.getAttribute(("data-" + key));
-        };
-        
-        var dataset = this.dom().dataset;
-        
-        if (!dataset) {
-          dataset = {};
-          for (var i = 0, ary = iter$(this.dom().attributes), len = ary.length, atr; i < len; i++) {
-            atr = ary[i];
-            if (atr.name.substr(0,5) == 'data-') {
-              dataset[Imba.toCamelCase(atr.name.slice(5))] = atr.value;
-            };
-          };
-        };
-        
-        return dataset;
-      };
-      
-      /*
-        Get descendants of current node, optionally matching selector
-        @return {Imba.Selector}
-        */
-      
-      tag.prototype.find = function (sel){
-        return new Imba.Selector(sel,this);
-      };
-      
-      /*
-        Get the first matching child of node
-      
-        @return {Imba.Tag}
-        */
-      
-      tag.prototype.first = function (sel){
-        return sel ? (this.find(sel).first()) : (tag$wrap(this.dom().firstElementChild));
-      };
-      
-      /*
-        Get the last matching child of node
-      
-          node.last # returns the last child of node
-          node.last %span # returns the last span inside node
-          node.last do |el| el.text == 'Hi' # return last node with text Hi
-      
-        @return {Imba.Tag}
-        */
-      
-      tag.prototype.last = function (sel){
-        return sel ? (this.find(sel).last()) : (tag$wrap(this.dom().lastElementChild));
-      };
-      
-      /*
-        Get the child at index
-        */
-      
-      tag.prototype.child = function (i){
-        return tag$wrap(this.dom().children[i || 0]);
-      };
-      
-      tag.prototype.children = function (sel){
-        var nodes = new Imba.Selector(null,this,this._dom.children);
-        return sel ? (nodes.filter(sel)) : (nodes);
-      };
-      
-      tag.prototype.orphanize = function (){
-        var par;
-        if (par = this.dom().parentNode) { par.removeChild(this._dom) };
-        return this;
-      };
-      
-      tag.prototype.matches = function (sel){
-        var fn;
-        if (sel instanceof Function) {
-          return sel(this);
-        };
-        
-        if (sel.query) { sel = sel.query() };
-        if (fn = (this._dom.matches || this._dom.matchesSelector || this._dom.webkitMatchesSelector || this._dom.msMatchesSelector || this._dom.mozMatchesSelector)) {
-          return fn.call(this._dom,sel);
-        };
-      };
-      
-      /*
-        Get the first element matching supplied selector / filter
-        traversing upwards, but including the node itself.
-        @return {Imba.Tag}
-        */
-      
-      tag.prototype.closest = function (sel){
-        if (!sel) { return this.parent() }; // should return self?!
-        var node = this;
-        if (sel.query) { sel = sel.query() };
-        
-        while (node){
-          if (node.matches(sel)) { return node };
-          node = node.parent();
-        };
-        return null;
-      };
-      
-      /*
-        Get the closest ancestor of node that matches
-        specified selector / matcher.
-      
-        @return {Imba.Tag}
-        */
-      
-      tag.prototype.up = function (sel){
-        if (!sel) { return this.parent() };
-        return this.parent() && this.parent().closest(sel);
-      };
-      
-      tag.prototype.path = function (sel){
-        var node = this;
-        var nodes = [];
-        if (sel && sel.query) { sel = sel.query() };
-        
-        while (node){
-          if (!sel || node.matches(sel)) { nodes.push(node) };
-          node = node.parent();
-        };
-        return nodes;
-      };
-      
-      tag.prototype.parents = function (sel){
-        var par = this.parent();
-        return par ? (par.path(sel)) : ([]);
-      };
-      
-      
-      
-      tag.prototype.siblings = function (sel){
-        var par, self = this;
-        if (!(par = this.parent())) { return [] }; // FIXME
-        var ary = this.dom().parentNode.children;
-        var nodes = new Imba.Selector(null,this,ary);
-        return nodes.filter(function(n) { return n != self && (!sel || n.matches(sel)); });
-      };
-      
-      /*
-        Get the immediately following sibling of node.
-        */
-      
-      tag.prototype.next = function (sel){
-        if (sel) {
-          var el = this;
-          while (el = el.next()){
-            if (el.matches(sel)) { return el };
-          };
-          return null;
-        };
-        return tag$wrap(this.dom().nextElementSibling);
-      };
-      
-      /*
-        Get the immediately preceeding sibling of node.
-        */
-      
-      tag.prototype.prev = function (sel){
-        if (sel) {
-          var el = this;
-          while (el = el.prev()){
-            if (el.matches(sel)) { return el };
-          };
-          return null;
-        };
-        return tag$wrap(this.dom().previousElementSibling);
-      };
-      
-      tag.prototype.contains = function (node){
-        return this.dom().contains(node && node._dom || node);
-      };
-      
-      tag.prototype.index = function (){
-        var i = 0;
-        var el = this.dom();
-        while (el.previousSibling){
-          el = el.previousSibling;
-          i++;
-        };
-        return i;
-      };
-      
-      
-      /*
-        
-        @deprecated
-        */
-      
-      tag.prototype.insert = function (node,pars){
-        if(!pars||pars.constructor !== Object) pars = {};
-        var before = pars.before !== undefined ? pars.before : null;
-        var after = pars.after !== undefined ? pars.after : null;
-        if (after) { before = after.next() };
-        if (node instanceof Array) {
-          node = (tag$.$fragment().setContent(node,0).end());
-        };
-        if (before) {
-          this.dom().insertBefore(node.dom(),before.dom());
-        } else {
-          this.append(node);
-        };
-        return this;
-      };
-      
-      /*
-        Focus on current node
-        @return {self}
-        */
-      
-      tag.prototype.focus = function (){
-        this.dom().focus();
-        return this;
-      };
-      
-      /*
-        Remove focus from current node
-        @return {self}
-        */
-      
-      tag.prototype.blur = function (){
-        this.dom().blur();
-        return this;
-      };
-      
-      tag.prototype.template = function (){
-        return null;
-      };
-      
-      /*
-        @todo Should support multiple arguments like append
-      
-        The .prepend method inserts the specified content as the first
-        child of the target node. If the content is already a child of 
-        node it will be moved to the start.
-        
-            node.prepend <div.top> # prepend node
-            node.prepend "some text" # prepend text
-            node.prepend [<ul>,<ul>] # prepend array
-      
-        */
-      
-      tag.prototype.prepend = function (item){
-        var first = this._dom.childNodes[0];
-        first ? (this.insertBefore(item,first)) : (this.appendChild(item));
-        return this;
-      };
-      
-      /*
-        The .append method inserts the specified content as the last child
-        of the target node. If the content is already a child of node it
-        will be moved to the end.
-        
-        # example
-            var root = <div.root>
-            var item = <div.item> "This is an item"
-            root.append item # appends item to the end of root
-      
-            root.prepend "some text" # append text
-            root.prepend [<ul>,<ul>] # append array
-        */
-      
-      tag.prototype.append = function (item){
-        // possible to append blank
-        // possible to simplify on server?
-        if (!item) { return this };
-        
-        if (item instanceof Array) {
-          for (var i = 0, ary = iter$(item), len = ary.length, member; i < len; i++) {
-            member = ary[i];
-            member && this.append(member);
-          };
-        } else if ((typeof item=='string'||item instanceof String) || (typeof item=='number'||item instanceof Number)) {
-          var node = Imba.document().createTextNode(item);
-          this._dom.appendChild(node);
-          if (this._empty) { this._empty = false };
-        } else {
-          this._dom.appendChild(item._dom || item);
-          if (this._empty) { this._empty = false };
-        };
-        
-        return this;
-      };
-      
-      /*
-        Insert a node into the current node (self), before another.
-        The relative node must be a child of current node. 
-        */
-      
-      tag.prototype.insertBefore = function (node,rel){
-        if ((typeof node=='string'||node instanceof String)) { node = Imba.document().createTextNode(node) };
-        if (node && rel) { this.dom().insertBefore((node._dom || node),(rel._dom || rel)) };
-        return this;
-      };
-      
-      /*
-        Append a single item (node or string) to the current node.
-        If supplied item is a string it will automatically. This is used
-        by Imba internally, but will practically never be used explicitly.
-        */
-      
-      tag.prototype.appendChild = function (node){
-        if ((typeof node=='string'||node instanceof String)) { node = Imba.document().createTextNode(node) };
-        if (node) { this.dom().appendChild(node._dom || node) };
-        return this;
-      };
-      
-      /*
-        Remove a single child from the current node.
-        Used by Imba internally.
-        */
-      
-      tag.prototype.removeChild = function (node){
-        if (node) { this.dom().removeChild(node._dom || node) };
-        return this;
-      };
-      
-      /*
-        @deprecated
-        */
-      
-      tag.prototype.classes = function (){
-        console.log('Imba.Tag#classes is deprecated');
-        return this._dom.classList;
-      };
-    });
-    
-    return tag$.defineTag('svgelement', 'htmlelement');
-
-  })()
-
-/***/ },
-/* 6 */
-/***/ function(module, exports) {
-
-  (function(){
-    
-    // predefine all supported html tags
-    tag$.defineTag('fragment', 'htmlelement', function(tag){
-      
-      tag.createNode = function (){
-        return Imba.document().createDocumentFragment();
-      };
-    });
-    
-    tag$.defineTag('a', function(tag){
-      tag.prototype.href = function(v){ return this.getAttribute('href'); }
-      tag.prototype.setHref = function(v){ this.setAttribute('href',v); return this; };
-    });
-    
-    tag$.defineTag('abbr');
-    tag$.defineTag('address');
-    tag$.defineTag('area');
-    tag$.defineTag('article');
-    tag$.defineTag('aside');
-    tag$.defineTag('audio');
-    tag$.defineTag('b');
-    tag$.defineTag('base');
-    tag$.defineTag('bdi');
-    tag$.defineTag('bdo');
-    tag$.defineTag('big');
-    tag$.defineTag('blockquote');
-    tag$.defineTag('body');
-    tag$.defineTag('br');
-    
-    tag$.defineTag('button', function(tag){
-      tag.prototype.autofocus = function(v){ return this.getAttribute('autofocus'); }
-      tag.prototype.setAutofocus = function(v){ this.setAttribute('autofocus',v); return this; };
-      tag.prototype.type = function(v){ return this.getAttribute('type'); }
-      tag.prototype.setType = function(v){ this.setAttribute('type',v); return this; };
-      
-      tag.prototype.__disabled = {dom: true,name: 'disabled'};
-      tag.prototype.disabled = function(v){ return this.dom().disabled; }
-      tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
-    });
-    
-    tag$.defineTag('canvas', function(tag){
-      tag.prototype.__width = {dom: true,name: 'width'};
-      tag.prototype.width = function(v){ return this.dom().width; }
-      tag.prototype.setWidth = function(v){ if (v != this.dom().width) { this.dom().width = v }; return this; };
-      tag.prototype.__height = {dom: true,name: 'height'};
-      tag.prototype.height = function(v){ return this.dom().height; }
-      tag.prototype.setHeight = function(v){ if (v != this.dom().height) { this.dom().height = v }; return this; };
-      
-      tag.prototype.context = function (type){
-        if(type === undefined) type = '2d';
-        return this.dom().getContext(type);
-      };
-    });
-    
-    tag$.defineTag('caption');
-    tag$.defineTag('cite');
-    tag$.defineTag('code');
-    tag$.defineTag('col');
-    tag$.defineTag('colgroup');
-    tag$.defineTag('data');
-    tag$.defineTag('datalist');
-    tag$.defineTag('dd');
-    tag$.defineTag('del');
-    tag$.defineTag('details');
-    tag$.defineTag('dfn');
-    tag$.defineTag('div');
-    tag$.defineTag('dl');
-    tag$.defineTag('dt');
-    tag$.defineTag('em');
-    tag$.defineTag('embed');
-    
-    tag$.defineTag('fieldset', function(tag){
-      tag.prototype.__disabled = {dom: true,name: 'disabled'};
-      tag.prototype.disabled = function(v){ return this.dom().disabled; }
-      tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
-    });
-    
-    tag$.defineTag('figcaption');
-    tag$.defineTag('figure');
-    tag$.defineTag('footer');
-    
-    tag$.defineTag('form', function(tag){
-      tag.prototype.method = function(v){ return this.getAttribute('method'); }
-      tag.prototype.setMethod = function(v){ this.setAttribute('method',v); return this; };
-      tag.prototype.action = function(v){ return this.getAttribute('action'); }
-      tag.prototype.setAction = function(v){ this.setAttribute('action',v); return this; };
-    });
-    
-    tag$.defineTag('h1');
-    tag$.defineTag('h2');
-    tag$.defineTag('h3');
-    tag$.defineTag('h4');
-    tag$.defineTag('h5');
-    tag$.defineTag('h6');
-    tag$.defineTag('head');
-    tag$.defineTag('header');
-    tag$.defineTag('hr');
-    tag$.defineTag('html');
-    tag$.defineTag('i');
-    
-    tag$.defineTag('iframe', function(tag){
-      tag.prototype.src = function(v){ return this.getAttribute('src'); }
-      tag.prototype.setSrc = function(v){ this.setAttribute('src',v); return this; };
-    });
-    
-    tag$.defineTag('img', function(tag){
-      tag.prototype.src = function(v){ return this.getAttribute('src'); }
-      tag.prototype.setSrc = function(v){ this.setAttribute('src',v); return this; };
-    });
-    
-    tag$.defineTag('input', function(tag){
-      tag.prototype.type = function(v){ return this.getAttribute('type'); }
-      tag.prototype.setType = function(v){ this.setAttribute('type',v); return this; };
-      tag.prototype.required = function(v){ return this.getAttribute('required'); }
-      tag.prototype.setRequired = function(v){ this.setAttribute('required',v); return this; };
-      tag.prototype.disabled = function(v){ return this.getAttribute('disabled'); }
-      tag.prototype.setDisabled = function(v){ this.setAttribute('disabled',v); return this; };
-      tag.prototype.autofocus = function(v){ return this.getAttribute('autofocus'); }
-      tag.prototype.setAutofocus = function(v){ this.setAttribute('autofocus',v); return this; };
-      
-      tag.prototype.__value = {dom: true,name: 'value'};
-      tag.prototype.value = function(v){ return this.dom().value; }
-      tag.prototype.setValue = function(v){ if (v != this.dom().value) { this.dom().value = v }; return this; };
-      tag.prototype.__placeholder = {dom: true,name: 'placeholder'};
-      tag.prototype.placeholder = function(v){ return this.dom().placeholder; }
-      tag.prototype.setPlaceholder = function(v){ if (v != this.dom().placeholder) { this.dom().placeholder = v }; return this; };
-      tag.prototype.__required = {dom: true,name: 'required'};
-      tag.prototype.required = function(v){ return this.dom().required; }
-      tag.prototype.setRequired = function(v){ if (v != this.dom().required) { this.dom().required = v }; return this; };
-      tag.prototype.__disabled = {dom: true,name: 'disabled'};
-      tag.prototype.disabled = function(v){ return this.dom().disabled; }
-      tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
-      tag.prototype.__checked = {dom: true,name: 'checked'};
-      tag.prototype.checked = function(v){ return this.dom().checked; }
-      tag.prototype.setChecked = function(v){ if (v != this.dom().checked) { this.dom().checked = v }; return this; };
-    });
-    
-    tag$.defineTag('ins');
-    tag$.defineTag('kbd');
-    tag$.defineTag('keygen');
-    tag$.defineTag('label');
-    tag$.defineTag('legend');
-    tag$.defineTag('li');
-    
-    tag$.defineTag('link', function(tag){
-      tag.prototype.rel = function(v){ return this.getAttribute('rel'); }
-      tag.prototype.setRel = function(v){ this.setAttribute('rel',v); return this; };
-      tag.prototype.type = function(v){ return this.getAttribute('type'); }
-      tag.prototype.setType = function(v){ this.setAttribute('type',v); return this; };
-      tag.prototype.href = function(v){ return this.getAttribute('href'); }
-      tag.prototype.setHref = function(v){ this.setAttribute('href',v); return this; };
-      tag.prototype.media = function(v){ return this.getAttribute('media'); }
-      tag.prototype.setMedia = function(v){ this.setAttribute('media',v); return this; };
-    });
-    
-    tag$.defineTag('main');
-    tag$.defineTag('map');
-    tag$.defineTag('mark');
-    tag$.defineTag('menu');
-    tag$.defineTag('menuitem');
-    
-    tag$.defineTag('meta', function(tag){
-      tag.prototype.content = function(v){ return this.getAttribute('content'); }
-      tag.prototype.setContent = function(v){ this.setAttribute('content',v); return this; };
-      tag.prototype.charset = function(v){ return this.getAttribute('charset'); }
-      tag.prototype.setCharset = function(v){ this.setAttribute('charset',v); return this; };
-    });
-    
-    tag$.defineTag('meter');
-    tag$.defineTag('nav');
-    tag$.defineTag('noscript');
-    
-    tag$.defineTag('ol');
-    tag$.defineTag('optgroup', function(tag){
-      tag.prototype.__disabled = {dom: true,name: 'disabled'};
-      tag.prototype.disabled = function(v){ return this.dom().disabled; }
-      tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
-    });
-    
-    tag$.defineTag('option', function(tag){
-      tag.prototype.__disabled = {dom: true,name: 'disabled'};
-      tag.prototype.disabled = function(v){ return this.dom().disabled; }
-      tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
-      tag.prototype.__selected = {dom: true,name: 'selected'};
-      tag.prototype.selected = function(v){ return this.dom().selected; }
-      tag.prototype.setSelected = function(v){ if (v != this.dom().selected) { this.dom().selected = v }; return this; };
-      tag.prototype.__value = {dom: true,name: 'value'};
-      tag.prototype.value = function(v){ return this.dom().value; }
-      tag.prototype.setValue = function(v){ if (v != this.dom().value) { this.dom().value = v }; return this; };
-    });
-    
-    tag$.defineTag('output');
-    tag$.defineTag('p');
-    
-    tag$.defineTag('object', function(tag){
-      Imba.attr(tag,'type');
-      Imba.attr(tag,'data');
-      Imba.attr(tag,'width');
-      Imba.attr(tag,'height');
-    });
-    
-    tag$.defineTag('param', function(tag){
-      tag.prototype.name = function(v){ return this.getAttribute('name'); }
-      tag.prototype.setName = function(v){ this.setAttribute('name',v); return this; };
-      tag.prototype.value = function(v){ return this.getAttribute('value'); }
-      tag.prototype.setValue = function(v){ this.setAttribute('value',v); return this; };
-    });
-    
-    tag$.defineTag('pre');
-    tag$.defineTag('progress');
-    tag$.defineTag('q');
-    tag$.defineTag('rp');
-    tag$.defineTag('rt');
-    tag$.defineTag('ruby');
-    tag$.defineTag('s');
-    tag$.defineTag('samp');
-    
-    tag$.defineTag('script', function(tag){
-      tag.prototype.src = function(v){ return this.getAttribute('src'); }
-      tag.prototype.setSrc = function(v){ this.setAttribute('src',v); return this; };
-      tag.prototype.type = function(v){ return this.getAttribute('type'); }
-      tag.prototype.setType = function(v){ this.setAttribute('type',v); return this; };
-      tag.prototype.async = function(v){ return this.getAttribute('async'); }
-      tag.prototype.setAsync = function(v){ this.setAttribute('async',v); return this; };
-      tag.prototype.defer = function(v){ return this.getAttribute('defer'); }
-      tag.prototype.setDefer = function(v){ this.setAttribute('defer',v); return this; };
-    });
-    
-    tag$.defineTag('section');
-    
-    tag$.defineTag('select', function(tag){
-      tag.prototype.multiple = function(v){ return this.getAttribute('multiple'); }
-      tag.prototype.setMultiple = function(v){ this.setAttribute('multiple',v); return this; };
-      
-      tag.prototype.__disabled = {dom: true,name: 'disabled'};
-      tag.prototype.disabled = function(v){ return this.dom().disabled; }
-      tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
-      tag.prototype.__required = {dom: true,name: 'required'};
-      tag.prototype.required = function(v){ return this.dom().required; }
-      tag.prototype.setRequired = function(v){ if (v != this.dom().required) { this.dom().required = v }; return this; };
-      tag.prototype.__value = {dom: true,name: 'value'};
-      tag.prototype.value = function(v){ return this.dom().value; }
-      tag.prototype.setValue = function(v){ if (v != this.dom().value) { this.dom().value = v }; return this; };
-    });
-    
-    
-    tag$.defineTag('small');
-    tag$.defineTag('source');
-    tag$.defineTag('span');
-    tag$.defineTag('strong');
-    tag$.defineTag('style');
-    tag$.defineTag('sub');
-    tag$.defineTag('summary');
-    tag$.defineTag('sup');
-    tag$.defineTag('table');
-    tag$.defineTag('tbody');
-    tag$.defineTag('td');
-    
-    tag$.defineTag('textarea', function(tag){
-      tag.prototype.rows = function(v){ return this.getAttribute('rows'); }
-      tag.prototype.setRows = function(v){ this.setAttribute('rows',v); return this; };
-      tag.prototype.cols = function(v){ return this.getAttribute('cols'); }
-      tag.prototype.setCols = function(v){ this.setAttribute('cols',v); return this; };
-      tag.prototype.autofocus = function(v){ return this.getAttribute('autofocus'); }
-      tag.prototype.setAutofocus = function(v){ this.setAttribute('autofocus',v); return this; };
-      
-      tag.prototype.__value = {dom: true,name: 'value'};
-      tag.prototype.value = function(v){ return this.dom().value; }
-      tag.prototype.setValue = function(v){ if (v != this.dom().value) { this.dom().value = v }; return this; };
-      tag.prototype.__disabled = {dom: true,name: 'disabled'};
-      tag.prototype.disabled = function(v){ return this.dom().disabled; }
-      tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
-      tag.prototype.__required = {dom: true,name: 'required'};
-      tag.prototype.required = function(v){ return this.dom().required; }
-      tag.prototype.setRequired = function(v){ if (v != this.dom().required) { this.dom().required = v }; return this; };
-      tag.prototype.__placeholder = {dom: true,name: 'placeholder'};
-      tag.prototype.placeholder = function(v){ return this.dom().placeholder; }
-      tag.prototype.setPlaceholder = function(v){ if (v != this.dom().placeholder) { this.dom().placeholder = v }; return this; };
-    });
-    
-    tag$.defineTag('tfoot');
-    tag$.defineTag('th');
-    tag$.defineTag('thead');
-    tag$.defineTag('time');
-    tag$.defineTag('title');
-    tag$.defineTag('tr');
-    tag$.defineTag('track');
-    tag$.defineTag('u');
-    tag$.defineTag('ul');
-    tag$.defineTag('video');
-    tag$.defineTag('wbr');
-    
-    // var idls =
-    //  name: ['button','form','fieldset','iframe','input','keygen','object','output','select','textarea','map','meta','param']
-    //  src: ['audio','embed','iframe','img','input','script','source','track','video']
-    //  disabled: ['button','fieldset','input','keygen','optgroup','option','select','textarea'] # 'command',
-    //  required: ['input','select','textarea']
-    
-    // for own name,tags of idls
-    //  idls[name] = tags.map do |name|
-    //    console.log name
-    //    Imba.TAGS[name][:prototype]
-    // 
-    // for typ in idls:src
-    //  def typ.src do dom:src
-    //  def typ.setSrc val
-    //    dom:src = val if val != dom:src
-    //    self
-    // 
-    // for typ in idls:disabled
-    //  def typ.disabled do dom:disabled
-    //  def typ.setDisabled val
-    //    dom:disabled = val if dom:disabled != !!val
-    //    self
-    // 
-    // for typ in idls:required
-    //  def typ.required do dom:required
-    //  def typ.setRequired val
-    //    dom:required = val if dom:required != !!val
-    //    self
-    
-    
-    return true;
-
-  })()
-
-/***/ },
-/* 7 */
-/***/ function(module, exports) {
-
-  (function(){
-    function idx$(a,b){
-      return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
-    };
-    
-    
-    tag$.ns('svg').defineTag('svgelement', function(tag){
-      
-      tag.namespaceURI = function (){
-        return "http://www.w3.org/2000/svg";
-      };
-      
-      var types = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan".split(" ");
-      
-      tag.buildNode = function (){
-        var dom = Imba.document().createElementNS(this.namespaceURI(),this._nodeType);
-        var cls = this._classes.join(" ");
-        if (cls) { dom.className.baseVal = cls };
-        return dom;
-      };
-      
-      tag.inherit = function (child){
-        child._protoDom = null;
-        
-        if (idx$(child._name,types) >= 0) {
-          child._nodeType = child._name;
-          return child._classes = [];
-        } else {
-          child._nodeType = this._nodeType;
-          var className = "_" + child._name.replace(/_/g,'-');
-          return child._classes = this._classes.concat(className);
-        };
-      };
-      
-      
-      Imba.attr(tag,'x');
-      Imba.attr(tag,'y');
-      
-      Imba.attr(tag,'width');
-      Imba.attr(tag,'height');
-      
-      Imba.attr(tag,'stroke');
-      Imba.attr(tag,'stroke-width');
-    });
-    
-    tag$.ns('svg').defineTag('svg', function(tag){
-      Imba.attr(tag,'viewbox');
-    });
-    
-    tag$.ns('svg').defineTag('g');
-    
-    tag$.ns('svg').defineTag('defs');
-    
-    tag$.ns('svg').defineTag('symbol', function(tag){
-      Imba.attr(tag,'preserveAspectRatio');
-      Imba.attr(tag,'viewBox');
-    });
-    
-    tag$.ns('svg').defineTag('marker', function(tag){
-      Imba.attr(tag,'markerUnits');
-      Imba.attr(tag,'refX');
-      Imba.attr(tag,'refY');
-      Imba.attr(tag,'markerWidth');
-      Imba.attr(tag,'markerHeight');
-      Imba.attr(tag,'orient');
-    });
-    
-    
-    // Basic shapes
-    
-    tag$.ns('svg').defineTag('rect', function(tag){
-      Imba.attr(tag,'rx');
-      Imba.attr(tag,'ry');
-    });
-    
-    tag$.ns('svg').defineTag('circle', function(tag){
-      Imba.attr(tag,'cx');
-      Imba.attr(tag,'cy');
-      Imba.attr(tag,'r');
-    });
-    
-    tag$.ns('svg').defineTag('ellipse', function(tag){
-      Imba.attr(tag,'cx');
-      Imba.attr(tag,'cy');
-      Imba.attr(tag,'rx');
-      Imba.attr(tag,'ry');
-    });
-    
-    tag$.ns('svg').defineTag('path', function(tag){
-      Imba.attr(tag,'d');
-      Imba.attr(tag,'pathLength');
-    });
-    
-    tag$.ns('svg').defineTag('line', function(tag){
-      Imba.attr(tag,'x1');
-      Imba.attr(tag,'x2');
-      Imba.attr(tag,'y1');
-      Imba.attr(tag,'y2');
-    });
-    
-    tag$.ns('svg').defineTag('polyline', function(tag){
-      Imba.attr(tag,'points');
-    });
-    
-    tag$.ns('svg').defineTag('polygon', function(tag){
-      Imba.attr(tag,'points');
-    });
-    
-    tag$.ns('svg').defineTag('text', function(tag){
-      Imba.attr(tag,'dx');
-      Imba.attr(tag,'dy');
-      Imba.attr(tag,'text-anchor');
-      Imba.attr(tag,'rotate');
-      Imba.attr(tag,'textLength');
-      Imba.attr(tag,'lengthAdjust');
-    });
-    
-    return tag$.ns('svg').defineTag('tspan', function(tag){
-      Imba.attr(tag,'dx');
-      Imba.attr(tag,'dy');
-      Imba.attr(tag,'rotate');
-      Imba.attr(tag,'textLength');
-      Imba.attr(tag,'lengthAdjust');
-    });
-
-  })()
-
-/***/ },
-/* 8 */
-/***/ function(module, exports, __webpack_require__) {
-
-  (function(){
-    function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-    // Extending Imba.Tag#css to work without prefixes by inspecting
-    // the properties of a CSSStyleDeclaration and creating a map
-    
-    // var prefixes = ['-webkit-','-ms-','-moz-','-o-','-blink-']
-    // var props = ['transform','transition','animation']
-    
-    if (true) {
-      var styles = window.getComputedStyle(document.documentElement,'');
-      
-      Imba.CSSKeyMap = {};
-      
-      for (var i = 0, ary = iter$(styles), len = ary.length, prefixed; i < len; i++) {
-        prefixed = ary[i];
-        var unprefixed = prefixed.replace(/^-(webkit|ms|moz|o|blink)-/,'');
-        var camelCase = unprefixed.replace(/-(\w)/g,function(m,a) { return a.toUpperCase(); });
-        
-        // if there exists an unprefixed version -- always use this
-        if (prefixed != unprefixed) {
-          if (styles.hasOwnProperty(unprefixed)) { continue; };
-        };
-        
-        // register the prefixes
-        Imba.CSSKeyMap[unprefixed] = Imba.CSSKeyMap[camelCase] = prefixed;
-      };
-      
-      tag$.extendTag('element', function(tag){
-        
-        // override the original css method
-        tag.prototype.css = function (key,val){
-          if (key instanceof Object) {
-            for (var i = 0, keys = Object.keys(key), l = keys.length; i < l; i++){
-              this.css(keys[i],key[keys[i]]);
-            };
-            return this;
-          };
-          
-          key = Imba.CSSKeyMap[key] || key;
-          
-          if (val == null) {
-            this.dom().style.removeProperty(key);
-          } else if (val == undefined) {
-            return this.dom().style[key];
-          } else {
-            if ((typeof val=='number'||val instanceof Number) && key.match(/width|height|left|right|top|bottom/)) {
-              val = val + "px";
-            };
-            this.dom().style[key] = val;
-          };
-          return this;
-        };
-      });
-      
-      if (!document.documentElement.classList) {
-        tag$.extendTag('element', function(tag){
-          
-          tag.prototype.hasFlag = function (ref){
-            return new RegExp('(^|\\s)' + ref + '(\\s|$)').test(this._dom.className);
-          };
-          
-          tag.prototype.addFlag = function (ref){
-            if (this.hasFlag(ref)) { return this };
-            this._dom.className += (this._dom.className ? (' ') : ('')) + ref;
-            return this;
-          };
-          
-          tag.prototype.unflag = function (ref){
-            if (!this.hasFlag(ref)) { return this };
-            var regex = new RegExp('(^|\\s)*' + ref + '(\\s|$)*','g');
-            this._dom.className = this._dom.className.replace(regex,'');
-            return this;
-          };
-          
-          tag.prototype.toggleFlag = function (ref){
-            return this.hasFlag(ref) ? (this.unflag(ref)) : (this.flag(ref));
-          };
-          
-          tag.prototype.flag = function (ref,bool){
-            if (arguments.length == 2 && !!bool === false) {
-              return this.unflag(ref);
-            };
-            return this.addFlag(ref);
-          };
-        });
-        return true;
-      };
-    };
-
-  })()
-
-/***/ },
-/* 9 */
-/***/ function(module, exports) {
-
-  (function(){
-    function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-    var doc = document;
-    var win = window;
-    
-    var hasTouchEvents = window && window.ontouchstart !== undefined;
-    
-    Imba.Pointer = function Pointer(){
-      this.setButton(-1);
-      this.setEvent({x: 0,y: 0,type: 'uninitialized'});
-      return this;
-    };
-    
-    Imba.Pointer.prototype.phase = function(v){ return this._phase; }
-    Imba.Pointer.prototype.setPhase = function(v){ this._phase = v; return this; };
-    Imba.Pointer.prototype.prevEvent = function(v){ return this._prevEvent; }
-    Imba.Pointer.prototype.setPrevEvent = function(v){ this._prevEvent = v; return this; };
-    Imba.Pointer.prototype.button = function(v){ return this._button; }
-    Imba.Pointer.prototype.setButton = function(v){ this._button = v; return this; };
-    Imba.Pointer.prototype.event = function(v){ return this._event; }
-    Imba.Pointer.prototype.setEvent = function(v){ this._event = v; return this; };
-    Imba.Pointer.prototype.dirty = function(v){ return this._dirty; }
-    Imba.Pointer.prototype.setDirty = function(v){ this._dirty = v; return this; };
-    Imba.Pointer.prototype.events = function(v){ return this._events; }
-    Imba.Pointer.prototype.setEvents = function(v){ this._events = v; return this; };
-    Imba.Pointer.prototype.touch = function(v){ return this._touch; }
-    Imba.Pointer.prototype.setTouch = function(v){ this._touch = v; return this; };
-    
-    Imba.Pointer.prototype.update = function (e){
-      this.setEvent(e);
-      this.setDirty(true);
-      return this;
-    };
-    
-    // this is just for regular mouse now
-    Imba.Pointer.prototype.process = function (){
-      var e1 = this.event();
-      
-      if (this.dirty()) {
-        this.setPrevEvent(e1);
-        this.setDirty(false);
-        
-        // button should only change on mousedown etc
-        if (e1.type == 'mousedown') {
-          this.setButton(e1.button);
-          
-          // do not create touch for right click
-          if (this.button() == 2 || (this.touch() && this.button() != 0)) {
-            return;
-          };
-          
-          // cancel the previous touch
-          if (this.touch()) { this.touch().cancel() };
-          this.setTouch(new Imba.Touch(e1,this));
-          this.touch().mousedown(e1,e1);
-        } else if (e1.type == 'mousemove') {
-          if (this.touch()) { this.touch().mousemove(e1,e1) };
-        } else if (e1.type == 'mouseup') {
-          this.setButton(-1);
-          
-          if (this.touch() && this.touch().button() == e1.button) {
-            this.touch().mouseup(e1,e1);
-            this.setTouch(null);
-          };
-          // trigger pointerup
-        };
-      } else {
-        if (this.touch()) { this.touch().idle() };
-      };
-      return this;
-    };
-    
-    Imba.Pointer.prototype.cleanup = function (){
-      return Imba.POINTERS;
-    };
-    
-    Imba.Pointer.prototype.x = function (){
-      return this.event().x;
-    };
-    Imba.Pointer.prototype.y = function (){
-      return this.event().y;
-    };
-    
-    // deprecated -- should remove
-    Imba.Pointer.update = function (){
-      // console.log('update touch')
-      for (var i = 0, ary = iter$(Imba.POINTERS), len = ary.length; i < len; i++) {
-        ary[i].process();
-      };
-      // need to be able to prevent the default behaviour of touch, no?
-      win.requestAnimationFrame(Imba.Pointer.update);
-      return this;
-    };
-    
-    var lastNativeTouchTimeStamp = 0;
-    var lastNativeTouchTimeout = 50;
-    
-    // Imba.Touch
-    // Began  A finger touched the screen.
-    // Moved  A finger moved on the screen.
-    // Stationary A finger is touching the screen but hasn't moved.
-    // Ended  A finger was lifted from the screen. This is the final phase of a touch.
-    // Canceled The system cancelled tracking for the touch.
-    
-    /*
-    Consolidates mouse and touch events. Touch objects persist across a touch,
-    from touchstart until end/cancel. When a touch starts, it will traverse
-    down from the innermost target, until it finds a node that responds to
-    ontouchstart. Unless the touch is explicitly redirected, the touch will
-    call ontouchmove and ontouchend / ontouchcancel on the responder when appropriate.
-    
-      tag draggable
-        # called when a touch starts
-        def ontouchstart touch
-          flag 'dragging'
-          self
-        
-        # called when touch moves - same touch object
-        def ontouchmove touch
-          # move the node with touch
-          css top: touch.dy, left: touch.dx
-        
-        # called when touch ends
-        def ontouchend touch
-          unflag 'dragging'
-    
-    @iname touch
-    */
-    
-    Imba.Touch = function Touch(event,pointer){
-      // @native  = false
-      this.setEvent(event);
-      this.setData({});
-      this.setActive(true);
-      this._button = event && event.button || 0;
-      this._suppress = false; // deprecated
-      this._captured = false;
-      this.setBubble(false);
-      pointer = pointer;
-      this.setUpdates(0);
-      return this;
-    };
-    
-    var touches = [];
-    var count = 0;
-    var identifiers = {};
-    
-    Imba.Touch.count = function (){
-      return count;
-    };
-    
-    Imba.Touch.lookup = function (item){
-      return item && (item.__touch__ || identifiers[item.identifier]);
-    };
-    
-    Imba.Touch.release = function (item,touch){
-      var v_, $1;
-      (((v_ = identifiers[item.identifier]),delete identifiers[item.identifier], v_));
-      ((($1 = item.__touch__),delete item.__touch__, $1));
-      return;
-    };
-    
-    Imba.Touch.ontouchstart = function (e){
-      for (var i = 0, ary = iter$(e.changedTouches), len = ary.length, t; i < len; i++) {
-        t = ary[i];
-        if (this.lookup(t)) { continue; };
-        var touch = identifiers[t.identifier] = new this(e); // (e)
-        t.__touch__ = touch;
-        touches.push(touch);
-        count++;
-        touch.touchstart(e,t);
-      };
-      return this;
-    };
-    
-    Imba.Touch.ontouchmove = function (e){
-      var touch;
-      for (var i = 0, ary = iter$(e.changedTouches), len = ary.length, t; i < len; i++) {
-        t = ary[i];
-        if (touch = this.lookup(t)) {
-          touch.touchmove(e,t);
-        };
-      };
-      
-      return this;
-    };
-    
-    Imba.Touch.ontouchend = function (e){
-      var touch;
-      for (var i = 0, ary = iter$(e.changedTouches), len = ary.length, t; i < len; i++) {
-        t = ary[i];
-        if (touch = this.lookup(t)) {
-          touch.touchend(e,t);
-          this.release(t,touch);
-          count--;
-        };
-      };
-      
-      // e.preventDefault
-      // not always supported!
-      // touches = touches.filter(||)
-      return this;
-    };
-    
-    Imba.Touch.ontouchcancel = function (e){
-      var touch;
-      for (var i = 0, ary = iter$(e.changedTouches), len = ary.length, t; i < len; i++) {
-        t = ary[i];
-        if (touch = this.lookup(t)) {
-          touch.touchcancel(e,t);
-          this.release(t,touch);
-          count--;
-        };
-      };
-      return this;
-    };
-    
-    Imba.Touch.onmousedown = function (e){
-      return this;
-    };
-    
-    Imba.Touch.onmousemove = function (e){
-      return this;
-    };
-    
-    Imba.Touch.onmouseup = function (e){
-      return this;
-    };
-    
-    
-    Imba.Touch.prototype.phase = function(v){ return this._phase; }
-    Imba.Touch.prototype.setPhase = function(v){ this._phase = v; return this; };
-    Imba.Touch.prototype.active = function(v){ return this._active; }
-    Imba.Touch.prototype.setActive = function(v){ this._active = v; return this; };
-    Imba.Touch.prototype.event = function(v){ return this._event; }
-    Imba.Touch.prototype.setEvent = function(v){ this._event = v; return this; };
-    Imba.Touch.prototype.pointer = function(v){ return this._pointer; }
-    Imba.Touch.prototype.setPointer = function(v){ this._pointer = v; return this; };
-    Imba.Touch.prototype.target = function(v){ return this._target; }
-    Imba.Touch.prototype.setTarget = function(v){ this._target = v; return this; };
-    Imba.Touch.prototype.handler = function(v){ return this._handler; }
-    Imba.Touch.prototype.setHandler = function(v){ this._handler = v; return this; };
-    Imba.Touch.prototype.updates = function(v){ return this._updates; }
-    Imba.Touch.prototype.setUpdates = function(v){ this._updates = v; return this; };
-    Imba.Touch.prototype.suppress = function(v){ return this._suppress; }
-    Imba.Touch.prototype.setSuppress = function(v){ this._suppress = v; return this; };
-    Imba.Touch.prototype.data = function(v){ return this._data; }
-    Imba.Touch.prototype.setData = function(v){ this._data = v; return this; };
-    Imba.Touch.prototype.__bubble = {chainable: true,name: 'bubble'};
-    Imba.Touch.prototype.bubble = function(v){ return v !== undefined ? (this.setBubble(v),this) : this._bubble; }
-    Imba.Touch.prototype.setBubble = function(v){ this._bubble = v; return this; };
-    
-    Imba.Touch.prototype.gestures = function(v){ return this._gestures; }
-    Imba.Touch.prototype.setGestures = function(v){ this._gestures = v; return this; };
-    
-    /*
-      
-    
-      @internal
-      @constructor
-      */
-    
-    Imba.Touch.prototype.capture = function (){
-      this._captured = true;
-      this._event && this._event.preventDefault();
-      return this;
-    };
-    
-    Imba.Touch.prototype.isCaptured = function (){
-      return !!this._captured;
-    };
-    
-    /*
-      Extend the touch with a plugin / gesture. 
-      All events (touchstart,move etc) for the touch
-      will be triggered on the plugins in the order they
-      are added.
-      */
-    
-    Imba.Touch.prototype.extend = function (plugin){
-      // console.log "added gesture!!!"
-      this._gestures || (this._gestures = []);
-      this._gestures.push(plugin);
-      return this;
-    };
-    
-    /*
-      Redirect touch to specified target. ontouchstart will always be
-      called on the new target.
-      @return {Number}
-      */
-    
-    Imba.Touch.prototype.redirect = function (target){
-      this._redirect = target;
-      return this;
-    };
-    
-    /*
-      Suppress the default behaviour. Will call preventDefault for
-      all native events that are part of the touch.
-      */
-    
-    Imba.Touch.prototype.suppress = function (){
-      // collision with the suppress property
-      this._active = false;
-      return this;
-    };
-    
-    Imba.Touch.prototype.setSuppress = function (value){
-      console.warn('Imba.Touch#suppress= is deprecated');
-      this._supress = value;
-      return this;
-    };
-    
-    Imba.Touch.prototype.touchstart = function (e,t){
-      this._event = e;
-      this._touch = t;
-      this._button = 0;
-      this._x = t.clientX;
-      this._y = t.clientY;
-      this.began();
-      if (e && this.isCaptured()) { e.preventDefault() };
-      return this;
-    };
-    
-    Imba.Touch.prototype.touchmove = function (e,t){
-      this._event = e;
-      this._x = t.clientX;
-      this._y = t.clientY;
-      this.update();
-      if (e && this.isCaptured()) { e.preventDefault() };
-      return this;
-    };
-    
-    Imba.Touch.prototype.touchend = function (e,t){
-      this._event = e;
-      this._x = t.clientX;
-      this._y = t.clientY;
-      this.ended();
-      
-      lastNativeTouchTimeStamp = e.timeStamp;
-      
-      if (this._maxdr < 20) {
-        var tap = new Imba.Event(e);
-        tap.setType('tap');
-        tap.process();
-        if (tap._responder) { e.preventDefault() };
-      };
-      
-      if (e && this.isCaptured()) {
-        e.preventDefault();
-      };
-      
-      return this;
-    };
-    
-    Imba.Touch.prototype.touchcancel = function (e,t){
-      return this.cancel();
-    };
-    
-    Imba.Touch.prototype.mousedown = function (e,t){
-      var self = this;
-      self._event = e;
-      self._button = e.button;
-      self._x = t.clientX;
-      self._y = t.clientY;
-      self.began();
-      
-      self._mousemove = function(e) { return self.mousemove(e,e); };
-      doc.addEventListener('mousemove',self._mousemove,true);
-      return self;
-    };
-    
-    Imba.Touch.prototype.mousemove = function (e,t){
-      this._x = t.clientX;
-      this._y = t.clientY;
-      this._event = e;
-      if (this.isCaptured()) { e.preventDefault() };
-      this.update();
-      this.move();
-      return this;
-    };
-    
-    Imba.Touch.prototype.mouseup = function (e,t){
-      this._x = t.clientX;
-      this._y = t.clientY;
-      this.ended();
-      doc.removeEventListener('mousemove',this._mousemove,true);
-      this._mousemove = null;
-      return this;
-    };
-    
-    Imba.Touch.prototype.idle = function (){
-      return this.update();
-    };
-    
-    Imba.Touch.prototype.began = function (){
-      this._maxdr = this._dr = 0;
-      this._x0 = this._x;
-      this._y0 = this._y;
-      
-      var dom = this.event().target;
-      var node = null;
-      
-      this._sourceTarget = dom && tag$wrap(dom);
-      
-      while (dom){
-        node = tag$wrap(dom);
-        if (node && node.ontouchstart) {
-          this._bubble = false;
-          this.setTarget(node);
-          this.target().ontouchstart(this);
-          if (!this._bubble) { break; };
-        };
-        dom = dom.parentNode;
-      };
-      
-      this._updates++;
-      return this;
-    };
-    
-    Imba.Touch.prototype.update = function (){
-      var target_;
-      if (!this._active) { return this };
-      
-      var dr = Math.sqrt(this.dx() * this.dx() + this.dy() * this.dy());
-      if (dr > this._dr) { this._maxdr = dr };
-      this._dr = dr;
-      
-      // catching a touch-redirect?!?
-      if (this._redirect) {
-        if (this._target && this._target.ontouchcancel) {
-          this._target.ontouchcancel(this);
-        };
-        this.setTarget(this._redirect);
-        this._redirect = null;
-        if (this.target().ontouchstart) { this.target().ontouchstart(this) };
-      };
-      
-      
-      this._updates++;
-      if (this._gestures) {
-        for (var i = 0, ary = iter$(this._gestures), len = ary.length; i < len; i++) {
-          ary[i].ontouchupdate(this);
-        };
-      };
-      
-      (target_ = this.target()) && target_.ontouchupdate  &&  target_.ontouchupdate(this);
-      return this;
-    };
-    
-    Imba.Touch.prototype.move = function (){
-      var target_;
-      if (!this._active) { return this };
-      
-      if (this._gestures) {
-        for (var i = 0, ary = iter$(this._gestures), len = ary.length, g; i < len; i++) {
-          g = ary[i];
-          if (g.ontouchmove) { g.ontouchmove(this,this._event) };
-        };
-      };
-      
-      (target_ = this.target()) && target_.ontouchmove  &&  target_.ontouchmove(this,this._event);
-      return this;
-    };
-    
-    Imba.Touch.prototype.ended = function (){
-      var target_;
-      if (!this._active) { return this };
-      
-      this._updates++;
-      
-      if (this._gestures) {
-        for (var i = 0, ary = iter$(this._gestures), len = ary.length; i < len; i++) {
-          ary[i].ontouchend(this);
-        };
-      };
-      
-      (target_ = this.target()) && target_.ontouchend  &&  target_.ontouchend(this);
-      
-      return this;
-    };
-    
-    Imba.Touch.prototype.cancel = function (){
-      if (!this._cancelled) {
-        this._cancelled = true;
-        this.cancelled();
-        if (this._mousemove) { doc.removeEventListener('mousemove',this._mousemove,true) };
-      };
-      return this;
-    };
-    
-    Imba.Touch.prototype.cancelled = function (){
-      var target_;
-      if (!this._active) { return this };
-      
-      this._cancelled = true;
-      this._updates++;
-      
-      if (this._gestures) {
-        for (var i = 0, ary = iter$(this._gestures), len = ary.length, g; i < len; i++) {
-          g = ary[i];
-          if (g.ontouchcancel) { g.ontouchcancel(this) };
-        };
-      };
-      
-      (target_ = this.target()) && target_.ontouchcancel  &&  target_.ontouchcancel(this);
-      return this;
-    };
-    
-    /*
-      The absolute distance the touch has moved from starting position 
-      @return {Number}
-      */
-    
-    Imba.Touch.prototype.dr = function (){
-      return this._dr;
-    };
-    
-    /*
-      The distance the touch has moved horizontally
-      @return {Number}
-      */
-    
-    Imba.Touch.prototype.dx = function (){
-      return this._x - this._x0;
-    };
-    
-    /*
-      The distance the touch has moved vertically
-      @return {Number}
-      */
-    
-    Imba.Touch.prototype.dy = function (){
-      return this._y - this._y0;
-    };
-    
-    /*
-      Initial horizontal position of touch
-      @return {Number}
-      */
-    
-    Imba.Touch.prototype.x0 = function (){
-      return this._x0;
-    };
-    
-    /*
-      Initial vertical position of touch
-      @return {Number}
-      */
-    
-    Imba.Touch.prototype.y0 = function (){
-      return this._y0;
-    };
-    
-    /*
-      Horizontal position of touch
-      @return {Number}
-      */
-    
-    Imba.Touch.prototype.x = function (){
-      return this._x;
-    };
-    
-    /*
-      Vertical position of touch
-      @return {Number}
-      */
-    
-    Imba.Touch.prototype.y = function (){
-      return this._y;
-    };
-    
-    /*
-      Horizontal position of touch relative to target
-      @return {Number}
-      */
-    
-    Imba.Touch.prototype.tx = function (){
-      this._targetBox || (this._targetBox = this._target.dom().getBoundingClientRect());
-      return this._x - this._targetBox.left;
-    };
-    
-    /*
-      Vertical position of touch relative to target
-      @return {Number}
-      */
-    
-    Imba.Touch.prototype.ty = function (){
-      this._targetBox || (this._targetBox = this._target.dom().getBoundingClientRect());
-      return this._y - this._targetBox.top;
-    };
-    
-    /*
-      Button pressed in this touch. Native touches defaults to left-click (0)
-      @return {Number}
-      */
-    
-    Imba.Touch.prototype.button = function (){
-      return this._button;
-    }; // @pointer ? @pointer.button : 0
-    
-    Imba.Touch.prototype.sourceTarget = function (){
-      return this._sourceTarget;
-    };
-    
-    
-    Imba.TouchGesture = function TouchGesture(){ };
-    
-    Imba.TouchGesture.prototype.__active = {'default': false,name: 'active'};
-    Imba.TouchGesture.prototype.active = function(v){ return this._active; }
-    Imba.TouchGesture.prototype.setActive = function(v){ this._active = v; return this; }
-    Imba.TouchGesture.prototype._active = false;
-    
-    Imba.TouchGesture.prototype.ontouchstart = function (e){
-      return this;
-    };
-    
-    Imba.TouchGesture.prototype.ontouchupdate = function (e){
-      return this;
-    };
-    
-    Imba.TouchGesture.prototype.ontouchend = function (e){
-      return this;
-    };
-    
-    
-    // A Touch-event is created on mousedown (always)
-    // and while it exists, mousemove and mouseup will
-    // be delegated to this active event.
-    Imba.POINTER = new Imba.Pointer();
-    Imba.POINTERS = [Imba.POINTER];
-    
-    
-    // regular event stuff
-    Imba.KEYMAP = {
-      "8": 'backspace',
-      "9": 'tab',
-      "13": 'enter',
-      "16": 'shift',
-      "17": 'ctrl',
-      "18": 'alt',
-      "19": 'break',
-      "20": 'caps',
-      "27": 'esc',
-      "32": 'space',
-      "35": 'end',
-      "36": 'home',
-      "37": 'larr',
-      "38": 'uarr',
-      "39": 'rarr',
-      "40": 'darr',
-      "45": 'insert',
-      "46": 'delete',
-      "107": 'plus',
-      "106": 'mult',
-      "91": 'meta'
-    };
-    
-    Imba.CHARMAP = {
-      "%": 'modulo',
-      "*": 'multiply',
-      "+": 'add',
-      "-": 'sub',
-      "/": 'divide',
-      ".": 'dot'
-    };
-    
-    /*
-    Imba handles all events in the dom through a single manager,
-    listening at the root of your document. If Imba finds a tag
-    that listens to a certain event, the event will be wrapped 
-    in an `Imba.Event`, which normalizes some of the quirks and 
-    browser differences.
-    
-    @iname event
-    */
-    
-    Imba.Event = function Event(e){
-      this.setEvent(e);
-      this.setBubble(true);
-    };
-    
-    /* reference to the native event */
-    
-    Imba.Event.prototype.event = function(v){ return this._event; }
-    Imba.Event.prototype.setEvent = function(v){ this._event = v; return this; };
-    
-    /* reference to the native event */
-    
-    Imba.Event.prototype.prefix = function(v){ return this._prefix; }
-    Imba.Event.prototype.setPrefix = function(v){ this._prefix = v; return this; };
-    
-    Imba.Event.prototype.data = function(v){ return this._data; }
-    Imba.Event.prototype.setData = function(v){ this._data = v; return this; };
-    
-    /*
-      should remove this alltogether?
-      @deprecated
-      */
-    
-    Imba.Event.prototype.source = function(v){ return this._source; }
-    Imba.Event.prototype.setSource = function(v){ this._source = v; return this; };
-    
-    /* A {Boolean} indicating whether the event bubbles up or not */
-    
-    Imba.Event.prototype.__bubble = {type: Boolean,chainable: true,name: 'bubble'};
-    Imba.Event.prototype.bubble = function(v){ return v !== undefined ? (this.setBubble(v),this) : this._bubble; }
-    Imba.Event.prototype.setBubble = function(v){ this._bubble = v; return this; };
-    
-    Imba.Event.wrap = function (e){
-      return new this(e);
-    };
-    
-    Imba.Event.prototype.setType = function (type){
-      this._type = type;
-      return this;
-    };
-    
-    /*
-      @return {String} The name of the event (case-insensitive)
-      */
-    
-    Imba.Event.prototype.type = function (){
-      return this._type || this.event().type;
-    };
-    
-    Imba.Event.prototype.name = function (){
-      return this._name || (this._name = this.type().toLowerCase().replace(/\:/g,''));
-    };
-    
-    // mimc getset
-    Imba.Event.prototype.bubble = function (v){
-      if (v != undefined) {
-        this.setBubble(v);
-        return this;
-      };
-      return this._bubble;
-    };
-    
-    /*
-      Prevents further propagation of the current event.
-      @return {self}
-      */
-    
-    Imba.Event.prototype.halt = function (){
-      this.setBubble(false);
-      return this;
-    };
-    
-    /*
-      Cancel the event (if cancelable). In the case of native events it
-      will call `preventDefault` on the wrapped event object.
-      @return {self}
-      */
-    
-    Imba.Event.prototype.cancel = function (){
-      if (this.event().preventDefault) { this.event().preventDefault() };
-      this._cancel = true;
-      return this;
-    };
-    
-    Imba.Event.prototype.silence = function (){
-      this._silenced = true;
-      return this;
-    };
-    
-    Imba.Event.prototype.isSilenced = function (){
-      return !!this._silenced;
-    };
-    
-    /*
-      Indicates whether or not event.cancel has been called.
-    
-      @return {Boolean}
-      */
-    
-    Imba.Event.prototype.isPrevented = function (){
-      return this.event() && this.event().defaultPrevented || this._cancel;
-    };
-    
-    /*
-      A reference to the initial target of the event.
-      */
-    
-    Imba.Event.prototype.target = function (){
-      return tag$wrap(this.event()._target || this.event().target);
-    };
-    
-    /*
-      A reference to the object responding to the event.
-      */
-    
-    Imba.Event.prototype.responder = function (){
-      return this._responder;
-    };
-    
-    /*
-      Redirect the event to new target
-      */
-    
-    Imba.Event.prototype.redirect = function (node){
-      this._redirect = node;
-      return this;
-    };
-    
-    /*
-      Get the normalized character for KeyboardEvent/TextEvent
-      @return {String}
-      */
-    
-    Imba.Event.prototype.keychar = function (){
-      if (this.event() instanceof KeyboardEvent) {
-        var ki = this.event().keyIdentifier;
-        var sym = Imba.KEYMAP[this.event().keyCode];
-        
-        if (!sym && ki.substr(0,2) == "U+") {
-          sym = String.fromCharCode(parseInt(ki.substr(2),16));
-        };
-        return sym;
-      } else if (this.event() instanceof (window.TextEvent || window.InputEvent)) {
-        return this.event().data;
-      };
-      
-      return null;
-    };
-    
-    /*
-      @deprecated
-      */
-    
-    Imba.Event.prototype.keycombo = function (){
-      var sym;
-      if (!(sym = this.keychar())) { return };
-      sym = Imba.CHARMAP[sym] || sym;
-      var combo = [],e = this.event();
-      if (e.ctrlKey) { combo.push('ctrl') };
-      if (e.shiftKey) { combo.push('shift') };
-      if (e.altKey) { combo.push('alt') };
-      if (e.metaKey) { combo.push('cmd') };
-      combo.push(sym);
-      return combo.join("_").toLowerCase();
-    };
-    
-    
-    Imba.Event.prototype.process = function (){
-      var node;
-      var meth = ("on" + (this._prefix || '') + this.name());
-      var args = null;
-      var domtarget = this.event()._target || this.event().target;
-      // var node = <{domtarget:_responder or domtarget}>
-      // need to clean up and document this behaviour
-      
-      var domnode = domtarget._responder || domtarget;
-      // @todo need to stop infinite redirect-rules here
-      
-      var $1;while (domnode){
-        this._redirect = null;
-        if (node = tag$wrap(domnode)) { // not only tag 
-          
-          if ((typeof node[($1 = meth)]=='string'||node[$1] instanceof String)) {
-            // should remember the receiver of the event
-            meth = node[meth];
-            continue; // should not continue?
-          };
-          
-          if (node[meth] instanceof Array) {
-            args = node[meth].concat(node);
-            meth = args.shift();
-            continue; // should not continue?
-          };
-          
-          if (node[meth] instanceof Function) {
-            this._responder || (this._responder = node);
-            // should autostop bubble here?
-            args ? (node[meth].apply(node,args)) : (node[meth](this,this.data()));
-          };
-        };
-        
-        // add node.nextEventResponder as a separate method here?
-        if (!(this.bubble() && (domnode = (this._redirect || (node ? (node.parent()) : (domnode.parentNode)))))) {
-          break;
-        };
-      };
-      
-      this.processed();
-      return this;
-    };
-    
-    
-    Imba.Event.prototype.processed = function (){
-      if (!this._silenced) { Imba.emit(Imba,'event',[this]) };
-      return this;
-    };
-    
-    /*
-      Return the x/left coordinate of the mouse / pointer for this event
-      @return {Number} x coordinate of mouse / pointer for event
-      */
-    
-    Imba.Event.prototype.x = function (){
-      return this.event().x;
-    };
-    
-    /*
-      Return the y/top coordinate of the mouse / pointer for this event
-      @return {Number} y coordinate of mouse / pointer for event
-      */
-    
-    Imba.Event.prototype.y = function (){
-      return this.event().y;
-    };
-    
-    /*
-      Returns a Number representing a system and implementation
-      dependent numeric code identifying the unmodified value of the
-      pressed key; this is usually the same as keyCode.
-    
-      For mouse-events, the returned value indicates which button was
-      pressed on the mouse to trigger the event.
-    
-      @return {Number}
-      */
-    
-    Imba.Event.prototype.which = function (){
-      return this.event().which;
-    };
-    
-    
-    /*
-    
-    Manager for listening to and delegating events in Imba. A single instance
-    is always created by Imba (as `Imba.Events`), which handles and delegates all
-    events at the very root of the document. Imba does not capture all events
-    by default, so if you want to make sure exotic or custom DOMEvents are delegated
-    in Imba you will need to register them in `Imba.Events.register(myCustomEventName)`
-    
-    @iname manager
-    
-    */
-    
-    Imba.EventManager = function EventManager(node,pars){
-      var self = this;
-      if(!pars||pars.constructor !== Object) pars = {};
-      var events = pars.events !== undefined ? pars.events : [];
-      self.setRoot(node);
-      self.setCount(0);
-      self.setListeners([]);
-      self.setDelegators({});
-      self.setDelegator(function(e) {
-        // console.log "delegating event?! {e}"
-        self.delegate(e);
-        return true;
-      });
-      
-      for (var i = 0, ary = iter$(events), len = ary.length; i < len; i++) {
-        self.register(ary[i]);
-      };
-      
-      return self;
-    };
-    
-    Imba.EventManager.prototype.root = function(v){ return this._root; }
-    Imba.EventManager.prototype.setRoot = function(v){ this._root = v; return this; };
-    Imba.EventManager.prototype.count = function(v){ return this._count; }
-    Imba.EventManager.prototype.setCount = function(v){ this._count = v; return this; };
-    Imba.EventManager.prototype.__enabled = {'default': false,watch: 'enabledDidSet',name: 'enabled'};
-    Imba.EventManager.prototype.enabled = function(v){ return this._enabled; }
-    Imba.EventManager.prototype.setEnabled = function(v){
-      var a = this.enabled();
-      if(v != a) { this._enabled = v; }
-      if(v != a) { this.enabledDidSet && this.enabledDidSet(v,a,this.__enabled) }
-      return this;
-    }
-    Imba.EventManager.prototype._enabled = false;
-    Imba.EventManager.prototype.listeners = function(v){ return this._listeners; }
-    Imba.EventManager.prototype.setListeners = function(v){ this._listeners = v; return this; };
-    Imba.EventManager.prototype.delegators = function(v){ return this._delegators; }
-    Imba.EventManager.prototype.setDelegators = function(v){ this._delegators = v; return this; };
-    Imba.EventManager.prototype.delegator = function(v){ return this._delegator; }
-    Imba.EventManager.prototype.setDelegator = function(v){ this._delegator = v; return this; };
-    
-    Imba.EventManager.prototype.enabledDidSet = function (bool){
-      bool ? (this.onenable()) : (this.ondisable());
-      return this;
-    };
-    
-    /*
-    
-      Tell the current EventManager to intercept and handle event of a certain name.
-      By default, Imba.Events will register interceptors for: *keydown*, *keyup*, 
-      *keypress*, *textInput*, *input*, *change*, *submit*, *focusin*, *focusout*, 
-      *blur*, *contextmenu*, *dblclick*, *mousewheel*, *wheel*
-    
-      */
-    
-    Imba.EventManager.prototype.register = function (name,handler){
-      if(handler === undefined) handler = true;
-      if (name instanceof Array) {
-        for (var i = 0, ary = iter$(name), len = ary.length; i < len; i++) {
-          this.register(ary[i],handler);
-        };
-        return this;
-      };
-      
-      if (this.delegators()[name]) { return this };
-      // console.log("register for event {name}")
-      var fn = this.delegators()[name] = handler instanceof Function ? (handler) : (this.delegator());
-      if (this.enabled()) { return this.root().addEventListener(name,fn,true) };
-    };
-    
-    Imba.EventManager.prototype.listen = function (name,handler,capture){
-      if(capture === undefined) capture = true;
-      this.listeners().push([name,handler,capture]);
-      if (this.enabled()) { this.root().addEventListener(name,handler,capture) };
-      return this;
-    };
-    
-    Imba.EventManager.prototype.delegate = function (e){
-      this.setCount(this.count() + 1);
-      var event = Imba.Event.wrap(e);
-      event.process();
-      return this;
-    };
-    
-    /*
-    
-      Create a new Imba.Event
-    
-      */
-    
-    Imba.EventManager.prototype.create = function (type,target,pars){
-      if(!pars||pars.constructor !== Object) pars = {};
-      var data = pars.data !== undefined ? pars.data : null;
-      var source = pars.source !== undefined ? pars.source : null;
-      var event = Imba.Event.wrap({type: type,target: target});
-      if (data) { (event.setData(data),data) };
-      if (source) { (event.setSource(source),source) };
-      return event;
-    };
-    
-    /*
-    
-      Trigger / process an Imba.Event.
-    
-      */
-    
-    Imba.EventManager.prototype.trigger = function (){
-      return this.create.apply(this,arguments).process();
-    };
-    
-    Imba.EventManager.prototype.onenable = function (){
-      for (var o = this.delegators(), i = 0, keys = Object.keys(o), l = keys.length; i < l; i++){
-        this.root().addEventListener(keys[i],o[keys[i]],true);
-      };
-      
-      for (var i = 0, ary = iter$(this.listeners()), len = ary.length, item; i < len; i++) {
-        item = ary[i];
-        this.root().addEventListener(item[0],item[1],item[2]);
-      };
-      return this;
-    };
-    
-    Imba.EventManager.prototype.ondisable = function (){
-      for (var o = this.delegators(), i = 0, keys = Object.keys(o), l = keys.length; i < l; i++){
-        this.root().removeEventListener(keys[i],o[keys[i]],true);
-      };
-      
-      for (var i = 0, ary = iter$(this.listeners()), len = ary.length, item; i < len; i++) {
-        item = ary[i];
-        this.root().removeEventListener(item[0],item[1],item[2]);
-      };
-      return this;
-    };
-    
-    
-    ED = Imba.Events = new Imba.EventManager(document,{events: [
-      'keydown','keyup','keypress','textInput','input','change','submit',
-      'focusin','focusout','blur','contextmenu','dblclick',
-      'mousewheel','wheel','scroll'
-    ]});
-    
-    // should set these up inside the Imba.Events object itself
-    // so that we can have different EventManager for different roots
-    
-    if (hasTouchEvents) {
-      Imba.Events.listen('touchstart',function(e) {
-        var Events_, v_;
-        (((Events_ = Imba.Events).setCount(v_ = Events_.count() + 1),v_)) - 1;
-        return Imba.Touch.ontouchstart(e);
-      });
-      
-      Imba.Events.listen('touchmove',function(e) {
-        var Events_, v_;
-        (((Events_ = Imba.Events).setCount(v_ = Events_.count() + 1),v_)) - 1;
-        return Imba.Touch.ontouchmove(e);
-      });
-      
-      Imba.Events.listen('touchend',function(e) {
-        var Events_, v_;
-        (((Events_ = Imba.Events).setCount(v_ = Events_.count() + 1),v_)) - 1;
-        return Imba.Touch.ontouchend(e);
-      });
-      
-      Imba.Events.listen('touchcancel',function(e) {
-        var Events_, v_;
-        (((Events_ = Imba.Events).setCount(v_ = Events_.count() + 1),v_)) - 1;
-        return Imba.Touch.ontouchcancel(e);
-      });
-    };
-    
-    Imba.Events.register('click',function(e) {
-      // Only for main mousebutton, no?
-      if ((e.timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout) {
-        var tap = new Imba.Event(e);
-        tap.setType('tap');
-        tap.process();
-        if (tap._responder) {
-          return e.preventDefault();
-        };
-      };
-      // delegate the real click event
-      return Imba.Events.delegate(e);
-    });
-    
-    Imba.Events.listen('mousedown',function(e) {
-      if ((e.timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout) {
-        if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
-      };
-    });
-    
-    // Imba.Events.listen(:mousemove) do |e|
-    //  # console.log 'mousemove',e:timeStamp
-    //  if (e:timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout
-    //    Imba.POINTER.update(e).process if Imba.POINTER # .process if touch # should not happen? We process through 
-    
-    Imba.Events.listen('mouseup',function(e) {
-      // console.log 'mouseup',e:timeStamp
-      if ((e.timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout) {
-        if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
-      };
-    });
-    
-    
-    Imba.Events.register(['mousedown','mouseup']);
-    return (Imba.Events.setEnabled(true),true);
-
-  })()
-
-/***/ },
-/* 10 */
-/***/ function(module, exports) {
-
-  (function(){
-    function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-    var ImbaTag = Imba.TAGS.element;
-    
-    function removeNested(root,node,caret){
-      // if node/nodes isa String
-      //  we need to use the caret to remove elements
-      //  for now we will simply not support this
-      if (node instanceof ImbaTag) {
-        root.removeChild(node);
-      } else if (node instanceof Array) {
-        for (var i = 0, ary = iter$(node), len = ary.length; i < len; i++) {
-          removeNested(root,ary[i],caret);
-        };
-      } else {
-        // what if this is not null?!?!?
-        // take a chance and remove a text-elementng
-        var next = caret ? (caret.nextSibling) : (root._dom.firstChild);
-        if ((next instanceof Text) && next.textContent == node) {
-          root.removeChild(next);
-        } else {
-          throw 'cannot remove string';
-        };
-      };
-      
-      return caret;
-    };
-    
-    function appendNested(root,node){
-      if (node instanceof ImbaTag) {
-        root.appendChild(node);
-      } else if (node instanceof Array) {
-        for (var i = 0, ary = iter$(node), len = ary.length; i < len; i++) {
-          appendNested(root,ary[i]);
-        };
-      } else if (node != null && node !== false) {
-        root.appendChild(Imba.document().createTextNode(node));
-      };
-      
-      return;
-    };
-    
-    
-    // insert nodes before a certain node
-    // does not need to return any tail, as before
-    // will still be correct there
-    // before must be an actual domnode
-    function insertNestedBefore(root,node,before){
-      if (node instanceof ImbaTag) {
-        root.insertBefore(node,before);
-      } else if (node instanceof Array) {
-        for (var i = 0, ary = iter$(node), len = ary.length; i < len; i++) {
-          insertNestedBefore(root,ary[i],before);
-        };
-      } else if (node != null && node !== false) {
-        root.insertBefore(Imba.document().createTextNode(node),before);
-      };
-      
-      return before;
-    };
-    
-    // after must be an actual domnode
-    function insertNestedAfter(root,node,after){
-      var before = after ? (after.nextSibling) : (root._dom.firstChild);
-      
-      if (before) {
-        insertNestedBefore(root,node,before);
-        return before.previousSibling;
-      } else {
-        appendNested(root,node);
-        return root._dom.lastChild;
-      };
-    };
-    
-    function reconcileCollectionChanges(root,new$,old,caret){
-      
-      var newLen = new$.length;
-      var lastNew = new$[newLen - 1];
-      
-      // This re-order algorithm is based on the following principle:
-      // 
-      // We build a "chain" which shows which items are already sorted.
-      // If we're going from [1, 2, 3] -> [2, 1, 3], the tree looks like:
-      //
-      //  3 ->  0 (idx)
-      //  2 -> -1 (idx)
-      //  1 -> -1 (idx)
-      //
-      // This tells us that we have two chains of ordered items:
-      // 
-      //  (1, 3) and (2)
-      // 
-      // The optimal re-ordering then becomes two keep the longest chain intact,
-      // and move all the other items.
-      
-      var newPosition = [];
-      
-      // The tree/graph itself
-      var prevChain = [];
-      // The length of the chain
-      var lengthChain = [];
-      
-      // Keep track of the longest chain
-      var maxChainLength = 0;
-      var maxChainEnd = 0;
-      
-      for (var idx = 0, ary = iter$(old), len = ary.length, node; idx < len; idx++) {
-        node = ary[idx];
-        var newPos = new$.indexOf(node);
-        newPosition.push(newPos);
-        
-        if (newPos == -1) {
-          root.removeChild(node);
-          prevChain.push(-1);
-          lengthChain.push(-1);
-          continue;
-        };
-        
-        var prevIdx = newPosition.length - 2;
-        
-        // Build the chain:
-        while (prevIdx >= 0){
-          if (newPosition[prevIdx] == -1) {
-            prevIdx--;
-          } else if (newPos > newPosition[prevIdx]) {
-            // Yay, we're bigger than the previous!
-            break;
-          } else {
-            // Nope, let's walk back the chain
-            prevIdx = prevChain[prevIdx];
-          };
-        };
-        
-        prevChain.push(prevIdx);
-        
-        var currLength = (prevIdx == -1) ? (0) : (lengthChain[prevIdx] + 1);
-        
-        if (currLength > maxChainLength) {
-          maxChainLength = currLength;
-          maxChainEnd = idx;
-        };
-        
-        lengthChain.push(currLength);
-      };
-      
-      var stickyNodes = [];
-      
-      // Now we can walk the longest chain backwards and mark them as "sticky",
-      // which implies that they should not be moved
-      var cursor = newPosition.length - 1;
-      while (cursor >= 0){
-        if (cursor == maxChainEnd && newPosition[cursor] != -1) {
-          stickyNodes[newPosition[cursor]] = true;
-          maxChainEnd = prevChain[maxChainEnd];
-        };
-        
-        cursor -= 1;
-      };
-      
-      // And let's iterate forward, but only move non-sticky nodes
-      for (var idx1 = 0, ary = iter$(new$), len = ary.length; idx1 < len; idx1++) {
-        if (!stickyNodes[idx1]) {
-          var after = new$[idx1 - 1];
-          insertNestedAfter(root,ary[idx1],(after && after._dom) || caret);
-        };
-      };
-      
-      // should trust that the last item in new list is the caret
-      return lastNew && lastNew._dom || caret;
-    };
-    
-    
-    // expects a flat non-sparse array of nodes in both new and old, always
-    function reconcileCollection(root,new$,old,caret){
-      var k = new$.length;
-      var i = k;
-      var last = new$[k - 1];
-      
-      
-      if (k == old.length && new$[0] === old[0]) {
-        // running through to compare
-        while (i--){
-          if (new$[i] !== old[i]) { break; };
-        };
-      };
-      
-      if (i == -1) {
-        return last && last._dom || caret;
-      } else {
-        return reconcileCollectionChanges(root,new$,old,caret);
-      };
-    };
-    
-    // the general reconciler that respects conditions etc
-    // caret is the current node we want to insert things after
-    function reconcileNested(root,new$,old,caret){
-      
-      // if new == null or new === false or new === true
-      //  if new === old
-      //    return caret
-      //  if old && new != old
-      //    removeNested(root,old,caret) if old
-      // 
-      //  return caret
-      
-      // var skipnew = new == null or new === false or new === true
-      var newIsNull = new$ == null || new$ === false;
-      var oldIsNull = old == null || old === false;
-      
-      
-      if (new$ === old) {
-        // remember that the caret must be an actual dom element
-        // we should instead move the actual caret? - trust
-        if (newIsNull) {
-          return caret;
-        } else if (new$ && new$._dom) {
-          return new$._dom;
-        } else {
-          return caret ? (caret.nextSibling) : (root._dom.firstChild);
-        };
-      } else if (new$ instanceof Array) {
-        if (old instanceof Array) {
-          if (new$.static || old.static) {
-            // if the static is not nested - we could get a hint from compiler
-            // and just skip it
-            if (new$.static == old.static) {
-              for (var i = 0, ary = iter$(new$), len = ary.length; i < len; i++) {
-                // this is where we could do the triple equal directly
-                caret = reconcileNested(root,ary[i],old[i],caret);
-              };
-              return caret;
-            } else {
-              removeNested(root,old,caret);
-            };
-            
-            // if they are not the same we continue through to the default
-          } else {
-            return reconcileCollection(root,new$,old,caret);
-          };
-        } else if (old instanceof ImbaTag) {
-          root.removeChild(old);
-        } else if (!oldIsNull) {
-          // old was a string-like object?
-          root.removeChild(caret ? (caret.nextSibling) : (root._dom.firstChild));
-        };
-        
-        return insertNestedAfter(root,new$,caret);
-        // remove old
-      } else if (new$ instanceof ImbaTag) {
-        if (!oldIsNull) { removeNested(root,old,caret) };
-        insertNestedAfter(root,new$,caret);
-        return new$;
-      } else if (newIsNull) {
-        if (!oldIsNull) { removeNested(root,old,caret) };
-        return caret;
-      } else {
-        // if old did not exist we need to add a new directly
-        var nextNode;
-        // if old was array or imbatag we need to remove it and then add
-        if (old instanceof Array) {
-          removeNested(root,old,caret);
-        } else if (old instanceof ImbaTag) {
-          root.removeChild(old);
-        } else if (!oldIsNull) {
-          // ...
-          nextNode = caret ? (caret.nextSibling) : (root._dom.firstChild);
-          if ((nextNode instanceof Text) && nextNode.textContent != new$) {
-            nextNode.textContent = new$;
-            return nextNode;
-          };
-        };
-        
-        // now add the textnode
-        return insertNestedAfter(root,new$,caret);
-      };
-    };
-    
-    
-    return tag$.extendTag('htmlelement', function(tag){
-      
-      tag.prototype.setChildren = function (new$,typ){
-        var old = this._children;
-        // var isArray = nodes isa Array
-        if (new$ === old) {
-          return this;
-        };
-        
-        if (!old) {
-          this.empty();
-          appendNested(this,new$);
-        } else if (typ == 2) {
-          return this;
-        } else if (typ == 1) {
-          // here we _know _that it is an array with the same shape
-          // every time
-          var caret = null;
-          for (var i = 0, ary = iter$(new$), len = ary.length; i < len; i++) {
-            // prev = old[i]
-            caret = reconcileNested(this,ary[i],old[i],caret);
-          };
-        } else if (typ == 3) {
-          // this is possibly fully dynamic. It often is
-          // but the old or new could be static while the other is not
-          // this is not handled now
-          // what if it was previously a static array? edgecase - but must work
-          if (new$ instanceof ImbaTag) {
-            this.empty();
-            this.appendChild(new$);
-          } else if (new$ instanceof Array) {
-            if (old instanceof Array) {
-              // is this not the same as setting staticChildren now but with the
-              reconcileCollection(this,new$,old,null);
-            } else {
-              this.empty();
-              appendNested(this,new$);
-            };
-          } else {
-            this.setText(new$);
-            return this;
-          };
-        } else if ((new$ instanceof Array) && (old instanceof Array)) {
-          reconcileCollection(this,new$,old,null);
-        } else {
-          this.empty();
-          appendNested(this,new$);
-        };
-        
-        this._children = new$;
-        return this;
-      };
-      
-      
-      // only ever called with array as argument
-      tag.prototype.setStaticChildren = function (new$){
-        var old = this._children;
-        
-        var caret = null;
-        for (var i = 0, ary = iter$(new$), len = ary.length; i < len; i++) {
-          // prev = old[i]
-          caret = reconcileNested(this,ary[i],old[i],caret);
-        };
-        
-        this._children = new$;
-        return this;
-      };
-      
-      tag.prototype.content = function (){
-        return this._content || this.children().toArray();
-      };
-      
-      tag.prototype.setText = function (text){
-        if (text != this._children) {
-          this._children = text;
-          this.dom().textContent = text == null || text === false ? ('') : (text);
-        };
-        return this;
-      };
-    });
-
-  })()
-
-/***/ },
-/* 11 */
-/***/ function(module, exports) {
-
-  (function(){
-    function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
-    
-    /*
-    The special syntax for selectors in Imba creates Imba.Selector
-    instances.
-    */
-    
-    Imba.Selector = function Selector(sel,scope,nodes){
-      
-      this._query = sel instanceof Imba.Selector ? (sel.query()) : (sel);
-      this._context = scope;
-      
-      if (nodes) {
-        for (var i = 0, ary = iter$(nodes), len = ary.length, res = []; i < len; i++) {
-          res.push(tag$wrap(ary[i]));
-        };
-        this._nodes = res;
-      };
-      
-      this._lazy = !nodes;
-      return this;
-    };
-    
-    Imba.Selector.one = function (sel,scope){
-      var el = (scope || Imba.document()).querySelector(sel);
-      return el && tag$wrap(el) || null;
-    };
-    
-    Imba.Selector.all = function (sel,scope){
-      return new Imba.Selector(sel,scope);
-    };
-    
-    Imba.Selector.prototype.query = function(v){ return this._query; }
-    Imba.Selector.prototype.setQuery = function(v){ this._query = v; return this; };
-    
-    Imba.Selector.prototype.reload = function (){
-      this._nodes = null;
-      return this;
-    };
-    
-    Imba.Selector.prototype.scope = function (){
-      var ctx;
-      if (this._scope) { return this._scope };
-      if (!(ctx = this._context)) { return Imba.document() };
-      return this._scope = ctx.toScope ? (ctx.toScope()) : (ctx);
-    };
-    
-    /*
-      @returns {Imba.Tag} first node matching this selector
-      */
-    
-    Imba.Selector.prototype.first = function (){
-      if (this._lazy) { return tag$wrap(this._first || (this._first = this.scope().querySelector(this.query()))) } else {
-        return this.nodes()[0];
-      };
-    };
-    
-    /*
-      @returns {Imba.Tag} last node matching this selector
-      */
-    
-    Imba.Selector.prototype.last = function (){
-      return this.nodes()[this._nodes.length - 1];
-    };
-    
-    /*
-      @returns [Imba.Tag] all nodes matching this selector
-      */
-    
-    Imba.Selector.prototype.nodes = function (){
-      if (this._nodes) { return this._nodes };
-      var items = this.scope().querySelectorAll(this.query());
-      for (var i = 0, ary = iter$(items), len = ary.length, res = []; i < len; i++) {
-        res.push(tag$wrap(ary[i]));
-      };
-      this._nodes = res;
-      this._lazy = false;
-      return this._nodes;
-    };
-    
-    /*
-      The number of nodes matching this selector
-      */
-    
-    Imba.Selector.prototype.count = function (){
-      return this.nodes().length;
-    };
-    
-    Imba.Selector.prototype.len = function (){
-      return this.nodes().length;
-    };
-    
-    /*
-      @todo Add support for block or selector?
-      */
-    
-    Imba.Selector.prototype.some = function (){
-      return this.count() >= 1;
-    };
-    
-    /*
-      Get node at index
-      */
-    
-    Imba.Selector.prototype.at = function (idx){
-      return this.nodes()[idx];
-    };
-    
-    /*
-      Loop through nodes
-      */
-    
-    Imba.Selector.prototype.forEach = function (block){
-      this.nodes().forEach(block);
-      return this;
-    };
-    
-    /*
-      Map nodes
-      */
-    
-    Imba.Selector.prototype.map = function (block){
-      return this.nodes().map(block);
-    };
-    
-    /*
-      Returns a plain array containing nodes. Implicitly called
-      when iterating over a selector in Imba `(node for node in $(selector))`
-      */
-    
-    Imba.Selector.prototype.toArray = function (){
-      return this.nodes();
-    };
-    
-    // Get the first element that matches the selector, 
-    // beginning at the current element and progressing up through the DOM tree
-    Imba.Selector.prototype.closest = function (sel){
-      // seems strange that we alter this selector?
-      this._nodes = this.map(function(node) { return node.closest(sel); });
-      return this;
-    };
-    
-    // Get the siblings of each element in the set of matched elements, 
-    // optionally filtered by a selector.
-    // TODO remove duplicates?
-    Imba.Selector.prototype.siblings = function (sel){
-      this._nodes = this.map(function(node) { return node.siblings(sel); });
-      return this;
-    };
-    
-    // Get the descendants of each element in the current set of matched 
-    // elements, filtered by a selector.
-    Imba.Selector.prototype.find = function (sel){
-      this._nodes = this.__query__(sel.query(),this.nodes());
-      return this;
-    };
-    
-    Imba.Selector.prototype.reject = function (blk){
-      return this.filter(blk,false);
-    };
-    
-    /*
-      Filter the nodes in selector by a function or other selector
-      */
-    
-    Imba.Selector.prototype.filter = function (blk,bool){
-      if(bool === undefined) bool = true;
-      var fn = (blk instanceof Function) && blk || function(n) { return n.matches(blk); };
-      var ary = this.nodes().filter(function(n) { return fn(n) == bool; });
-      // if we want to return a new selector for this, we should do that for
-      // others as well
-      return new Imba.Selector("",this._scope,ary);
-    };
-    
-    Imba.Selector.prototype.__query__ = function (query,contexts){
-      var nodes = [];
-      var i = 0;
-      var l = contexts.length;
-      
-      while (i < l){
-        nodes.push.apply(nodes,contexts[i++].querySelectorAll(query));
-      };
-      return nodes;
-    };
-    
-    Imba.Selector.prototype.__matches__ = function (){
-      return true;
-    };
-    
-    /*
-      Add specified flag to all nodes in selector
-      */
-    
-    Imba.Selector.prototype.flag = function (flag){
-      return this.forEach(function(n) { return n.flag(flag); });
-    };
-    
-    /*
-      Remove specified flag from all nodes in selector
-      */
-    
-    Imba.Selector.prototype.unflag = function (flag){
-      return this.forEach(function(n) { return n.unflag(flag); });
-    };
-    
-    
-    // def Imba.querySelectorAll
-    q$ = function(sel,scope) { return new Imba.Selector(sel,scope); };
-    
-    // def Imba.Selector.one
-    q$$ = function(sel,scope) {
-      var el = (scope || Imba.document()).querySelector(sel);
-      return el && tag$wrap(el) || null;
-    };
-    
-    
-    // extending tags with query-methods
-    // must be a better way to reopen classes
-    return tag$.extendTag('element', function(tag){
-      tag.prototype.querySelectorAll = function (q){
-        return this._dom.querySelectorAll(q);
-      };
-      tag.prototype.querySelector = function (q){
-        return this._dom.querySelector(q);
-      };
-      
-      // should be moved to Imba.Tag instead?
-      // or we should implement all of them here
-      tag.prototype.find = function (sel){
-        return new Imba.Selector(sel,this);
-      };
-    });
-    
-
-  })()
-
-/***/ }
-/******/ ]);
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.dapple = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
@@ -4126,7 +17,7 @@ dapple['feedbase'] = (function builder () {
         'objects': {
           'feedbase': {
             'class': 'FeedBase',
-            'address': '0xde3358c5d11860a2c434809d82be6f6e69870e1e'
+            'address': '0xc0eb6dca907a8d617a7cb7a8bf35ad953b9c7e5e'
           }
         }
       }
@@ -4164,7 +55,7 @@ dapple['feedbase'] = (function builder () {
       'objects': {
         'feedbase': {
           'class': 'FeedBase',
-          'address': '0xde3358c5d11860a2c434809d82be6f6e69870e1e'
+          'address': '0xc0eb6dca907a8d617a7cb7a8bf35ad953b9c7e5e'
         }
       }
     };
@@ -4183,6 +74,43 @@ dapple['feedbase'] = (function builder () {
     this.headers = {
       'FeedBase': {
         'interface': [
+          {
+            'constant': true,
+            'inputs': [
+              {
+                'name': '',
+                'type': 'uint64'
+              }
+            ],
+            'name': 'feeds',
+            'outputs': [
+              {
+                'name': 'owner',
+                'type': 'address'
+              },
+              {
+                'name': 'timestamp',
+                'type': 'uint256'
+              },
+              {
+                'name': 'expiration',
+                'type': 'uint256'
+              },
+              {
+                'name': 'cost',
+                'type': 'uint256'
+              },
+              {
+                'name': 'paid',
+                'type': 'bool'
+              },
+              {
+                'name': 'title',
+                'type': 'bytes32'
+              }
+            ],
+            'type': 'function'
+          },
           {
             'constant': false,
             'inputs': [
@@ -4225,6 +153,10 @@ dapple['feedbase'] = (function builder () {
               {
                 'name': 'expiration',
                 'type': 'uint256'
+              },
+              {
+                'name': 'title',
+                'type': 'bytes32'
               }
             ],
             'name': 'setFeed',
@@ -4286,11 +218,48 @@ dapple['feedbase'] = (function builder () {
             'type': 'event'
           }
         ],
-        'bytecode': '60606040526040516020806108d1833981016040528080519060200190919050505b805b805b80600060006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908302179055505b50600073ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff1614156100a5577337d3e484971a2463eef75b684ca3e17c93128884905080506100ff565b600173ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff1614156100f85773213183be469a38e99facc2c468bb7e3c01377bce905080506100fe565b80905080505b5b5b505b506107c0806101116000396000f360606040526000357c01000000000000000000000000000000000000000000000000000000009004806313f588c3146100655780634e71d92d146100865780637d5f1363146100b35780637ef09476146100dd578063ada86798146100fe57610063565b005b6100846004808035906020019091908035906020019091905050610253565b005b6100936004805050610342565b604051808267ffffffffffffffff16815260200191505060405180910390f35b6100db600480803590602001909190803590602001909190803590602001909190505061012a565b005b6100fc6004808035906020019091908035906020019091905050610467565b005b6101146004808035906020019091905050610577565b6040518082815260200191505060405180910390f35b600083600160005060008267ffffffffffffffff16815260200190815260200160002060005060010160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff161415156101ad57610002565b600160005060008667ffffffffffffffff168152602001908152602001600020600050915083826000016000508190555042826002016000508190555082826003016000508190555060008260050160006101000a81548160ff021916908302179055508467ffffffffffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2505b50505050565b81600160005060008267ffffffffffffffff16815260200190815260200160002060005060010160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff161415156102d457610002565b81600160005060008567ffffffffffffffff168152602001908152602001600020600050600401600050819055508267ffffffffffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2505b5050565b60006000601481819054906101000a900463ffffffff168092919060010191906101000a81548163ffffffff02191690830217905550506000600060149054906101000a900463ffffffff1663ffffffff16141561039f57610002565b3360016000506000600060149054906101000a900463ffffffff1663ffffffff16815260200190815260200160002060005060010160006101000a81548173ffffffffffffffffffffffffffffffffffffffff02191690830217905550600060149054906101000a900463ffffffff1663ffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2600060149054906101000a900463ffffffff1663ffffffff169050610464565b90565b81600160005060008267ffffffffffffffff16815260200190815260200160002060005060010160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff161415156104e857610002565b81600160005060008567ffffffffffffffff16815260200190815260200160002060005060010160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908302179055508267ffffffffffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2505b5050565b60006000600160005060008467ffffffffffffffff168152602001908152602001600020600050905080600301600050544211156105b457610002565b8060050160009054906101000a900460ff16151561061c576105ff333083600401600050547f4441490000000000000000000000000000000000000000000000000000000000610631565b5060018160050160006101000a81548160ff021916908302179055505b8060000160005054915061062b565b50919050565b6000600060008414156106475760019150610714565b6106508361071d565b73ffffffffffffffffffffffffffffffffffffffff166323b872dd878787604051847c0100000000000000000000000000000000000000000000000000000000028152600401808473ffffffffffffffffffffffffffffffffffffffff1681526020018373ffffffffffffffffffffffffffffffffffffffff16815260200182815260200193505050506020604051808303816000876161da5a03f1156100025750505060405180519060200150905080151561070c57610002565b809150610714565b50949350505050565b6000600060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663155bf4e283604051827c0100000000000000000000000000000000000000000000000000000000028152600401808281526020019150506020604051808303816000876161da5a03f115610002575050506040518051906020015090506107bb565b91905056'
+        'bytecode': '6060604052604051602080610a0d833981016040528080519060200190919050505b805b805b80600060006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908302179055505b50600073ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff1614156100a5577337d3e484971a2463eef75b684ca3e17c93128884905080506100ff565b600173ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff1614156100f85773213183be469a38e99facc2c468bb7e3c01377bce905080506100fe565b80905080505b5b5b505b506108fc806101116000396000f360606040523615610074576000357c010000000000000000000000000000000000000000000000000000000090048063051950f71461007657806313f588c3146100db5780634e71d92d146100fc5780636e575e17146101295780637ef094761461015c578063ada867981461017d57610074565b005b61008c60048080359060200190919050506101a9565b604051808773ffffffffffffffffffffffffffffffffffffffff168152602001868152602001858152602001848152602001838152602001828152602001965050505050505060405180910390f35b6100fa6004808035906020019091908035906020019091905050610373565b005b6101096004805050610462565b604051808267ffffffffffffffff16815260200191505060405180910390f35b61015a6004808035906020019091908035906020019091908035906020019091908035906020019091905050610221565b005b61017b6004808035906020019091908035906020019091905050610587565b005b6101936004808035906020019091905050610697565b6040518082815260200191505060405180910390f35b60026000506020528060005260406000206000915090508060000160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff16908060010160005054908060020160005054908060030160005054908060040160009054906101000a900460ff16908060050160005054905086565b600084600260005060008267ffffffffffffffff16815260200190815260200160002060005060000160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff161415156102a457610002565b84600160005060008867ffffffffffffffff16815260200190815260200160002060005081905550600260005060008767ffffffffffffffff168152602001908152602001600020600050915042826001016000508190555083826002016000508190555060008260040160006101000a81548160ff021916908302179055508282600501600050819055508567ffffffffffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2505b5050505050565b81600260005060008267ffffffffffffffff16815260200190815260200160002060005060000160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff161415156103f457610002565b81600260005060008567ffffffffffffffff168152602001908152602001600020600050600301600050819055508267ffffffffffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2505b5050565b60006000601481819054906101000a900463ffffffff168092919060010191906101000a81548163ffffffff02191690830217905550506000600060149054906101000a900463ffffffff1663ffffffff1614156104bf57610002565b3360026000506000600060149054906101000a900463ffffffff1663ffffffff16815260200190815260200160002060005060000160006101000a81548173ffffffffffffffffffffffffffffffffffffffff02191690830217905550600060149054906101000a900463ffffffff1663ffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2600060149054906101000a900463ffffffff1663ffffffff169050610584565b90565b81600260005060008267ffffffffffffffff16815260200190815260200160002060005060000160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614151561060857610002565b81600260005060008567ffffffffffffffff16815260200190815260200160002060005060000160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908302179055508267ffffffffffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2505b5050565b60006000600260005060008467ffffffffffffffff168152602001908152602001600020600050905080600201600050544211156106d457610002565b8060040160009054906101000a900460ff16151561073c5761071f333083600301600050547f444149000000000000000000000000000000000000000000000000000000000061076d565b5060018160040160006101000a81548160ff021916908302179055505b600160005060008467ffffffffffffffff168152602001908152602001600020600050549150610767565b50919050565b6000600060008414156107835760019150610850565b61078c83610859565b73ffffffffffffffffffffffffffffffffffffffff166323b872dd878787604051847c0100000000000000000000000000000000000000000000000000000000028152600401808473ffffffffffffffffffffffffffffffffffffffff1681526020018373ffffffffffffffffffffffffffffffffffffffff16815260200182815260200193505050506020604051808303816000876161da5a03f1156100025750505060405180519060200150905080151561084857610002565b809150610850565b50949350505050565b6000600060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663155bf4e283604051827c0100000000000000000000000000000000000000000000000000000000028152600401808281526020019150506020604051808303816000876161da5a03f115610002575050506040518051906020015090506108f7565b91905056'
       },
       'FeedBaseMainnet': {
         'interface': [
           {
+            'constant': true,
+            'inputs': [
+              {
+                'name': '',
+                'type': 'uint64'
+              }
+            ],
+            'name': 'feeds',
+            'outputs': [
+              {
+                'name': 'owner',
+                'type': 'address'
+              },
+              {
+                'name': 'timestamp',
+                'type': 'uint256'
+              },
+              {
+                'name': 'expiration',
+                'type': 'uint256'
+              },
+              {
+                'name': 'cost',
+                'type': 'uint256'
+              },
+              {
+                'name': 'paid',
+                'type': 'bool'
+              },
+              {
+                'name': 'title',
+                'type': 'bytes32'
+              }
+            ],
+            'type': 'function'
+          },
+          {
             'constant': false,
             'inputs': [
               {
@@ -4332,6 +301,10 @@ dapple['feedbase'] = (function builder () {
               {
                 'name': 'expiration',
                 'type': 'uint256'
+              },
+              {
+                'name': 'title',
+                'type': 'bytes32'
               }
             ],
             'name': 'setFeed',
@@ -4384,11 +357,48 @@ dapple['feedbase'] = (function builder () {
             'type': 'event'
           }
         ],
-        'bytecode': '606060405260005b805b805b80600060006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908302179055505b50600073ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff1614156089577337d3e484971a2463eef75b684ca3e17c931288849050805060e1565b600173ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff16141560da5773213183be469a38e99facc2c468bb7e3c01377bce9050805060e0565b80905080505b5b5b505b506107c0806100f36000396000f360606040526000357c01000000000000000000000000000000000000000000000000000000009004806313f588c3146100655780634e71d92d146100865780637d5f1363146100b35780637ef09476146100dd578063ada86798146100fe57610063565b005b6100846004808035906020019091908035906020019091905050610253565b005b6100936004805050610342565b604051808267ffffffffffffffff16815260200191505060405180910390f35b6100db600480803590602001909190803590602001909190803590602001909190505061012a565b005b6100fc6004808035906020019091908035906020019091905050610467565b005b6101146004808035906020019091905050610577565b6040518082815260200191505060405180910390f35b600083600160005060008267ffffffffffffffff16815260200190815260200160002060005060010160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff161415156101ad57610002565b600160005060008667ffffffffffffffff168152602001908152602001600020600050915083826000016000508190555042826002016000508190555082826003016000508190555060008260050160006101000a81548160ff021916908302179055508467ffffffffffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2505b50505050565b81600160005060008267ffffffffffffffff16815260200190815260200160002060005060010160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff161415156102d457610002565b81600160005060008567ffffffffffffffff168152602001908152602001600020600050600401600050819055508267ffffffffffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2505b5050565b60006000601481819054906101000a900463ffffffff168092919060010191906101000a81548163ffffffff02191690830217905550506000600060149054906101000a900463ffffffff1663ffffffff16141561039f57610002565b3360016000506000600060149054906101000a900463ffffffff1663ffffffff16815260200190815260200160002060005060010160006101000a81548173ffffffffffffffffffffffffffffffffffffffff02191690830217905550600060149054906101000a900463ffffffff1663ffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2600060149054906101000a900463ffffffff1663ffffffff169050610464565b90565b81600160005060008267ffffffffffffffff16815260200190815260200160002060005060010160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff161415156104e857610002565b81600160005060008567ffffffffffffffff16815260200190815260200160002060005060010160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908302179055508267ffffffffffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2505b5050565b60006000600160005060008467ffffffffffffffff168152602001908152602001600020600050905080600301600050544211156105b457610002565b8060050160009054906101000a900460ff16151561061c576105ff333083600401600050547f4441490000000000000000000000000000000000000000000000000000000000610631565b5060018160050160006101000a81548160ff021916908302179055505b8060000160005054915061062b565b50919050565b6000600060008414156106475760019150610714565b6106508361071d565b73ffffffffffffffffffffffffffffffffffffffff166323b872dd878787604051847c0100000000000000000000000000000000000000000000000000000000028152600401808473ffffffffffffffffffffffffffffffffffffffff1681526020018373ffffffffffffffffffffffffffffffffffffffff16815260200182815260200193505050506020604051808303816000876161da5a03f1156100025750505060405180519060200150905080151561070c57610002565b809150610714565b50949350505050565b6000600060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663155bf4e283604051827c0100000000000000000000000000000000000000000000000000000000028152600401808281526020019150506020604051808303816000876161da5a03f115610002575050506040518051906020015090506107bb565b91905056'
+        'bytecode': '606060405260005b805b805b80600060006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908302179055505b50600073ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff1614156089577337d3e484971a2463eef75b684ca3e17c931288849050805060e1565b600173ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff16141560da5773213183be469a38e99facc2c468bb7e3c01377bce9050805060e0565b80905080505b5b5b505b506108fc806100f36000396000f360606040523615610074576000357c010000000000000000000000000000000000000000000000000000000090048063051950f71461007657806313f588c3146100db5780634e71d92d146100fc5780636e575e17146101295780637ef094761461015c578063ada867981461017d57610074565b005b61008c60048080359060200190919050506101a9565b604051808773ffffffffffffffffffffffffffffffffffffffff168152602001868152602001858152602001848152602001838152602001828152602001965050505050505060405180910390f35b6100fa6004808035906020019091908035906020019091905050610373565b005b6101096004805050610462565b604051808267ffffffffffffffff16815260200191505060405180910390f35b61015a6004808035906020019091908035906020019091908035906020019091908035906020019091905050610221565b005b61017b6004808035906020019091908035906020019091905050610587565b005b6101936004808035906020019091905050610697565b6040518082815260200191505060405180910390f35b60026000506020528060005260406000206000915090508060000160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff16908060010160005054908060020160005054908060030160005054908060040160009054906101000a900460ff16908060050160005054905086565b600084600260005060008267ffffffffffffffff16815260200190815260200160002060005060000160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff161415156102a457610002565b84600160005060008867ffffffffffffffff16815260200190815260200160002060005081905550600260005060008767ffffffffffffffff168152602001908152602001600020600050915042826001016000508190555083826002016000508190555060008260040160006101000a81548160ff021916908302179055508282600501600050819055508567ffffffffffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2505b5050505050565b81600260005060008267ffffffffffffffff16815260200190815260200160002060005060000160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff161415156103f457610002565b81600260005060008567ffffffffffffffff168152602001908152602001600020600050600301600050819055508267ffffffffffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2505b5050565b60006000601481819054906101000a900463ffffffff168092919060010191906101000a81548163ffffffff02191690830217905550506000600060149054906101000a900463ffffffff1663ffffffff1614156104bf57610002565b3360026000506000600060149054906101000a900463ffffffff1663ffffffff16815260200190815260200160002060005060000160006101000a81548173ffffffffffffffffffffffffffffffffffffffff02191690830217905550600060149054906101000a900463ffffffff1663ffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2600060149054906101000a900463ffffffff1663ffffffff169050610584565b90565b81600260005060008267ffffffffffffffff16815260200190815260200160002060005060000160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614151561060857610002565b81600260005060008567ffffffffffffffff16815260200190815260200160002060005060000160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908302179055508267ffffffffffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2505b5050565b60006000600260005060008467ffffffffffffffff168152602001908152602001600020600050905080600201600050544211156106d457610002565b8060040160009054906101000a900460ff16151561073c5761071f333083600301600050547f444149000000000000000000000000000000000000000000000000000000000061076d565b5060018160040160006101000a81548160ff021916908302179055505b600160005060008467ffffffffffffffff168152602001908152602001600020600050549150610767565b50919050565b6000600060008414156107835760019150610850565b61078c83610859565b73ffffffffffffffffffffffffffffffffffffffff166323b872dd878787604051847c0100000000000000000000000000000000000000000000000000000000028152600401808473ffffffffffffffffffffffffffffffffffffffff1681526020018373ffffffffffffffffffffffffffffffffffffffff16815260200182815260200193505050506020604051808303816000876161da5a03f1156100025750505060405180519060200150905080151561084857610002565b809150610850565b50949350505050565b6000600060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663155bf4e283604051827c0100000000000000000000000000000000000000000000000000000000028152600401808281526020019150506020604051808303816000876161da5a03f115610002575050506040518051906020015090506108f7565b91905056'
       },
       'FeedBaseMorden': {
         'interface': [
           {
+            'constant': true,
+            'inputs': [
+              {
+                'name': '',
+                'type': 'uint64'
+              }
+            ],
+            'name': 'feeds',
+            'outputs': [
+              {
+                'name': 'owner',
+                'type': 'address'
+              },
+              {
+                'name': 'timestamp',
+                'type': 'uint256'
+              },
+              {
+                'name': 'expiration',
+                'type': 'uint256'
+              },
+              {
+                'name': 'cost',
+                'type': 'uint256'
+              },
+              {
+                'name': 'paid',
+                'type': 'bool'
+              },
+              {
+                'name': 'title',
+                'type': 'bytes32'
+              }
+            ],
+            'type': 'function'
+          },
+          {
             'constant': false,
             'inputs': [
               {
@@ -4430,6 +440,10 @@ dapple['feedbase'] = (function builder () {
               {
                 'name': 'expiration',
                 'type': 'uint256'
+              },
+              {
+                'name': 'title',
+                'type': 'bytes32'
               }
             ],
             'name': 'setFeed',
@@ -4482,7 +496,7 @@ dapple['feedbase'] = (function builder () {
             'type': 'event'
           }
         ],
-        'bytecode': '606060405260015b805b805b80600060006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908302179055505b50600073ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff1614156089577337d3e484971a2463eef75b684ca3e17c931288849050805060e1565b600173ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff16141560da5773213183be469a38e99facc2c468bb7e3c01377bce9050805060e0565b80905080505b5b5b505b506107c0806100f36000396000f360606040526000357c01000000000000000000000000000000000000000000000000000000009004806313f588c3146100655780634e71d92d146100865780637d5f1363146100b35780637ef09476146100dd578063ada86798146100fe57610063565b005b6100846004808035906020019091908035906020019091905050610253565b005b6100936004805050610342565b604051808267ffffffffffffffff16815260200191505060405180910390f35b6100db600480803590602001909190803590602001909190803590602001909190505061012a565b005b6100fc6004808035906020019091908035906020019091905050610467565b005b6101146004808035906020019091905050610577565b6040518082815260200191505060405180910390f35b600083600160005060008267ffffffffffffffff16815260200190815260200160002060005060010160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff161415156101ad57610002565b600160005060008667ffffffffffffffff168152602001908152602001600020600050915083826000016000508190555042826002016000508190555082826003016000508190555060008260050160006101000a81548160ff021916908302179055508467ffffffffffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2505b50505050565b81600160005060008267ffffffffffffffff16815260200190815260200160002060005060010160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff161415156102d457610002565b81600160005060008567ffffffffffffffff168152602001908152602001600020600050600401600050819055508267ffffffffffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2505b5050565b60006000601481819054906101000a900463ffffffff168092919060010191906101000a81548163ffffffff02191690830217905550506000600060149054906101000a900463ffffffff1663ffffffff16141561039f57610002565b3360016000506000600060149054906101000a900463ffffffff1663ffffffff16815260200190815260200160002060005060010160006101000a81548173ffffffffffffffffffffffffffffffffffffffff02191690830217905550600060149054906101000a900463ffffffff1663ffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2600060149054906101000a900463ffffffff1663ffffffff169050610464565b90565b81600160005060008267ffffffffffffffff16815260200190815260200160002060005060010160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff161415156104e857610002565b81600160005060008567ffffffffffffffff16815260200190815260200160002060005060010160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908302179055508267ffffffffffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2505b5050565b60006000600160005060008467ffffffffffffffff168152602001908152602001600020600050905080600301600050544211156105b457610002565b8060050160009054906101000a900460ff16151561061c576105ff333083600401600050547f4441490000000000000000000000000000000000000000000000000000000000610631565b5060018160050160006101000a81548160ff021916908302179055505b8060000160005054915061062b565b50919050565b6000600060008414156106475760019150610714565b6106508361071d565b73ffffffffffffffffffffffffffffffffffffffff166323b872dd878787604051847c0100000000000000000000000000000000000000000000000000000000028152600401808473ffffffffffffffffffffffffffffffffffffffff1681526020018373ffffffffffffffffffffffffffffffffffffffff16815260200182815260200193505050506020604051808303816000876161da5a03f1156100025750505060405180519060200150905080151561070c57610002565b809150610714565b50949350505050565b6000600060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663155bf4e283604051827c0100000000000000000000000000000000000000000000000000000000028152600401808281526020019150506020604051808303816000876161da5a03f115610002575050506040518051906020015090506107bb565b91905056'
+        'bytecode': '606060405260015b805b805b80600060006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908302179055505b50600073ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff1614156089577337d3e484971a2463eef75b684ca3e17c931288849050805060e1565b600173ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff16141560da5773213183be469a38e99facc2c468bb7e3c01377bce9050805060e0565b80905080505b5b5b505b506108fc806100f36000396000f360606040523615610074576000357c010000000000000000000000000000000000000000000000000000000090048063051950f71461007657806313f588c3146100db5780634e71d92d146100fc5780636e575e17146101295780637ef094761461015c578063ada867981461017d57610074565b005b61008c60048080359060200190919050506101a9565b604051808773ffffffffffffffffffffffffffffffffffffffff168152602001868152602001858152602001848152602001838152602001828152602001965050505050505060405180910390f35b6100fa6004808035906020019091908035906020019091905050610373565b005b6101096004805050610462565b604051808267ffffffffffffffff16815260200191505060405180910390f35b61015a6004808035906020019091908035906020019091908035906020019091908035906020019091905050610221565b005b61017b6004808035906020019091908035906020019091905050610587565b005b6101936004808035906020019091905050610697565b6040518082815260200191505060405180910390f35b60026000506020528060005260406000206000915090508060000160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff16908060010160005054908060020160005054908060030160005054908060040160009054906101000a900460ff16908060050160005054905086565b600084600260005060008267ffffffffffffffff16815260200190815260200160002060005060000160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff161415156102a457610002565b84600160005060008867ffffffffffffffff16815260200190815260200160002060005081905550600260005060008767ffffffffffffffff168152602001908152602001600020600050915042826001016000508190555083826002016000508190555060008260040160006101000a81548160ff021916908302179055508282600501600050819055508567ffffffffffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2505b5050505050565b81600260005060008267ffffffffffffffff16815260200190815260200160002060005060000160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff161415156103f457610002565b81600260005060008567ffffffffffffffff168152602001908152602001600020600050600301600050819055508267ffffffffffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2505b5050565b60006000601481819054906101000a900463ffffffff168092919060010191906101000a81548163ffffffff02191690830217905550506000600060149054906101000a900463ffffffff1663ffffffff1614156104bf57610002565b3360026000506000600060149054906101000a900463ffffffff1663ffffffff16815260200190815260200160002060005060000160006101000a81548173ffffffffffffffffffffffffffffffffffffffff02191690830217905550600060149054906101000a900463ffffffff1663ffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2600060149054906101000a900463ffffffff1663ffffffff169050610584565b90565b81600260005060008267ffffffffffffffff16815260200190815260200160002060005060000160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff1614151561060857610002565b81600260005060008567ffffffffffffffff16815260200190815260200160002060005060000160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908302179055508267ffffffffffffffff167fa770522872ef0d83ecf21a5248c65e1509d4ffba3e782cecf27fd5ed13d882ae60405180905060405180910390a2505b5050565b60006000600260005060008467ffffffffffffffff168152602001908152602001600020600050905080600201600050544211156106d457610002565b8060040160009054906101000a900460ff16151561073c5761071f333083600301600050547f444149000000000000000000000000000000000000000000000000000000000061076d565b5060018160040160006101000a81548160ff021916908302179055505b600160005060008467ffffffffffffffff168152602001908152602001600020600050549150610767565b50919050565b6000600060008414156107835760019150610850565b61078c83610859565b73ffffffffffffffffffffffffffffffffffffffff166323b872dd878787604051847c0100000000000000000000000000000000000000000000000000000000028152600401808473ffffffffffffffffffffffffffffffffffffffff1681526020018373ffffffffffffffffffffffffffffffffffffffff16815260200182815260200193505050506020604051808303816000876161da5a03f1156100025750505060405180519060200150905080151561084857610002565b809150610850565b50949350505050565b6000600060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663155bf4e283604051827c0100000000000000000000000000000000000000000000000000000000028152600401808281526020019150506020604051808303816000876161da5a03f115610002575050506040518051906020015090506108f7565b91905056'
       },
       'FeedBaseUser': {
         'interface': [
@@ -5085,13 +1099,11 @@ Node.prototype._decode = function decode(input) {
 
     // Decode children
     if (!state.any && state.choice === null && state.children !== null) {
-      var fail = state.children.some(function decodeChildren(child) {
+      state.children.forEach(function decodeChildren(child) {
         // NOTE: We are ignoring errors here, to let parser continue with other
         // parts of encoded data
         child._decode(input);
       });
-      if (fail)
-        return err;
     }
 
     // Decode contained/encoded by schema, only in bit or octet strings
@@ -9049,10 +5061,7 @@ function fromByteArray (uint8) {
   // BN
 
   function BN (number, base, endian) {
-    // May be `new BN(bn)` ?
-    if (number !== null &&
-      typeof number === 'object' &&
-      Array.isArray(number.words)) {
+    if (BN.isBN(number)) {
       return number;
     }
 
@@ -9086,6 +5095,11 @@ function fromByteArray (uint8) {
     Buffer = require('buf' + 'fer').Buffer;
   } catch (e) {
   }
+
+  BN.isBN = function isBN (num) {
+    return num !== null && typeof num === 'object' &&
+      num.constructor.name === 'BN' && Array.isArray(num.words);
+  };
 
   BN.max = function max (left, right) {
     if (left.cmp(right) > 0) return left;
@@ -40728,44 +36742,4388 @@ module.exports = transfer;
 
 },{"../contracts/SmartExchange.json":173,"./iban":203}]},{},[1])(1)
 });
+var web3 = window.web3 = new Web3();
+
+// TODO mist integration
+var providerUrl = 'http://localhost:8545';
+
+// connect to local node
+web3.setProvider(new web3.providers.HttpProvider(providerUrl));
+
+// initialize dapple contracts
+dapple.class(web3);
+
+try{
+  // set default account
+  web3.eth.defaultAccount = web3.eth.accounts[0];
+} catch (e) {
+  alert(e)
+}
+/******/ (function(modules) { // webpackBootstrap
+/******/  // The module cache
+/******/  var installedModules = {};
+
+/******/  // The require function
+/******/  function __webpack_require__(moduleId) {
+
+/******/    // Check if module is in cache
+/******/    if(installedModules[moduleId])
+/******/      return installedModules[moduleId].exports;
+
+/******/    // Create a new module (and put it into the cache)
+/******/    var module = installedModules[moduleId] = {
+/******/      exports: {},
+/******/      id: moduleId,
+/******/      loaded: false
+/******/    };
+
+/******/    // Execute the module function
+/******/    modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+
+/******/    // Flag the module as loaded
+/******/    module.loaded = true;
+
+/******/    // Return the exports of the module
+/******/    return module.exports;
+/******/  }
+
+
+/******/  // expose the modules object (__webpack_modules__)
+/******/  __webpack_require__.m = modules;
+
+/******/  // expose the module cache
+/******/  __webpack_require__.c = installedModules;
+
+/******/  // __webpack_public_path__
+/******/  __webpack_require__.p = "";
+
+/******/  // Load entry module and return exports
+/******/  return __webpack_require__(0);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ function(module, exports, __webpack_require__) {
+
+  (function(){
+    
+    if (typeof Imba === 'undefined') {
+      __webpack_require__(1);
+      __webpack_require__(2);
+      __webpack_require__(3);
+      __webpack_require__(4);
+      __webpack_require__(5);
+      __webpack_require__(6);
+      __webpack_require__(7);
+      
+      if (false) {
+        require('./dom.server');
+      };
+      
+      if (true) {
+        __webpack_require__(8);
+        __webpack_require__(9);
+        __webpack_require__(10);
+      };
+      
+      return __webpack_require__(11);
+    } else {
+      return console.warn(("Imba v" + (Imba.VERSION) + " is already loaded"));
+    };
+
+  })()
+
+/***/ },
+/* 1 */
+/***/ function(module, exports, __webpack_require__) {
+
+  (function(){
+    var isClient = (typeof window == 'object' && this == window);
+    
+    if (isClient) {
+      // should not go there
+      window.global || (window.global = window);
+    };
+    
+    /*
+    Imba is the namespace for all runtime related utilities
+    @namespace
+    */
+    
+    Imba = {
+      VERSION: '0.14.4',
+      CLIENT: isClient,
+      SERVER: !isClient,
+      DEBUG: false
+    };
+    
+    var reg = /-./g;
+    
+    /*
+    True if running in client environment.
+    @return {bool}
+    */
+    
+    Imba.isClient = function (){
+      return (true) == true;
+    };
+    
+    /*
+    True if running in server environment.
+    @return {bool}
+    */
+    
+    Imba.isServer = function (){
+      return (false) == true;
+    };
+    
+    Imba.subclass = function (obj,sup){
+      ;
+      for (var k in sup){
+        if (sup.hasOwnProperty(k)) { obj[k] = sup[k] };
+      };
+      
+      obj.prototype = Object.create(sup.prototype);
+      obj.__super__ = obj.prototype.__super__ = sup.prototype;
+      obj.prototype.initialize = obj.prototype.constructor = obj;
+      return obj;
+    };
+    
+    /*
+    Lightweight method for making an object iterable in imbas for/in loops.
+    If the compiler cannot say for certain that a target in a for loop is an
+    array, it will cache the iterable version before looping.
+    
+    ```imba
+    # this is the whole method
+    def Imba.iterable o
+      return o ? (o:toArray ? o.toArray : o) : []
+    
+    class CustomIterable
+      def toArray
+        [1,2,3]
+    
+    # will return [2,4,6]
+    for x in CustomIterable.new
+      x * 2
+    
+    ```
+    */
+    
+    Imba.iterable = function (o){
+      return o ? ((o.toArray ? (o.toArray()) : (o))) : ([]);
+    };
+    
+    /*
+    Coerces a value into a promise. If value is array it will
+    call `Promise.all(value)`, or if it is not a promise it will
+    wrap the value in `Promise.resolve(value)`. Used for experimental
+    await syntax.
+    @return {Promise}
+    */
+    
+    Imba.await = function (value){
+      if (value instanceof Array) {
+        return Promise.all(value);
+      } else if (value && value.then) {
+        return value;
+      } else {
+        return Promise.resolve(value);
+      };
+    };
+    
+    Imba.toCamelCase = function (str){
+      return str.replace(reg,function(m) { return m.charAt(1).toUpperCase(); });
+    };
+    
+    Imba.toCamelCase = function (str){
+      return str.replace(reg,function(m) { return m.charAt(1).toUpperCase(); });
+    };
+    
+    Imba.indexOf = function (a,b){
+      return (b && b.indexOf) ? (b.indexOf(a)) : ([].indexOf.call(a,b));
+    };
+    
+    Imba.prop = function (scope,name,opts){
+      if (scope.defineProperty) {
+        return scope.defineProperty(name,opts);
+      };
+      return;
+    };
+    
+    return Imba.attr = function (scope,name,opts){
+      if (scope.defineAttribute) {
+        return scope.defineAttribute(name,opts);
+      };
+      
+      var getName = Imba.toCamelCase(name);
+      var setName = Imba.toCamelCase('set-' + name);
+      
+      scope.prototype[getName] = function() {
+        return this.getAttribute(name);
+      };
+      
+      scope.prototype[setName] = function(value) {
+        this.setAttribute(name,value);
+        return this;
+      };
+      
+      return;
+    };
+
+  })()
+
+/***/ },
+/* 2 */
+/***/ function(module, exports) {
+
+  (function(){
+    
+    
+    function emit__(event,args,node){
+      // var node = cbs[event]
+      var prev,cb,ret;
+      
+      while ((prev = node) && (node = node.next)){
+        if (cb = node.listener) {
+          if (node.path && cb[node.path]) {
+            ret = args ? (cb[node.path].apply(cb,args)) : (cb[node.path]());
+          } else {
+            // check if it is a method?
+            ret = args ? (cb.apply(node,args)) : (cb.call(node));
+          };
+        };
+        
+        if (node.times && --node.times <= 0) {
+          prev.next = node.next;
+          node.listener = null;
+        };
+      };
+      return;
+    };
+    
+    // method for registering a listener on object
+    Imba.listen = function (obj,event,listener,path){
+      var $1;
+      var cbs,list,tail;
+      cbs = obj.__listeners__ || (obj.__listeners__ = {});
+      list = cbs[($1 = event)] || (cbs[$1] = {});
+      tail = list.tail || (list.tail = (list.next = {}));
+      tail.listener = listener;
+      tail.path = path;
+      list.tail = tail.next = {};
+      return tail;
+    };
+    
+    Imba.once = function (obj,event,listener){
+      var tail = Imba.listen(obj,event,listener);
+      tail.times = 1;
+      return tail;
+    };
+    
+    Imba.unlisten = function (obj,event,cb,meth){
+      var node,prev;
+      var meta = obj.__listeners__;
+      if (!meta) { return };
+      
+      if (node = meta[event]) {
+        while ((prev = node) && (node = node.next)){
+          if (node == cb || node.listener == cb) {
+            prev.next = node.next;
+            // check for correct path as well?
+            node.listener = null;
+            break;
+          };
+        };
+      };
+      return;
+    };
+    
+    Imba.emit = function (obj,event,params){
+      var cb;
+      if (cb = obj.__listeners__) {
+        if (cb[event]) { emit__(event,params,cb[event]) };
+        if (cb.all) { emit__(event,[event,params],cb.all) }; // and event != 'all'
+      };
+      return;
+    };
+    
+    return Imba.observeProperty = function (observer,key,trigger,target,prev){
+      if (prev && typeof prev == 'object') {
+        Imba.unlisten(prev,'all',observer,trigger);
+      };
+      if (target && typeof target == 'object') {
+        Imba.listen(target,'all',observer,trigger);
+      };
+      return this;
+    };
+
+  })()
+
+/***/ },
+/* 3 */
+/***/ function(module, exports) {
+
+  /* WEBPACK VAR INJECTION */(function(global) {(function(){
+    function idx$(a,b){
+      return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
+    };
+    
+    
+    var raf; // very simple raf polyfill
+    raf || (raf = global.requestAnimationFrame);
+    raf || (raf = global.webkitRequestAnimationFrame);
+    raf || (raf = global.mozRequestAnimationFrame);
+    raf || (raf = function(blk) { return setTimeout(blk,1000 / 60); });
+    
+    Imba.tick = function (d){
+      if (this._scheduled) { raf(Imba.ticker()) };
+      Imba.Scheduler.willRun();
+      this.emit(this,'tick',[d]);
+      Imba.Scheduler.didRun();
+      return;
+    };
+    
+    Imba.ticker = function (){
+      var self = this;
+      return self._ticker || (self._ticker = function(e) { return self.tick(e); });
+    };
+    
+    /*
+    
+    Global alternative to requestAnimationFrame. Schedule a target
+    to tick every frame. You can specify which method to call on the
+    target (defaults to tick).
+    
+    */
+    
+    Imba.schedule = function (target,method){
+      if(method === undefined) method = 'tick';
+      this.listen(this,'tick',target,method);
+      // start scheduling now if this was the first one
+      if (!this._scheduled) {
+        this._scheduled = true;
+        raf(Imba.ticker());
+      };
+      return this;
+    };
+    
+    /*
+    
+    Unschedule a previously scheduled target
+    
+    */
+    
+    Imba.unschedule = function (target,method){
+      this.unlisten(this,'tick',target,method);
+      var cbs = this.__listeners__ || (this.__listeners__ = {});
+      if (!cbs.tick || !cbs.tick.next || !cbs.tick.next.listener) {
+        this._scheduled = false;
+      };
+      return this;
+    };
+    
+    /*
+    
+    Light wrapper around native setTimeout that expects the block / function
+    as last argument (instead of first). It also triggers an event to Imba
+    after the timeout to let schedulers update (to rerender etc) afterwards.
+    
+    */
+    
+    Imba.setTimeout = function (delay,block){
+      return setTimeout(function() {
+        block();
+        return Imba.Scheduler.markDirty();
+        // Imba.emit(Imba,'timeout',[block])
+      },delay);
+    };
+    
+    /*
+    
+    Light wrapper around native setInterval that expects the block / function
+    as last argument (instead of first). It also triggers an event to Imba
+    after every interval to let schedulers update (to rerender etc) afterwards.
+    
+    */
+    
+    Imba.setInterval = function (interval,block){
+      return setInterval(function() {
+        block();
+        return Imba.Scheduler.markDirty();
+        // Imba.emit(Imba,'interval',[block])
+      },interval);
+    };
+    
+    /*
+    Clear interval with specified id
+    */
+    
+    Imba.clearInterval = function (interval){
+      return clearInterval(interval);
+    };
+    
+    /*
+    Clear timeout with specified id
+    */
+    
+    Imba.clearTimeout = function (timeout){
+      return clearTimeout(timeout);
+    };
+    
+    // should add an Imba.run / setImmediate that
+    // pushes listener onto the tick-queue with times - once
+    
+    
+    /*
+    
+    Instances of Imba.Scheduler manages when to call `tick()` on their target,
+    at a specified framerate or when certain events occur. Root-nodes in your
+    applications will usually have a scheduler to make sure they rerender when
+    something changes. It is also possible to make inner components use their
+    own schedulers to control when they render.
+    
+    @iname scheduler
+    
+    */
+    
+    Imba.Scheduler = function Scheduler(target){
+      var self = this;
+      self._target = target;
+      self._marked = false;
+      self._active = false;
+      self._marker = function() { return self.mark(); };
+      self._ticker = function(e) { return self.tick(e); };
+      
+      self._events = true;
+      self._fps = 1;
+      
+      self._dt = 0;
+      self._timestamp = 0;
+      self._ticks = 0;
+      self._flushes = 0;
+    };
+    
+    Imba.Scheduler.markDirty = function (){
+      this._dirty = true;
+      return this;
+    };
+    
+    Imba.Scheduler.isDirty = function (){
+      return !!this._dirty;
+    };
+    
+    Imba.Scheduler.willRun = function (){
+      return this._active = true;
+    };
+    
+    Imba.Scheduler.didRun = function (){
+      this._active = false;
+      return this._dirty = false;
+    };
+    
+    Imba.Scheduler.isActive = function (){
+      return !!this._active;
+    };
+    
+    /*
+      Create a new Imba.Scheduler for specified target
+      @return {Imba.Scheduler}
+      */
+    
+    /*
+      Check whether the current scheduler is active or not
+      @return {bool}
+      */
+    
+    Imba.Scheduler.prototype.active = function (){
+      return this._active;
+    };
+    
+    /*
+      Delta time between the two last ticks
+      @return {Number}
+      */
+    
+    Imba.Scheduler.prototype.dt = function (){
+      return this._dt;
+    };
+    
+    /*
+      Configure the scheduler
+      @return {self}
+      */
+    
+    Imba.Scheduler.prototype.configure = function (pars){
+      if(!pars||pars.constructor !== Object) pars = {};
+      var fps = pars.fps !== undefined ? pars.fps : 1;
+      var events = pars.events !== undefined ? pars.events : true;
+      if (events != null) { this._events = events };
+      if (fps != null) { this._fps = fps };
+      return this;
+    };
+    
+    /*
+      Mark the scheduler as dirty. This will make sure that
+      the scheduler calls `target.tick` on the next frame
+      @return {self}
+      */
+    
+    Imba.Scheduler.prototype.mark = function (){
+      this._marked = true;
+      return this;
+    };
+    
+    /*
+      Instantly trigger target.tick and mark scheduler as clean (not dirty/marked).
+      This is called implicitly from tick, but can also be called manually if you
+      really want to force a tick without waiting for the next frame.
+      @return {self}
+      */
+    
+    Imba.Scheduler.prototype.flush = function (){
+      this._marked = false;
+      this._flushes++;
+      this._target.tick();
+      return this;
+    };
+    
+    /*
+      @fixme this expects raf to run at 60 fps 
+    
+      Called automatically on every frame while the scheduler is active.
+      It will only call `target.tick` if the scheduler is marked dirty,
+      or when according to @fps setting.
+    
+      If you have set up a scheduler with an fps of 1, tick will still be
+      called every frame, but `target.tick` will only be called once every
+      second, and it will *make sure* each `target.tick` happens in separate
+      seconds according to Date. So if you have a node that renders a clock
+      based on Date.now (or something similar), you can schedule it with 1fps,
+      never needing to worry about two ticks happening within the same second.
+      The same goes for 4fps, 10fps etc.
+    
+      @protected
+      @return {self}
+      */
+    
+    Imba.Scheduler.prototype.tick = function (delta){
+      this._ticks++;
+      this._dt = delta;
+      
+      var fps = this._fps;
+      
+      if (fps == 60) {
+        this._marked = true;
+      } else if (fps == 30) {
+        if (this._ticks % 2) { this._marked = true };
+      } else if (fps) {
+        // if it is less round - we trigger based
+        // on date, for consistent rendering.
+        // ie, if you want to render every second
+        // it is important that no two renders
+        // happen during the same second (according to Date)
+        var period = ((60 / fps) / 60) * 1000;
+        var beat = Math.floor(Date.now() / period);
+        
+        if (this._beat != beat) {
+          this._beat = beat;
+          this._marked = true;
+        };
+      };
+      
+      if (this._marked || (this._events && Imba.Scheduler.isDirty())) this.flush();
+      // reschedule if @active
+      return this;
+    };
+    
+    /*
+      Start the scheduler if it is not already active.
+      **While active**, the scheduler will override `target.commit`
+      to do nothing. By default Imba.tag#commit calls render, so
+      that rendering is cascaded through to children when rendering
+      a node. When a scheduler is active (for a node), Imba disables
+      this automatic rendering.
+      */
+    
+    Imba.Scheduler.prototype.activate = function (){
+      if (!this._active) {
+        this._active = true;
+        // override target#commit while this is active
+        this._commit = this._target.commit;
+        this._target.commit = function() { return this; };
+        Imba.schedule(this);
+        if (this._events) { Imba.listen(Imba,'event',this,'onevent') };
+        this._target && this._target.flag  &&  this._target.flag('scheduled_');
+        this.tick(0); // start ticking
+      };
+      return this;
+    };
+    
+    /*
+      Stop the scheduler if it is active.
+      */
+    
+    Imba.Scheduler.prototype.deactivate = function (){
+      if (this._active) {
+        this._active = false;
+        this._target.commit = this._commit;
+        Imba.unschedule(this);
+        Imba.unlisten(Imba,'event',this);
+        this._target && this._target.unflag  &&  this._target.unflag('scheduled_');
+      };
+      return this;
+    };
+    
+    Imba.Scheduler.prototype.track = function (){
+      return this._marker;
+    };
+    
+    Imba.Scheduler.prototype.onevent = function (event){
+      var $1;
+      if (this._marked) { return this };
+      
+      if (this._events instanceof Function) {
+        if (this._events(event)) this.mark();
+      } else if (this._events instanceof Array) {
+        if (idx$(($1 = event) && $1.type  &&  $1.type(),this._events) >= 0) this.mark();
+      } else if (this._events) {
+        if (event._responder) this.mark();
+      };
+      return this;
+    };
+    return Imba.Scheduler;
+
+  })()
+  /* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+  (function(){
+    function idx$(a,b){
+      return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
+    };
+    
+    Imba.static = function (items,nr){
+      items.static = nr;
+      return items;
+    };
+    
+    /*
+    This is the baseclass that all tags in imba inherit from.
+    @iname node
+    */
+    
+    Imba.Tag = function Tag(dom){
+      this.setDom(dom);
+    };
+    
+    Imba.Tag.createNode = function (){
+      throw "Not implemented";
+    };
+    
+    Imba.Tag.build = function (){
+      return new this(this.createNode());
+    };
+    
+    Imba.Tag.prototype.object = function(v){ return this._object; }
+    Imba.Tag.prototype.setObject = function(v){ this._object = v; return this; };
+    
+    Imba.Tag.prototype.dom = function (){
+      return this._dom;
+    };
+    
+    Imba.Tag.prototype.setDom = function (dom){
+      dom._tag = this;
+      this._dom = dom;
+      return this;
+    };
+    
+    /*
+      Setting references for tags like
+      `<div@header>` will compile to `tag('div').setRef('header',this).end()`
+      By default it adds the reference as a className to the tag.
+      @return {self}
+      */
+    
+    Imba.Tag.prototype.setRef = function (ref,ctx){
+      this.flag(this._ref = ref);
+      return this;
+    };
+    
+    /*
+      Method that is called by the compiled tag-chains, for
+      binding events on tags to methods etc.
+      `<a :tap=fn>` compiles to `tag('a').setHandler('tap',fn,this).end()`
+      where this refers to the context in which the tag is created.
+      @return {self}
+      */
+    
+    Imba.Tag.prototype.setHandler = function (event,handler,ctx){
+      var key = 'on' + event;
+      
+      if (handler instanceof Function) {
+        this[key] = handler;
+      } else if (handler instanceof Array) {
+        var fn = handler.shift();
+        this[key] = function(e) { return ctx[fn].apply(ctx,handler.concat(e)); };
+      } else {
+        this[key] = function(e) { return ctx[handler](e); };
+      };
+      return this;
+    };
+    
+    Imba.Tag.prototype.setId = function (id){
+      this.dom().id = id;
+      return this;
+    };
+    
+    Imba.Tag.prototype.id = function (){
+      return this.dom().id;
+    };
+    
+    /*
+      Adds a new attribute or changes the value of an existing attribute
+      on the specified tag. If the value is null or false, the attribute
+      will be removed.
+      @return {self}
+      */
+    
+    Imba.Tag.prototype.setAttribute = function (name,value){
+      // should this not return self?
+      var old = this.dom().getAttribute(name);
+      
+      if (old == value) {
+        return value;
+      } else if (value != null && value !== false) {
+        return this.dom().setAttribute(name,value);
+      } else {
+        return this.dom().removeAttribute(name);
+      };
+    };
+    
+    /*
+      removes an attribute from the specified tag
+      */
+    
+    Imba.Tag.prototype.removeAttribute = function (name){
+      return this.dom().removeAttribute(name);
+    };
+    
+    /*
+      returns the value of an attribute on the tag.
+      If the given attribute does not exist, the value returned
+      will either be null or "" (the empty string)
+      */
+    
+    Imba.Tag.prototype.getAttribute = function (name){
+      return this.dom().getAttribute(name);
+    };
+    
+    /*
+      Override this to provide special wrapping etc.
+      @return {self}
+      */
+    
+    Imba.Tag.prototype.setContent = function (content,type){
+      this.setChildren(content,type);
+      return this;
+    };
+    
+    /*
+      Set the children of node. type param is optional,
+      and should only be used by Imba when compiling tag trees. 
+      @return {self}
+      */
+    
+    Imba.Tag.prototype.setChildren = function (nodes,type){
+      throw "Not implemented";
+    };
+    
+    /*
+      Get text of node. Uses textContent behind the scenes (not innerText)
+      [https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent]()
+      @return {string} inner text of node
+      */
+    
+    Imba.Tag.prototype.text = function (v){
+      return this._dom.textContent;
+    };
+    
+    /*
+      Set text of node. Uses textContent behind the scenes (not innerText)
+      [https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent]()
+      */
+    
+    Imba.Tag.prototype.setText = function (txt){
+      this._empty = false;
+      this._dom.textContent = txt == null ? (txt = "") : (txt);
+      return this;
+    };
+    
+    
+    /*
+      Method for getting and setting data-attributes. When called with zero
+      arguments it will return the actual dataset for the tag.
+    
+        var node = <div data-name='hello'>
+        # get the whole dataset
+        node.dataset # {name: 'hello'}
+        # get a single value
+        node.dataset('name') # 'hello'
+        # set a single value
+        node.dataset('name','newname') # self
+    
+    
+      */
+    
+    Imba.Tag.prototype.dataset = function (key,val){
+      throw "Not implemented";
+    };
+    
+    /*
+      Empty placeholder. Override to implement custom render behaviour.
+      Works much like the familiar render-method in React.
+      @return {self}
+      */
+    
+    Imba.Tag.prototype.render = function (){
+      return this;
+    };
+    
+    /*
+      Called implicitly through Imba.Tag#end, upon creating a tag. All
+      properties will have been set before build is called, including
+      setContent.
+      @return {self}
+      */
+    
+    Imba.Tag.prototype.build = function (){
+      this.render();
+      return this;
+    };
+    
+    /*
+      Called implicitly through Imba.Tag#end, for tags that are part of
+      a tag tree (that are rendered several times).
+      @return {self}
+      */
+    
+    Imba.Tag.prototype.commit = function (){
+      this.render();
+      return this;
+    };
+    
+    /*
+    
+      Called by the tag-scheduler (if this tag is scheduled)
+      By default it will call this.render. Do not override unless
+      you really understand it.
+    
+      */
+    
+    Imba.Tag.prototype.tick = function (){
+      this.render();
+      return this;
+    };
+    
+    /*
+      
+      A very important method that you will practically never manually.
+      The tag syntax of Imba compiles to a chain of setters, which always
+      ends with .end. `<a.large>` compiles to `tag('a').flag('large').end()`
+      
+      You are highly adviced to not override its behaviour. The first time
+      end is called it will mark the tag as built and call Imba.Tag#build,
+      and call Imba.Tag#commit on subsequent calls.
+      @return {self}
+      */
+    
+    Imba.Tag.prototype.end = function (){
+      if (this._built) {
+        this.commit();
+      } else {
+        this._built = true;
+        this.build();
+      };
+      return this;
+    };
+    
+    /*
+      This is called instead of Imba.Tag#end for `<self>` tag chains.
+      Defaults to noop
+      @return {self}
+      */
+    
+    Imba.Tag.prototype.synced = function (){
+      return this;
+    };
+    
+    // called when the node is awakened in the dom - either automatically
+    // upon attachment to the dom-tree, or the first time imba needs the
+    // tag for a domnode that has been rendered on the server
+    Imba.Tag.prototype.awaken = function (){
+      return this;
+    };
+    
+    /*
+      List of flags for this node. 
+      */
+    
+    Imba.Tag.prototype.flags = function (){
+      return this._dom.classList;
+    };
+    
+    /*
+      Add speficied flag to current node.
+      If a second argument is supplied, it will be coerced into a Boolean,
+      and used to indicate whether we should remove the flag instead.
+      @return {self}
+      */
+    
+    Imba.Tag.prototype.flag = function (name,toggler){
+      // it is most natural to treat a second undefined argument as a no-switch
+      // so we need to check the arguments-length
+      if (arguments.length == 2) {
+        if (this._dom.classList.contains(name) != !!toggler) {
+          this._dom.classList.toggle(name);
+        };
+      } else {
+        this._dom.classList.add(name);
+      };
+      return this;
+    };
+    
+    /*
+      Remove specified flag from node
+      @return {self}
+      */
+    
+    Imba.Tag.prototype.unflag = function (name){
+      this._dom.classList.remove(name);
+      return this;
+    };
+    
+    /*
+      Toggle specified flag on node
+      @return {self}
+      */
+    
+    Imba.Tag.prototype.toggleFlag = function (name){
+      this._dom.classList.toggle(name);
+      return this;
+    };
+    
+    /*
+      Check whether current node has specified flag
+      @return {bool}
+      */
+    
+    Imba.Tag.prototype.hasFlag = function (name){
+      return this._dom.classList.contains(name);
+    };
+    
+    /*
+      Get the scheduler for this node. A new scheduler will be created
+      if it does not already exist.
+    
+      @return {Imba.Scheduler}
+      */
+    
+    Imba.Tag.prototype.scheduler = function (){
+      return this._scheduler == null ? (this._scheduler = new Imba.Scheduler(this)) : (this._scheduler);
+    };
+    
+    /*
+    
+      Shorthand to start scheduling a node. The method will basically
+      proxy the arguments through to scheduler.configure, and then
+      activate the scheduler.
+      
+      @return {self}
+      */
+    
+    Imba.Tag.prototype.schedule = function (options){
+      if(options === undefined) options = {};
+      this.scheduler().configure(options).activate();
+      return this;
+    };
+    
+    /*
+      Shorthand for deactivating scheduler (if tag has one).
+      @deprecated
+      */
+    
+    Imba.Tag.prototype.unschedule = function (){
+      if (this._scheduler) { this.scheduler().deactivate() };
+      return this;
+    };
+    
+    
+    /*
+      Get the parent of current node
+      @return {Imba.Tag} 
+      */
+    
+    Imba.Tag.prototype.parent = function (){
+      return tag$wrap(this.dom().parentNode);
+    };
+    
+    /*
+      Shorthand for console.log on elements
+      @return {self}
+      */
+    
+    Imba.Tag.prototype.log = function (){
+      var $0 = arguments, i = $0.length;
+      var args = new Array(i>0 ? i : 0);
+      while(i>0) args[i-1] = $0[--i];
+      args.unshift(console);
+      Function.prototype.call.apply(console.log,args);
+      return this;
+    };
+    
+    Imba.Tag.prototype.css = function (key,val){
+      if (key instanceof Object) {
+        for (var i = 0, keys = Object.keys(key), l = keys.length; i < l; i++){
+          this.css(keys[i],key[keys[i]]);
+        };
+      } else if (val == null) {
+        this.dom().style.removeProperty(key);
+      } else if (val == undefined) {
+        return this.dom().style[key];
+      } else {
+        if ((typeof val=='number'||val instanceof Number) && key.match(/width|height|left|right|top|bottom/)) {
+          val = val + "px";
+        };
+        this.dom().style[key] = val;
+      };
+      return this;
+    };
+    
+    Imba.Tag.prototype.trigger = function (event,data){
+      if(data === undefined) data = {};
+      return Imba.Events.trigger(event,this,{data: data});
+    };
+    
+    Imba.Tag.prototype.setTransform = function (value){
+      this.css('transform',value);
+      return this;
+    };
+    
+    Imba.Tag.prototype.transform = function (){
+      return this.css('transform');
+    };
+    
+    Imba.Tag.prototype.setStyle = function (style){
+      this.setAttribute('style',style);
+      return this;
+    };
+    
+    Imba.Tag.prototype.style = function (){
+      return this.getAttribute('style');
+    };
+    
+    Imba.Tag.prototype.toString = function (){
+      return this.dom().outerHTML;
+    };
+    
+    
+    Imba.Tag.prototype.initialize = Imba.Tag;
+    
+    HTML_TAGS = "a abbr address area article aside audio b base bdi bdo big blockquote body br button canvas caption cite code col colgroup data datalist dd del details dfn div dl dt em embed fieldset figcaption figure footer form h1 h2 h3 h4 h5 h6 head header hr html i iframe img input ins kbd keygen label legend li link main map mark menu menuitem meta meter nav noscript object ol optgroup option output p param pre progress q rp rt ruby s samp script section select small source span strong style sub summary sup table tbody td textarea tfoot th thead time title tr track u ul var video wbr".split(" ");
+    HTML_TAGS_UNSAFE = "article aside header section".split(" ");
+    SVG_TAGS = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan".split(" ");
+    
+    
+    function extender(obj,sup){
+      for (var i = 0, keys = Object.keys(sup), l = keys.length; i < l; i++){
+        obj[($1 = keys[i])] == null ? (obj[$1] = sup[keys[i]]) : (obj[$1]);
+      };
+      
+      obj.prototype = Object.create(sup.prototype);
+      obj.__super__ = obj.prototype.__super__ = sup.prototype;
+      obj.prototype.initialize = obj.prototype.constructor = obj;
+      if (sup.inherit) { sup.inherit(obj) };
+      return obj;
+    };
+    
+    function Tag(){
+      return function(dom) {
+        this.setDom(dom);
+        return this;
+      };
+    };
+    
+    function TagSpawner(type){
+      return function() { return type.build(); };
+    };
+    
+    Imba.Tags = function Tags(){
+      this;
+    };
+    
+    Imba.Tags.prototype.__clone = function (ns){
+      var clone = Object.create(this);
+      clone._parent = this;
+      return clone;
+    };
+    
+    Imba.Tags.prototype.ns = function (name){
+      return this[name.toUpperCase()] || this.defineNamespace(name);
+    };
+    
+    Imba.Tags.prototype.defineNamespace = function (name){
+      var clone = Object.create(this);
+      clone._parent = this;
+      clone._ns = name;
+      this[name.toUpperCase()] = clone;
+      return clone;
+    };
+    
+    Imba.Tags.prototype.baseType = function (name){
+      return idx$(name,HTML_TAGS) >= 0 ? ('htmlelement') : ('div');
+    };
+    
+    Imba.Tags.prototype.defineTag = function (name,supr,body){
+      if(body==undefined && typeof supr == 'function') body = supr,supr = '';
+      if(supr==undefined) supr = '';
+      supr || (supr = this.baseType(name));
+      var supertype = this[supr];
+      var tagtype = Tag();
+      var norm = name.replace(/\-/g,'_');
+      
+      
+      tagtype._name = name;
+      extender(tagtype,supertype);
+      
+      if (name[0] == '#') {
+        this[name] = tagtype;
+        Imba.SINGLETONS[name.slice(1)] = tagtype;
+      } else {
+        this[name] = tagtype;
+        this['$' + norm] = TagSpawner(tagtype);
+      };
+      
+      if (body) {
+        if (body.length == 2) {
+          // create clone
+          if (!tagtype.hasOwnProperty('TAGS')) {
+            tagtype.TAGS = (supertype.TAGS || this).__clone();
+          };
+        };
+        
+        body.call(tagtype,tagtype,tagtype.TAGS || this);
+      };
+      
+      return tagtype;
+    };
+    
+    Imba.Tags.prototype.defineSingleton = function (name,supr,body){
+      return this.defineTag(name,supr,body);
+    };
+    
+    Imba.Tags.prototype.extendTag = function (name,supr,body){
+      if(body==undefined && typeof supr == 'function') body = supr,supr = '';
+      if(supr==undefined) supr = '';
+      var klass = ((typeof name=='string'||name instanceof String) ? (this[name]) : (name));
+      // allow for private tags here as well?
+      if (body) { body && body.call(klass,klass,klass.prototype) };
+      return klass;
+    };
+    
+    
+    Imba.TAGS = new Imba.Tags();
+    Imba.TAGS.element = Imba.Tag;
+    
+    var svg = Imba.TAGS.defineNamespace('svg');
+    
+    svg.baseType = function (name){
+      return 'svgelement';
+    };
+    
+    
+    Imba.SINGLETONS = {};
+    
+    
+    Imba.defineTag = function (name,supr,body){
+      if(body==undefined && typeof supr == 'function') body = supr,supr = '';
+      if(supr==undefined) supr = '';
+      return Imba.TAGS.defineTag(name,supr,body);
+    };
+    
+    Imba.defineSingletonTag = function (id,supr,body){
+      if(body==undefined && typeof supr == 'function') body = supr,supr = 'div';
+      if(supr==undefined) supr = 'div';
+      return Imba.TAGS.defineTag(this.name(),supr,body);
+    };
+    
+    Imba.extendTag = function (name,body){
+      return Imba.TAGS.extendTag(name,body);
+    };
+    
+    Imba.tag = function (name){
+      var typ = Imba.TAGS[name];
+      if (!typ) { throw new Error(("tag " + name + " is not defined")) };
+      return new typ(typ.createNode());
+    };
+    
+    Imba.tagWithId = function (name,id){
+      var typ = Imba.TAGS[name];
+      if (!typ) { throw new Error(("tag " + name + " is not defined")) };
+      var dom = typ.createNode();
+      dom.id = id;
+      return new typ(dom);
+    };
+    
+    // TODO: Can we move these out and into dom.imba in a clean way?
+    // These methods depends on Imba.document.getElementById
+    
+    Imba.getTagSingleton = function (id){
+      var klass;
+      var dom,node;
+      
+      if (klass = Imba.SINGLETONS[id]) {
+        if (klass && klass.Instance) { return klass.Instance };
+        
+        // no instance - check for element
+        if (dom = Imba.document().getElementById(id)) {
+          // we have a live instance - when finding it through a selector we should awake it, no?
+          // console.log('creating the singleton from existing node in dom?',id,type)
+          node = klass.Instance = new klass(dom);
+          node.awaken(dom); // should only awaken
+          return node;
+        };
+        
+        dom = klass.createNode();
+        dom.id = id;
+        node = klass.Instance = new klass(dom);
+        node.end().awaken(dom);
+        return node;
+      } else if (dom = Imba.document().getElementById(id)) {
+        return Imba.getTagForDom(dom);
+      };
+    };
+    
+    var svgSupport = typeof SVGElement !== 'undefined';
+    
+    Imba.getTagForDom = function (dom){
+      var m;
+      if (!dom) { return null };
+      if (dom._dom) { return dom }; // could use inheritance instead
+      if (dom._tag) { return dom._tag };
+      if (!dom.nodeName) { return null };
+      
+      var ns = null;
+      var id = dom.id;
+      var type = dom.nodeName.toLowerCase();
+      var tags = Imba.TAGS;
+      var native$ = type;
+      var cls = dom.className;
+      
+      if (id && Imba.SINGLETONS[id]) {
+        // FIXME control that it is the same singleton?
+        // might collide -- not good?
+        return Imba.getTagSingleton(id);
+      };
+      // look for id - singleton
+      
+      // need better test here
+      if (svgSupport && (dom instanceof SVGElement)) {
+        ns = "svg";
+        cls = dom.className.baseVal;
+        tags = tags.SVG;
+      };
+      
+      var spawner;
+      
+      if (cls) {
+        // there can be several matches here - should choose the last
+        // should fall back to less specific later? - otherwise things may fail
+        // TODO rework this
+        if (m = cls.match(/\b_([a-z\-]+)\b(?!\s*_[a-z\-]+)/)) {
+          type = m[1]; // .replace(/-/g,'_')
+        };
+        
+        if (m = cls.match(/\b([A-Z\-]+)_\b/)) {
+          ns = m[1];
+        };
+      };
+      
+      
+      spawner = tags[type] || tags[native$];
+      return spawner ? (new spawner(dom).awaken(dom)) : (null);
+    };
+    
+    tag$ = Imba.TAGS;
+    t$ = Imba.tag;
+    tc$ = Imba.tagWithFlags;
+    ti$ = Imba.tagWithId;
+    tic$ = Imba.tagWithIdAndFlags;
+    id$ = Imba.getTagSingleton;
+    return tag$wrap = Imba.getTagForDom;
+    
+
+  })()
+
+/***/ },
+/* 5 */
+/***/ function(module, exports) {
+
+  (function(){
+    function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+    
+    Imba.document = function (){
+      return window.document;
+    };
+    
+    /*
+    Returns the body element wrapped in an Imba.Tag
+    */
+    
+    Imba.root = function (){
+      return tag$wrap(Imba.document().body);
+    };
+    
+    tag$.defineTag('htmlelement', 'element', function(tag){
+      
+      /*
+        Called when a tag type is being subclassed.
+        */
+      
+      tag.inherit = function (child){
+        child.prototype._empty = true;
+        child._protoDom = null;
+        
+        if (this._nodeType) {
+          child._nodeType = this._nodeType;
+          
+          var className = "_" + child._name.replace(/_/g,'-');
+          if (child._name[0] != '#') { return child._classes = this._classes.concat(className) };
+        } else {
+          child._nodeType = child._name;
+          return child._classes = [];
+        };
+      };
+      
+      tag.buildNode = function (){
+        var dom = Imba.document().createElement(this._nodeType);
+        var cls = this._classes.join(" ");
+        if (cls) { dom.className = cls };
+        return dom;
+      };
+      
+      tag.createNode = function (){
+        var proto = (this._protoDom || (this._protoDom = this.buildNode()));
+        return proto.cloneNode(false);
+      };
+      
+      tag.dom = function (){
+        return this._protoDom || (this._protoDom = this.buildNode());
+      };
+      
+      tag.prototype.tabindex = function(v){ return this.getAttribute('tabindex'); }
+      tag.prototype.setTabindex = function(v){ this.setAttribute('tabindex',v); return this; };
+      tag.prototype.title = function(v){ return this.getAttribute('title'); }
+      tag.prototype.setTitle = function(v){ this.setAttribute('title',v); return this; };
+      tag.prototype.role = function(v){ return this.getAttribute('role'); }
+      tag.prototype.setRole = function(v){ this.setAttribute('role',v); return this; };
+      tag.prototype.name = function(v){ return this.getAttribute('name'); }
+      tag.prototype.setName = function(v){ this.setAttribute('name',v); return this; };
+      
+      tag.prototype.id = function (){
+        return this.dom().id;
+      };
+      
+      tag.prototype.setId = function (id){
+        this.dom().id = id;
+        return this;
+      };
+      
+      tag.prototype.width = function (){
+        return this._dom.offsetWidth;
+      };
+      
+      tag.prototype.height = function (){
+        return this._dom.offsetHeight;
+      };
+      
+      tag.prototype.setChildren = function (nodes,type){
+        this._empty ? (this.append(nodes)) : (this.empty().append(nodes));
+        this._children = null;
+        return this;
+      };
+      
+      /*
+        Set inner html of node
+        */
+      
+      tag.prototype.setHtml = function (html){
+        this._dom.innerHTML = html;
+        return this;
+      };
+      
+      /*
+        Get inner html of node
+        */
+      
+      tag.prototype.html = function (){
+        return this._dom.innerHTML;
+      };
+      
+      /*
+        Remove all content inside node
+        */
+      
+      tag.prototype.empty = function (){
+        while (this._dom.firstChild){
+          this._dom.removeChild(this._dom.firstChild);
+        };
+        this._children = null;
+        this._empty = true;
+        return this;
+      };
+      
+      /*
+        Remove specified child from current node.
+        */
+      
+      tag.prototype.remove = function (child){
+        var par = this.dom();
+        var el = child && child.dom();
+        if (el && el.parentNode == par) { par.removeChild(el) };
+        return this;
+      };
+      
+      tag.prototype.emit = function (name,pars){
+        if(!pars||pars.constructor !== Object) pars = {};
+        var data = pars.data !== undefined ? pars.data : null;
+        var bubble = pars.bubble !== undefined ? pars.bubble : true;
+        Imba.Events.trigger(name,this,{data: data,bubble: bubble});
+        return this;
+      };
+      
+      tag.prototype.dataset = function (key,val){
+        if (key instanceof Object) {
+          for (var i = 0, keys = Object.keys(key), l = keys.length; i < l; i++){
+            this.dataset(keys[i],key[keys[i]]);
+          };
+          return this;
+        };
+        
+        if (arguments.length == 2) {
+          this.setAttribute(("data-" + key),val);
+          return this;
+        };
+        
+        if (key) {
+          return this.getAttribute(("data-" + key));
+        };
+        
+        var dataset = this.dom().dataset;
+        
+        if (!dataset) {
+          dataset = {};
+          for (var i = 0, ary = iter$(this.dom().attributes), len = ary.length, atr; i < len; i++) {
+            atr = ary[i];
+            if (atr.name.substr(0,5) == 'data-') {
+              dataset[Imba.toCamelCase(atr.name.slice(5))] = atr.value;
+            };
+          };
+        };
+        
+        return dataset;
+      };
+      
+      /*
+        Get descendants of current node, optionally matching selector
+        @return {Imba.Selector}
+        */
+      
+      tag.prototype.find = function (sel){
+        return new Imba.Selector(sel,this);
+      };
+      
+      /*
+        Get the first matching child of node
+      
+        @return {Imba.Tag}
+        */
+      
+      tag.prototype.first = function (sel){
+        return sel ? (this.find(sel).first()) : (tag$wrap(this.dom().firstElementChild));
+      };
+      
+      /*
+        Get the last matching child of node
+      
+          node.last # returns the last child of node
+          node.last %span # returns the last span inside node
+          node.last do |el| el.text == 'Hi' # return last node with text Hi
+      
+        @return {Imba.Tag}
+        */
+      
+      tag.prototype.last = function (sel){
+        return sel ? (this.find(sel).last()) : (tag$wrap(this.dom().lastElementChild));
+      };
+      
+      /*
+        Get the child at index
+        */
+      
+      tag.prototype.child = function (i){
+        return tag$wrap(this.dom().children[i || 0]);
+      };
+      
+      tag.prototype.children = function (sel){
+        var nodes = new Imba.Selector(null,this,this._dom.children);
+        return sel ? (nodes.filter(sel)) : (nodes);
+      };
+      
+      tag.prototype.orphanize = function (){
+        var par;
+        if (par = this.dom().parentNode) { par.removeChild(this._dom) };
+        return this;
+      };
+      
+      tag.prototype.matches = function (sel){
+        var fn;
+        if (sel instanceof Function) {
+          return sel(this);
+        };
+        
+        if (sel.query) { sel = sel.query() };
+        if (fn = (this._dom.matches || this._dom.matchesSelector || this._dom.webkitMatchesSelector || this._dom.msMatchesSelector || this._dom.mozMatchesSelector)) {
+          return fn.call(this._dom,sel);
+        };
+      };
+      
+      /*
+        Get the first element matching supplied selector / filter
+        traversing upwards, but including the node itself.
+        @return {Imba.Tag}
+        */
+      
+      tag.prototype.closest = function (sel){
+        if (!sel) { return this.parent() }; // should return self?!
+        var node = this;
+        if (sel.query) { sel = sel.query() };
+        
+        while (node){
+          if (node.matches(sel)) { return node };
+          node = node.parent();
+        };
+        return null;
+      };
+      
+      /*
+        Get the closest ancestor of node that matches
+        specified selector / matcher.
+      
+        @return {Imba.Tag}
+        */
+      
+      tag.prototype.up = function (sel){
+        if (!sel) { return this.parent() };
+        return this.parent() && this.parent().closest(sel);
+      };
+      
+      tag.prototype.path = function (sel){
+        var node = this;
+        var nodes = [];
+        if (sel && sel.query) { sel = sel.query() };
+        
+        while (node){
+          if (!sel || node.matches(sel)) { nodes.push(node) };
+          node = node.parent();
+        };
+        return nodes;
+      };
+      
+      tag.prototype.parents = function (sel){
+        var par = this.parent();
+        return par ? (par.path(sel)) : ([]);
+      };
+      
+      
+      
+      tag.prototype.siblings = function (sel){
+        var par, self = this;
+        if (!(par = this.parent())) { return [] }; // FIXME
+        var ary = this.dom().parentNode.children;
+        var nodes = new Imba.Selector(null,this,ary);
+        return nodes.filter(function(n) { return n != self && (!sel || n.matches(sel)); });
+      };
+      
+      /*
+        Get the immediately following sibling of node.
+        */
+      
+      tag.prototype.next = function (sel){
+        if (sel) {
+          var el = this;
+          while (el = el.next()){
+            if (el.matches(sel)) { return el };
+          };
+          return null;
+        };
+        return tag$wrap(this.dom().nextElementSibling);
+      };
+      
+      /*
+        Get the immediately preceeding sibling of node.
+        */
+      
+      tag.prototype.prev = function (sel){
+        if (sel) {
+          var el = this;
+          while (el = el.prev()){
+            if (el.matches(sel)) { return el };
+          };
+          return null;
+        };
+        return tag$wrap(this.dom().previousElementSibling);
+      };
+      
+      tag.prototype.contains = function (node){
+        return this.dom().contains(node && node._dom || node);
+      };
+      
+      tag.prototype.index = function (){
+        var i = 0;
+        var el = this.dom();
+        while (el.previousSibling){
+          el = el.previousSibling;
+          i++;
+        };
+        return i;
+      };
+      
+      
+      /*
+        
+        @deprecated
+        */
+      
+      tag.prototype.insert = function (node,pars){
+        if(!pars||pars.constructor !== Object) pars = {};
+        var before = pars.before !== undefined ? pars.before : null;
+        var after = pars.after !== undefined ? pars.after : null;
+        if (after) { before = after.next() };
+        if (node instanceof Array) {
+          node = (tag$.$fragment().setContent(node,0).end());
+        };
+        if (before) {
+          this.dom().insertBefore(node.dom(),before.dom());
+        } else {
+          this.append(node);
+        };
+        return this;
+      };
+      
+      /*
+        Focus on current node
+        @return {self}
+        */
+      
+      tag.prototype.focus = function (){
+        this.dom().focus();
+        return this;
+      };
+      
+      /*
+        Remove focus from current node
+        @return {self}
+        */
+      
+      tag.prototype.blur = function (){
+        this.dom().blur();
+        return this;
+      };
+      
+      tag.prototype.template = function (){
+        return null;
+      };
+      
+      /*
+        @todo Should support multiple arguments like append
+      
+        The .prepend method inserts the specified content as the first
+        child of the target node. If the content is already a child of 
+        node it will be moved to the start.
+        
+            node.prepend <div.top> # prepend node
+            node.prepend "some text" # prepend text
+            node.prepend [<ul>,<ul>] # prepend array
+      
+        */
+      
+      tag.prototype.prepend = function (item){
+        var first = this._dom.childNodes[0];
+        first ? (this.insertBefore(item,first)) : (this.appendChild(item));
+        return this;
+      };
+      
+      /*
+        The .append method inserts the specified content as the last child
+        of the target node. If the content is already a child of node it
+        will be moved to the end.
+        
+        # example
+            var root = <div.root>
+            var item = <div.item> "This is an item"
+            root.append item # appends item to the end of root
+      
+            root.prepend "some text" # append text
+            root.prepend [<ul>,<ul>] # append array
+        */
+      
+      tag.prototype.append = function (item){
+        // possible to append blank
+        // possible to simplify on server?
+        if (!item) { return this };
+        
+        if (item instanceof Array) {
+          for (var i = 0, ary = iter$(item), len = ary.length, member; i < len; i++) {
+            member = ary[i];
+            member && this.append(member);
+          };
+        } else if ((typeof item=='string'||item instanceof String) || (typeof item=='number'||item instanceof Number)) {
+          var node = Imba.document().createTextNode(item);
+          this._dom.appendChild(node);
+          if (this._empty) { this._empty = false };
+        } else {
+          this._dom.appendChild(item._dom || item);
+          if (this._empty) { this._empty = false };
+        };
+        
+        return this;
+      };
+      
+      /*
+        Insert a node into the current node (self), before another.
+        The relative node must be a child of current node. 
+        */
+      
+      tag.prototype.insertBefore = function (node,rel){
+        if ((typeof node=='string'||node instanceof String)) { node = Imba.document().createTextNode(node) };
+        if (node && rel) { this.dom().insertBefore((node._dom || node),(rel._dom || rel)) };
+        return this;
+      };
+      
+      /*
+        Append a single item (node or string) to the current node.
+        If supplied item is a string it will automatically. This is used
+        by Imba internally, but will practically never be used explicitly.
+        */
+      
+      tag.prototype.appendChild = function (node){
+        if ((typeof node=='string'||node instanceof String)) { node = Imba.document().createTextNode(node) };
+        if (node) { this.dom().appendChild(node._dom || node) };
+        return this;
+      };
+      
+      /*
+        Remove a single child from the current node.
+        Used by Imba internally.
+        */
+      
+      tag.prototype.removeChild = function (node){
+        if (node) { this.dom().removeChild(node._dom || node) };
+        return this;
+      };
+      
+      /*
+        @deprecated
+        */
+      
+      tag.prototype.classes = function (){
+        console.log('Imba.Tag#classes is deprecated');
+        return this._dom.classList;
+      };
+    });
+    
+    return tag$.defineTag('svgelement', 'htmlelement');
+
+  })()
+
+/***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+  (function(){
+    
+    // predefine all supported html tags
+    tag$.defineTag('fragment', 'htmlelement', function(tag){
+      
+      tag.createNode = function (){
+        return Imba.document().createDocumentFragment();
+      };
+    });
+    
+    tag$.defineTag('a', function(tag){
+      tag.prototype.href = function(v){ return this.getAttribute('href'); }
+      tag.prototype.setHref = function(v){ this.setAttribute('href',v); return this; };
+    });
+    
+    tag$.defineTag('abbr');
+    tag$.defineTag('address');
+    tag$.defineTag('area');
+    tag$.defineTag('article');
+    tag$.defineTag('aside');
+    tag$.defineTag('audio');
+    tag$.defineTag('b');
+    tag$.defineTag('base');
+    tag$.defineTag('bdi');
+    tag$.defineTag('bdo');
+    tag$.defineTag('big');
+    tag$.defineTag('blockquote');
+    tag$.defineTag('body');
+    tag$.defineTag('br');
+    
+    tag$.defineTag('button', function(tag){
+      tag.prototype.autofocus = function(v){ return this.getAttribute('autofocus'); }
+      tag.prototype.setAutofocus = function(v){ this.setAttribute('autofocus',v); return this; };
+      tag.prototype.type = function(v){ return this.getAttribute('type'); }
+      tag.prototype.setType = function(v){ this.setAttribute('type',v); return this; };
+      
+      tag.prototype.__disabled = {dom: true,name: 'disabled'};
+      tag.prototype.disabled = function(v){ return this.dom().disabled; }
+      tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
+    });
+    
+    tag$.defineTag('canvas', function(tag){
+      tag.prototype.__width = {dom: true,name: 'width'};
+      tag.prototype.width = function(v){ return this.dom().width; }
+      tag.prototype.setWidth = function(v){ if (v != this.dom().width) { this.dom().width = v }; return this; };
+      tag.prototype.__height = {dom: true,name: 'height'};
+      tag.prototype.height = function(v){ return this.dom().height; }
+      tag.prototype.setHeight = function(v){ if (v != this.dom().height) { this.dom().height = v }; return this; };
+      
+      tag.prototype.context = function (type){
+        if(type === undefined) type = '2d';
+        return this.dom().getContext(type);
+      };
+    });
+    
+    tag$.defineTag('caption');
+    tag$.defineTag('cite');
+    tag$.defineTag('code');
+    tag$.defineTag('col');
+    tag$.defineTag('colgroup');
+    tag$.defineTag('data');
+    tag$.defineTag('datalist');
+    tag$.defineTag('dd');
+    tag$.defineTag('del');
+    tag$.defineTag('details');
+    tag$.defineTag('dfn');
+    tag$.defineTag('div');
+    tag$.defineTag('dl');
+    tag$.defineTag('dt');
+    tag$.defineTag('em');
+    tag$.defineTag('embed');
+    
+    tag$.defineTag('fieldset', function(tag){
+      tag.prototype.__disabled = {dom: true,name: 'disabled'};
+      tag.prototype.disabled = function(v){ return this.dom().disabled; }
+      tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
+    });
+    
+    tag$.defineTag('figcaption');
+    tag$.defineTag('figure');
+    tag$.defineTag('footer');
+    
+    tag$.defineTag('form', function(tag){
+      tag.prototype.method = function(v){ return this.getAttribute('method'); }
+      tag.prototype.setMethod = function(v){ this.setAttribute('method',v); return this; };
+      tag.prototype.action = function(v){ return this.getAttribute('action'); }
+      tag.prototype.setAction = function(v){ this.setAttribute('action',v); return this; };
+    });
+    
+    tag$.defineTag('h1');
+    tag$.defineTag('h2');
+    tag$.defineTag('h3');
+    tag$.defineTag('h4');
+    tag$.defineTag('h5');
+    tag$.defineTag('h6');
+    tag$.defineTag('head');
+    tag$.defineTag('header');
+    tag$.defineTag('hr');
+    tag$.defineTag('html');
+    tag$.defineTag('i');
+    
+    tag$.defineTag('iframe', function(tag){
+      tag.prototype.src = function(v){ return this.getAttribute('src'); }
+      tag.prototype.setSrc = function(v){ this.setAttribute('src',v); return this; };
+    });
+    
+    tag$.defineTag('img', function(tag){
+      tag.prototype.src = function(v){ return this.getAttribute('src'); }
+      tag.prototype.setSrc = function(v){ this.setAttribute('src',v); return this; };
+    });
+    
+    tag$.defineTag('input', function(tag){
+      tag.prototype.type = function(v){ return this.getAttribute('type'); }
+      tag.prototype.setType = function(v){ this.setAttribute('type',v); return this; };
+      tag.prototype.required = function(v){ return this.getAttribute('required'); }
+      tag.prototype.setRequired = function(v){ this.setAttribute('required',v); return this; };
+      tag.prototype.disabled = function(v){ return this.getAttribute('disabled'); }
+      tag.prototype.setDisabled = function(v){ this.setAttribute('disabled',v); return this; };
+      tag.prototype.autofocus = function(v){ return this.getAttribute('autofocus'); }
+      tag.prototype.setAutofocus = function(v){ this.setAttribute('autofocus',v); return this; };
+      
+      tag.prototype.__value = {dom: true,name: 'value'};
+      tag.prototype.value = function(v){ return this.dom().value; }
+      tag.prototype.setValue = function(v){ if (v != this.dom().value) { this.dom().value = v }; return this; };
+      tag.prototype.__placeholder = {dom: true,name: 'placeholder'};
+      tag.prototype.placeholder = function(v){ return this.dom().placeholder; }
+      tag.prototype.setPlaceholder = function(v){ if (v != this.dom().placeholder) { this.dom().placeholder = v }; return this; };
+      tag.prototype.__required = {dom: true,name: 'required'};
+      tag.prototype.required = function(v){ return this.dom().required; }
+      tag.prototype.setRequired = function(v){ if (v != this.dom().required) { this.dom().required = v }; return this; };
+      tag.prototype.__disabled = {dom: true,name: 'disabled'};
+      tag.prototype.disabled = function(v){ return this.dom().disabled; }
+      tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
+      tag.prototype.__checked = {dom: true,name: 'checked'};
+      tag.prototype.checked = function(v){ return this.dom().checked; }
+      tag.prototype.setChecked = function(v){ if (v != this.dom().checked) { this.dom().checked = v }; return this; };
+    });
+    
+    tag$.defineTag('ins');
+    tag$.defineTag('kbd');
+    tag$.defineTag('keygen');
+    tag$.defineTag('label');
+    tag$.defineTag('legend');
+    tag$.defineTag('li');
+    
+    tag$.defineTag('link', function(tag){
+      tag.prototype.rel = function(v){ return this.getAttribute('rel'); }
+      tag.prototype.setRel = function(v){ this.setAttribute('rel',v); return this; };
+      tag.prototype.type = function(v){ return this.getAttribute('type'); }
+      tag.prototype.setType = function(v){ this.setAttribute('type',v); return this; };
+      tag.prototype.href = function(v){ return this.getAttribute('href'); }
+      tag.prototype.setHref = function(v){ this.setAttribute('href',v); return this; };
+      tag.prototype.media = function(v){ return this.getAttribute('media'); }
+      tag.prototype.setMedia = function(v){ this.setAttribute('media',v); return this; };
+    });
+    
+    tag$.defineTag('main');
+    tag$.defineTag('map');
+    tag$.defineTag('mark');
+    tag$.defineTag('menu');
+    tag$.defineTag('menuitem');
+    
+    tag$.defineTag('meta', function(tag){
+      tag.prototype.content = function(v){ return this.getAttribute('content'); }
+      tag.prototype.setContent = function(v){ this.setAttribute('content',v); return this; };
+      tag.prototype.charset = function(v){ return this.getAttribute('charset'); }
+      tag.prototype.setCharset = function(v){ this.setAttribute('charset',v); return this; };
+    });
+    
+    tag$.defineTag('meter');
+    tag$.defineTag('nav');
+    tag$.defineTag('noscript');
+    
+    tag$.defineTag('ol');
+    tag$.defineTag('optgroup', function(tag){
+      tag.prototype.__disabled = {dom: true,name: 'disabled'};
+      tag.prototype.disabled = function(v){ return this.dom().disabled; }
+      tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
+    });
+    
+    tag$.defineTag('option', function(tag){
+      tag.prototype.__disabled = {dom: true,name: 'disabled'};
+      tag.prototype.disabled = function(v){ return this.dom().disabled; }
+      tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
+      tag.prototype.__selected = {dom: true,name: 'selected'};
+      tag.prototype.selected = function(v){ return this.dom().selected; }
+      tag.prototype.setSelected = function(v){ if (v != this.dom().selected) { this.dom().selected = v }; return this; };
+      tag.prototype.__value = {dom: true,name: 'value'};
+      tag.prototype.value = function(v){ return this.dom().value; }
+      tag.prototype.setValue = function(v){ if (v != this.dom().value) { this.dom().value = v }; return this; };
+    });
+    
+    tag$.defineTag('output');
+    tag$.defineTag('p');
+    
+    tag$.defineTag('object', function(tag){
+      Imba.attr(tag,'type');
+      Imba.attr(tag,'data');
+      Imba.attr(tag,'width');
+      Imba.attr(tag,'height');
+    });
+    
+    tag$.defineTag('param', function(tag){
+      tag.prototype.name = function(v){ return this.getAttribute('name'); }
+      tag.prototype.setName = function(v){ this.setAttribute('name',v); return this; };
+      tag.prototype.value = function(v){ return this.getAttribute('value'); }
+      tag.prototype.setValue = function(v){ this.setAttribute('value',v); return this; };
+    });
+    
+    tag$.defineTag('pre');
+    tag$.defineTag('progress');
+    tag$.defineTag('q');
+    tag$.defineTag('rp');
+    tag$.defineTag('rt');
+    tag$.defineTag('ruby');
+    tag$.defineTag('s');
+    tag$.defineTag('samp');
+    
+    tag$.defineTag('script', function(tag){
+      tag.prototype.src = function(v){ return this.getAttribute('src'); }
+      tag.prototype.setSrc = function(v){ this.setAttribute('src',v); return this; };
+      tag.prototype.type = function(v){ return this.getAttribute('type'); }
+      tag.prototype.setType = function(v){ this.setAttribute('type',v); return this; };
+      tag.prototype.async = function(v){ return this.getAttribute('async'); }
+      tag.prototype.setAsync = function(v){ this.setAttribute('async',v); return this; };
+      tag.prototype.defer = function(v){ return this.getAttribute('defer'); }
+      tag.prototype.setDefer = function(v){ this.setAttribute('defer',v); return this; };
+    });
+    
+    tag$.defineTag('section');
+    
+    tag$.defineTag('select', function(tag){
+      tag.prototype.multiple = function(v){ return this.getAttribute('multiple'); }
+      tag.prototype.setMultiple = function(v){ this.setAttribute('multiple',v); return this; };
+      
+      tag.prototype.__disabled = {dom: true,name: 'disabled'};
+      tag.prototype.disabled = function(v){ return this.dom().disabled; }
+      tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
+      tag.prototype.__required = {dom: true,name: 'required'};
+      tag.prototype.required = function(v){ return this.dom().required; }
+      tag.prototype.setRequired = function(v){ if (v != this.dom().required) { this.dom().required = v }; return this; };
+      tag.prototype.__value = {dom: true,name: 'value'};
+      tag.prototype.value = function(v){ return this.dom().value; }
+      tag.prototype.setValue = function(v){ if (v != this.dom().value) { this.dom().value = v }; return this; };
+    });
+    
+    
+    tag$.defineTag('small');
+    tag$.defineTag('source');
+    tag$.defineTag('span');
+    tag$.defineTag('strong');
+    tag$.defineTag('style');
+    tag$.defineTag('sub');
+    tag$.defineTag('summary');
+    tag$.defineTag('sup');
+    tag$.defineTag('table');
+    tag$.defineTag('tbody');
+    tag$.defineTag('td');
+    
+    tag$.defineTag('textarea', function(tag){
+      tag.prototype.rows = function(v){ return this.getAttribute('rows'); }
+      tag.prototype.setRows = function(v){ this.setAttribute('rows',v); return this; };
+      tag.prototype.cols = function(v){ return this.getAttribute('cols'); }
+      tag.prototype.setCols = function(v){ this.setAttribute('cols',v); return this; };
+      tag.prototype.autofocus = function(v){ return this.getAttribute('autofocus'); }
+      tag.prototype.setAutofocus = function(v){ this.setAttribute('autofocus',v); return this; };
+      
+      tag.prototype.__value = {dom: true,name: 'value'};
+      tag.prototype.value = function(v){ return this.dom().value; }
+      tag.prototype.setValue = function(v){ if (v != this.dom().value) { this.dom().value = v }; return this; };
+      tag.prototype.__disabled = {dom: true,name: 'disabled'};
+      tag.prototype.disabled = function(v){ return this.dom().disabled; }
+      tag.prototype.setDisabled = function(v){ if (v != this.dom().disabled) { this.dom().disabled = v }; return this; };
+      tag.prototype.__required = {dom: true,name: 'required'};
+      tag.prototype.required = function(v){ return this.dom().required; }
+      tag.prototype.setRequired = function(v){ if (v != this.dom().required) { this.dom().required = v }; return this; };
+      tag.prototype.__placeholder = {dom: true,name: 'placeholder'};
+      tag.prototype.placeholder = function(v){ return this.dom().placeholder; }
+      tag.prototype.setPlaceholder = function(v){ if (v != this.dom().placeholder) { this.dom().placeholder = v }; return this; };
+    });
+    
+    tag$.defineTag('tfoot');
+    tag$.defineTag('th');
+    tag$.defineTag('thead');
+    tag$.defineTag('time');
+    tag$.defineTag('title');
+    tag$.defineTag('tr');
+    tag$.defineTag('track');
+    tag$.defineTag('u');
+    tag$.defineTag('ul');
+    tag$.defineTag('video');
+    tag$.defineTag('wbr');
+    
+    // var idls =
+    //  name: ['button','form','fieldset','iframe','input','keygen','object','output','select','textarea','map','meta','param']
+    //  src: ['audio','embed','iframe','img','input','script','source','track','video']
+    //  disabled: ['button','fieldset','input','keygen','optgroup','option','select','textarea'] # 'command',
+    //  required: ['input','select','textarea']
+    
+    // for own name,tags of idls
+    //  idls[name] = tags.map do |name|
+    //    console.log name
+    //    Imba.TAGS[name][:prototype]
+    // 
+    // for typ in idls:src
+    //  def typ.src do dom:src
+    //  def typ.setSrc val
+    //    dom:src = val if val != dom:src
+    //    self
+    // 
+    // for typ in idls:disabled
+    //  def typ.disabled do dom:disabled
+    //  def typ.setDisabled val
+    //    dom:disabled = val if dom:disabled != !!val
+    //    self
+    // 
+    // for typ in idls:required
+    //  def typ.required do dom:required
+    //  def typ.setRequired val
+    //    dom:required = val if dom:required != !!val
+    //    self
+    
+    
+    return true;
+
+  })()
+
+/***/ },
+/* 7 */
+/***/ function(module, exports) {
+
+  (function(){
+    function idx$(a,b){
+      return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
+    };
+    
+    
+    tag$.ns('svg').defineTag('svgelement', function(tag){
+      
+      tag.namespaceURI = function (){
+        return "http://www.w3.org/2000/svg";
+      };
+      
+      var types = "circle defs ellipse g line linearGradient mask path pattern polygon polyline radialGradient rect stop svg text tspan".split(" ");
+      
+      tag.buildNode = function (){
+        var dom = Imba.document().createElementNS(this.namespaceURI(),this._nodeType);
+        var cls = this._classes.join(" ");
+        if (cls) { dom.className.baseVal = cls };
+        return dom;
+      };
+      
+      tag.inherit = function (child){
+        child._protoDom = null;
+        
+        if (idx$(child._name,types) >= 0) {
+          child._nodeType = child._name;
+          return child._classes = [];
+        } else {
+          child._nodeType = this._nodeType;
+          var className = "_" + child._name.replace(/_/g,'-');
+          return child._classes = this._classes.concat(className);
+        };
+      };
+      
+      
+      Imba.attr(tag,'x');
+      Imba.attr(tag,'y');
+      
+      Imba.attr(tag,'width');
+      Imba.attr(tag,'height');
+      
+      Imba.attr(tag,'stroke');
+      Imba.attr(tag,'stroke-width');
+    });
+    
+    tag$.ns('svg').defineTag('svg', function(tag){
+      Imba.attr(tag,'viewbox');
+    });
+    
+    tag$.ns('svg').defineTag('g');
+    
+    tag$.ns('svg').defineTag('defs');
+    
+    tag$.ns('svg').defineTag('symbol', function(tag){
+      Imba.attr(tag,'preserveAspectRatio');
+      Imba.attr(tag,'viewBox');
+    });
+    
+    tag$.ns('svg').defineTag('marker', function(tag){
+      Imba.attr(tag,'markerUnits');
+      Imba.attr(tag,'refX');
+      Imba.attr(tag,'refY');
+      Imba.attr(tag,'markerWidth');
+      Imba.attr(tag,'markerHeight');
+      Imba.attr(tag,'orient');
+    });
+    
+    
+    // Basic shapes
+    
+    tag$.ns('svg').defineTag('rect', function(tag){
+      Imba.attr(tag,'rx');
+      Imba.attr(tag,'ry');
+    });
+    
+    tag$.ns('svg').defineTag('circle', function(tag){
+      Imba.attr(tag,'cx');
+      Imba.attr(tag,'cy');
+      Imba.attr(tag,'r');
+    });
+    
+    tag$.ns('svg').defineTag('ellipse', function(tag){
+      Imba.attr(tag,'cx');
+      Imba.attr(tag,'cy');
+      Imba.attr(tag,'rx');
+      Imba.attr(tag,'ry');
+    });
+    
+    tag$.ns('svg').defineTag('path', function(tag){
+      Imba.attr(tag,'d');
+      Imba.attr(tag,'pathLength');
+    });
+    
+    tag$.ns('svg').defineTag('line', function(tag){
+      Imba.attr(tag,'x1');
+      Imba.attr(tag,'x2');
+      Imba.attr(tag,'y1');
+      Imba.attr(tag,'y2');
+    });
+    
+    tag$.ns('svg').defineTag('polyline', function(tag){
+      Imba.attr(tag,'points');
+    });
+    
+    tag$.ns('svg').defineTag('polygon', function(tag){
+      Imba.attr(tag,'points');
+    });
+    
+    tag$.ns('svg').defineTag('text', function(tag){
+      Imba.attr(tag,'dx');
+      Imba.attr(tag,'dy');
+      Imba.attr(tag,'text-anchor');
+      Imba.attr(tag,'rotate');
+      Imba.attr(tag,'textLength');
+      Imba.attr(tag,'lengthAdjust');
+    });
+    
+    return tag$.ns('svg').defineTag('tspan', function(tag){
+      Imba.attr(tag,'dx');
+      Imba.attr(tag,'dy');
+      Imba.attr(tag,'rotate');
+      Imba.attr(tag,'textLength');
+      Imba.attr(tag,'lengthAdjust');
+    });
+
+  })()
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+  (function(){
+    function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+    // Extending Imba.Tag#css to work without prefixes by inspecting
+    // the properties of a CSSStyleDeclaration and creating a map
+    
+    // var prefixes = ['-webkit-','-ms-','-moz-','-o-','-blink-']
+    // var props = ['transform','transition','animation']
+    
+    if (true) {
+      var styles = window.getComputedStyle(document.documentElement,'');
+      
+      Imba.CSSKeyMap = {};
+      
+      for (var i = 0, ary = iter$(styles), len = ary.length, prefixed; i < len; i++) {
+        prefixed = ary[i];
+        var unprefixed = prefixed.replace(/^-(webkit|ms|moz|o|blink)-/,'');
+        var camelCase = unprefixed.replace(/-(\w)/g,function(m,a) { return a.toUpperCase(); });
+        
+        // if there exists an unprefixed version -- always use this
+        if (prefixed != unprefixed) {
+          if (styles.hasOwnProperty(unprefixed)) { continue; };
+        };
+        
+        // register the prefixes
+        Imba.CSSKeyMap[unprefixed] = Imba.CSSKeyMap[camelCase] = prefixed;
+      };
+      
+      tag$.extendTag('element', function(tag){
+        
+        // override the original css method
+        tag.prototype.css = function (key,val){
+          if (key instanceof Object) {
+            for (var i = 0, keys = Object.keys(key), l = keys.length; i < l; i++){
+              this.css(keys[i],key[keys[i]]);
+            };
+            return this;
+          };
+          
+          key = Imba.CSSKeyMap[key] || key;
+          
+          if (val == null) {
+            this.dom().style.removeProperty(key);
+          } else if (val == undefined) {
+            return this.dom().style[key];
+          } else {
+            if ((typeof val=='number'||val instanceof Number) && key.match(/width|height|left|right|top|bottom/)) {
+              val = val + "px";
+            };
+            this.dom().style[key] = val;
+          };
+          return this;
+        };
+      });
+      
+      if (!document.documentElement.classList) {
+        tag$.extendTag('element', function(tag){
+          
+          tag.prototype.hasFlag = function (ref){
+            return new RegExp('(^|\\s)' + ref + '(\\s|$)').test(this._dom.className);
+          };
+          
+          tag.prototype.addFlag = function (ref){
+            if (this.hasFlag(ref)) { return this };
+            this._dom.className += (this._dom.className ? (' ') : ('')) + ref;
+            return this;
+          };
+          
+          tag.prototype.unflag = function (ref){
+            if (!this.hasFlag(ref)) { return this };
+            var regex = new RegExp('(^|\\s)*' + ref + '(\\s|$)*','g');
+            this._dom.className = this._dom.className.replace(regex,'');
+            return this;
+          };
+          
+          tag.prototype.toggleFlag = function (ref){
+            return this.hasFlag(ref) ? (this.unflag(ref)) : (this.flag(ref));
+          };
+          
+          tag.prototype.flag = function (ref,bool){
+            if (arguments.length == 2 && !!bool === false) {
+              return this.unflag(ref);
+            };
+            return this.addFlag(ref);
+          };
+        });
+        return true;
+      };
+    };
+
+  })()
+
+/***/ },
+/* 9 */
+/***/ function(module, exports) {
+
+  (function(){
+    function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+    var doc = document;
+    var win = window;
+    
+    var hasTouchEvents = window && window.ontouchstart !== undefined;
+    
+    Imba.Pointer = function Pointer(){
+      this.setButton(-1);
+      this.setEvent({x: 0,y: 0,type: 'uninitialized'});
+      return this;
+    };
+    
+    Imba.Pointer.prototype.phase = function(v){ return this._phase; }
+    Imba.Pointer.prototype.setPhase = function(v){ this._phase = v; return this; };
+    Imba.Pointer.prototype.prevEvent = function(v){ return this._prevEvent; }
+    Imba.Pointer.prototype.setPrevEvent = function(v){ this._prevEvent = v; return this; };
+    Imba.Pointer.prototype.button = function(v){ return this._button; }
+    Imba.Pointer.prototype.setButton = function(v){ this._button = v; return this; };
+    Imba.Pointer.prototype.event = function(v){ return this._event; }
+    Imba.Pointer.prototype.setEvent = function(v){ this._event = v; return this; };
+    Imba.Pointer.prototype.dirty = function(v){ return this._dirty; }
+    Imba.Pointer.prototype.setDirty = function(v){ this._dirty = v; return this; };
+    Imba.Pointer.prototype.events = function(v){ return this._events; }
+    Imba.Pointer.prototype.setEvents = function(v){ this._events = v; return this; };
+    Imba.Pointer.prototype.touch = function(v){ return this._touch; }
+    Imba.Pointer.prototype.setTouch = function(v){ this._touch = v; return this; };
+    
+    Imba.Pointer.prototype.update = function (e){
+      this.setEvent(e);
+      this.setDirty(true);
+      return this;
+    };
+    
+    // this is just for regular mouse now
+    Imba.Pointer.prototype.process = function (){
+      var e1 = this.event();
+      
+      if (this.dirty()) {
+        this.setPrevEvent(e1);
+        this.setDirty(false);
+        
+        // button should only change on mousedown etc
+        if (e1.type == 'mousedown') {
+          this.setButton(e1.button);
+          
+          // do not create touch for right click
+          if (this.button() == 2 || (this.touch() && this.button() != 0)) {
+            return;
+          };
+          
+          // cancel the previous touch
+          if (this.touch()) { this.touch().cancel() };
+          this.setTouch(new Imba.Touch(e1,this));
+          this.touch().mousedown(e1,e1);
+        } else if (e1.type == 'mousemove') {
+          if (this.touch()) { this.touch().mousemove(e1,e1) };
+        } else if (e1.type == 'mouseup') {
+          this.setButton(-1);
+          
+          if (this.touch() && this.touch().button() == e1.button) {
+            this.touch().mouseup(e1,e1);
+            this.setTouch(null);
+          };
+          // trigger pointerup
+        };
+      } else {
+        if (this.touch()) { this.touch().idle() };
+      };
+      return this;
+    };
+    
+    Imba.Pointer.prototype.cleanup = function (){
+      return Imba.POINTERS;
+    };
+    
+    Imba.Pointer.prototype.x = function (){
+      return this.event().x;
+    };
+    Imba.Pointer.prototype.y = function (){
+      return this.event().y;
+    };
+    
+    // deprecated -- should remove
+    Imba.Pointer.update = function (){
+      // console.log('update touch')
+      for (var i = 0, ary = iter$(Imba.POINTERS), len = ary.length; i < len; i++) {
+        ary[i].process();
+      };
+      // need to be able to prevent the default behaviour of touch, no?
+      win.requestAnimationFrame(Imba.Pointer.update);
+      return this;
+    };
+    
+    var lastNativeTouchTimeStamp = 0;
+    var lastNativeTouchTimeout = 50;
+    
+    // Imba.Touch
+    // Began  A finger touched the screen.
+    // Moved  A finger moved on the screen.
+    // Stationary A finger is touching the screen but hasn't moved.
+    // Ended  A finger was lifted from the screen. This is the final phase of a touch.
+    // Canceled The system cancelled tracking for the touch.
+    
+    /*
+    Consolidates mouse and touch events. Touch objects persist across a touch,
+    from touchstart until end/cancel. When a touch starts, it will traverse
+    down from the innermost target, until it finds a node that responds to
+    ontouchstart. Unless the touch is explicitly redirected, the touch will
+    call ontouchmove and ontouchend / ontouchcancel on the responder when appropriate.
+    
+      tag draggable
+        # called when a touch starts
+        def ontouchstart touch
+          flag 'dragging'
+          self
+        
+        # called when touch moves - same touch object
+        def ontouchmove touch
+          # move the node with touch
+          css top: touch.dy, left: touch.dx
+        
+        # called when touch ends
+        def ontouchend touch
+          unflag 'dragging'
+    
+    @iname touch
+    */
+    
+    Imba.Touch = function Touch(event,pointer){
+      // @native  = false
+      this.setEvent(event);
+      this.setData({});
+      this.setActive(true);
+      this._button = event && event.button || 0;
+      this._suppress = false; // deprecated
+      this._captured = false;
+      this.setBubble(false);
+      pointer = pointer;
+      this.setUpdates(0);
+      return this;
+    };
+    
+    var touches = [];
+    var count = 0;
+    var identifiers = {};
+    
+    Imba.Touch.count = function (){
+      return count;
+    };
+    
+    Imba.Touch.lookup = function (item){
+      return item && (item.__touch__ || identifiers[item.identifier]);
+    };
+    
+    Imba.Touch.release = function (item,touch){
+      var v_, $1;
+      (((v_ = identifiers[item.identifier]),delete identifiers[item.identifier], v_));
+      ((($1 = item.__touch__),delete item.__touch__, $1));
+      return;
+    };
+    
+    Imba.Touch.ontouchstart = function (e){
+      for (var i = 0, ary = iter$(e.changedTouches), len = ary.length, t; i < len; i++) {
+        t = ary[i];
+        if (this.lookup(t)) { continue; };
+        var touch = identifiers[t.identifier] = new this(e); // (e)
+        t.__touch__ = touch;
+        touches.push(touch);
+        count++;
+        touch.touchstart(e,t);
+      };
+      return this;
+    };
+    
+    Imba.Touch.ontouchmove = function (e){
+      var touch;
+      for (var i = 0, ary = iter$(e.changedTouches), len = ary.length, t; i < len; i++) {
+        t = ary[i];
+        if (touch = this.lookup(t)) {
+          touch.touchmove(e,t);
+        };
+      };
+      
+      return this;
+    };
+    
+    Imba.Touch.ontouchend = function (e){
+      var touch;
+      for (var i = 0, ary = iter$(e.changedTouches), len = ary.length, t; i < len; i++) {
+        t = ary[i];
+        if (touch = this.lookup(t)) {
+          touch.touchend(e,t);
+          this.release(t,touch);
+          count--;
+        };
+      };
+      
+      // e.preventDefault
+      // not always supported!
+      // touches = touches.filter(||)
+      return this;
+    };
+    
+    Imba.Touch.ontouchcancel = function (e){
+      var touch;
+      for (var i = 0, ary = iter$(e.changedTouches), len = ary.length, t; i < len; i++) {
+        t = ary[i];
+        if (touch = this.lookup(t)) {
+          touch.touchcancel(e,t);
+          this.release(t,touch);
+          count--;
+        };
+      };
+      return this;
+    };
+    
+    Imba.Touch.onmousedown = function (e){
+      return this;
+    };
+    
+    Imba.Touch.onmousemove = function (e){
+      return this;
+    };
+    
+    Imba.Touch.onmouseup = function (e){
+      return this;
+    };
+    
+    
+    Imba.Touch.prototype.phase = function(v){ return this._phase; }
+    Imba.Touch.prototype.setPhase = function(v){ this._phase = v; return this; };
+    Imba.Touch.prototype.active = function(v){ return this._active; }
+    Imba.Touch.prototype.setActive = function(v){ this._active = v; return this; };
+    Imba.Touch.prototype.event = function(v){ return this._event; }
+    Imba.Touch.prototype.setEvent = function(v){ this._event = v; return this; };
+    Imba.Touch.prototype.pointer = function(v){ return this._pointer; }
+    Imba.Touch.prototype.setPointer = function(v){ this._pointer = v; return this; };
+    Imba.Touch.prototype.target = function(v){ return this._target; }
+    Imba.Touch.prototype.setTarget = function(v){ this._target = v; return this; };
+    Imba.Touch.prototype.handler = function(v){ return this._handler; }
+    Imba.Touch.prototype.setHandler = function(v){ this._handler = v; return this; };
+    Imba.Touch.prototype.updates = function(v){ return this._updates; }
+    Imba.Touch.prototype.setUpdates = function(v){ this._updates = v; return this; };
+    Imba.Touch.prototype.suppress = function(v){ return this._suppress; }
+    Imba.Touch.prototype.setSuppress = function(v){ this._suppress = v; return this; };
+    Imba.Touch.prototype.data = function(v){ return this._data; }
+    Imba.Touch.prototype.setData = function(v){ this._data = v; return this; };
+    Imba.Touch.prototype.__bubble = {chainable: true,name: 'bubble'};
+    Imba.Touch.prototype.bubble = function(v){ return v !== undefined ? (this.setBubble(v),this) : this._bubble; }
+    Imba.Touch.prototype.setBubble = function(v){ this._bubble = v; return this; };
+    
+    Imba.Touch.prototype.gestures = function(v){ return this._gestures; }
+    Imba.Touch.prototype.setGestures = function(v){ this._gestures = v; return this; };
+    
+    /*
+      
+    
+      @internal
+      @constructor
+      */
+    
+    Imba.Touch.prototype.capture = function (){
+      this._captured = true;
+      this._event && this._event.preventDefault();
+      return this;
+    };
+    
+    Imba.Touch.prototype.isCaptured = function (){
+      return !!this._captured;
+    };
+    
+    /*
+      Extend the touch with a plugin / gesture. 
+      All events (touchstart,move etc) for the touch
+      will be triggered on the plugins in the order they
+      are added.
+      */
+    
+    Imba.Touch.prototype.extend = function (plugin){
+      // console.log "added gesture!!!"
+      this._gestures || (this._gestures = []);
+      this._gestures.push(plugin);
+      return this;
+    };
+    
+    /*
+      Redirect touch to specified target. ontouchstart will always be
+      called on the new target.
+      @return {Number}
+      */
+    
+    Imba.Touch.prototype.redirect = function (target){
+      this._redirect = target;
+      return this;
+    };
+    
+    /*
+      Suppress the default behaviour. Will call preventDefault for
+      all native events that are part of the touch.
+      */
+    
+    Imba.Touch.prototype.suppress = function (){
+      // collision with the suppress property
+      this._active = false;
+      return this;
+    };
+    
+    Imba.Touch.prototype.setSuppress = function (value){
+      console.warn('Imba.Touch#suppress= is deprecated');
+      this._supress = value;
+      return this;
+    };
+    
+    Imba.Touch.prototype.touchstart = function (e,t){
+      this._event = e;
+      this._touch = t;
+      this._button = 0;
+      this._x = t.clientX;
+      this._y = t.clientY;
+      this.began();
+      if (e && this.isCaptured()) { e.preventDefault() };
+      return this;
+    };
+    
+    Imba.Touch.prototype.touchmove = function (e,t){
+      this._event = e;
+      this._x = t.clientX;
+      this._y = t.clientY;
+      this.update();
+      if (e && this.isCaptured()) { e.preventDefault() };
+      return this;
+    };
+    
+    Imba.Touch.prototype.touchend = function (e,t){
+      this._event = e;
+      this._x = t.clientX;
+      this._y = t.clientY;
+      this.ended();
+      
+      lastNativeTouchTimeStamp = e.timeStamp;
+      
+      if (this._maxdr < 20) {
+        var tap = new Imba.Event(e);
+        tap.setType('tap');
+        tap.process();
+        if (tap._responder) { e.preventDefault() };
+      };
+      
+      if (e && this.isCaptured()) {
+        e.preventDefault();
+      };
+      
+      return this;
+    };
+    
+    Imba.Touch.prototype.touchcancel = function (e,t){
+      return this.cancel();
+    };
+    
+    Imba.Touch.prototype.mousedown = function (e,t){
+      var self = this;
+      self._event = e;
+      self._button = e.button;
+      self._x = t.clientX;
+      self._y = t.clientY;
+      self.began();
+      
+      self._mousemove = function(e) { return self.mousemove(e,e); };
+      doc.addEventListener('mousemove',self._mousemove,true);
+      return self;
+    };
+    
+    Imba.Touch.prototype.mousemove = function (e,t){
+      this._x = t.clientX;
+      this._y = t.clientY;
+      this._event = e;
+      if (this.isCaptured()) { e.preventDefault() };
+      this.update();
+      this.move();
+      return this;
+    };
+    
+    Imba.Touch.prototype.mouseup = function (e,t){
+      this._x = t.clientX;
+      this._y = t.clientY;
+      this.ended();
+      doc.removeEventListener('mousemove',this._mousemove,true);
+      this._mousemove = null;
+      return this;
+    };
+    
+    Imba.Touch.prototype.idle = function (){
+      return this.update();
+    };
+    
+    Imba.Touch.prototype.began = function (){
+      this._maxdr = this._dr = 0;
+      this._x0 = this._x;
+      this._y0 = this._y;
+      
+      var dom = this.event().target;
+      var node = null;
+      
+      this._sourceTarget = dom && tag$wrap(dom);
+      
+      while (dom){
+        node = tag$wrap(dom);
+        if (node && node.ontouchstart) {
+          this._bubble = false;
+          this.setTarget(node);
+          this.target().ontouchstart(this);
+          if (!this._bubble) { break; };
+        };
+        dom = dom.parentNode;
+      };
+      
+      this._updates++;
+      return this;
+    };
+    
+    Imba.Touch.prototype.update = function (){
+      var target_;
+      if (!this._active) { return this };
+      
+      var dr = Math.sqrt(this.dx() * this.dx() + this.dy() * this.dy());
+      if (dr > this._dr) { this._maxdr = dr };
+      this._dr = dr;
+      
+      // catching a touch-redirect?!?
+      if (this._redirect) {
+        if (this._target && this._target.ontouchcancel) {
+          this._target.ontouchcancel(this);
+        };
+        this.setTarget(this._redirect);
+        this._redirect = null;
+        if (this.target().ontouchstart) { this.target().ontouchstart(this) };
+      };
+      
+      
+      this._updates++;
+      if (this._gestures) {
+        for (var i = 0, ary = iter$(this._gestures), len = ary.length; i < len; i++) {
+          ary[i].ontouchupdate(this);
+        };
+      };
+      
+      (target_ = this.target()) && target_.ontouchupdate  &&  target_.ontouchupdate(this);
+      return this;
+    };
+    
+    Imba.Touch.prototype.move = function (){
+      var target_;
+      if (!this._active) { return this };
+      
+      if (this._gestures) {
+        for (var i = 0, ary = iter$(this._gestures), len = ary.length, g; i < len; i++) {
+          g = ary[i];
+          if (g.ontouchmove) { g.ontouchmove(this,this._event) };
+        };
+      };
+      
+      (target_ = this.target()) && target_.ontouchmove  &&  target_.ontouchmove(this,this._event);
+      return this;
+    };
+    
+    Imba.Touch.prototype.ended = function (){
+      var target_;
+      if (!this._active) { return this };
+      
+      this._updates++;
+      
+      if (this._gestures) {
+        for (var i = 0, ary = iter$(this._gestures), len = ary.length; i < len; i++) {
+          ary[i].ontouchend(this);
+        };
+      };
+      
+      (target_ = this.target()) && target_.ontouchend  &&  target_.ontouchend(this);
+      
+      return this;
+    };
+    
+    Imba.Touch.prototype.cancel = function (){
+      if (!this._cancelled) {
+        this._cancelled = true;
+        this.cancelled();
+        if (this._mousemove) { doc.removeEventListener('mousemove',this._mousemove,true) };
+      };
+      return this;
+    };
+    
+    Imba.Touch.prototype.cancelled = function (){
+      var target_;
+      if (!this._active) { return this };
+      
+      this._cancelled = true;
+      this._updates++;
+      
+      if (this._gestures) {
+        for (var i = 0, ary = iter$(this._gestures), len = ary.length, g; i < len; i++) {
+          g = ary[i];
+          if (g.ontouchcancel) { g.ontouchcancel(this) };
+        };
+      };
+      
+      (target_ = this.target()) && target_.ontouchcancel  &&  target_.ontouchcancel(this);
+      return this;
+    };
+    
+    /*
+      The absolute distance the touch has moved from starting position 
+      @return {Number}
+      */
+    
+    Imba.Touch.prototype.dr = function (){
+      return this._dr;
+    };
+    
+    /*
+      The distance the touch has moved horizontally
+      @return {Number}
+      */
+    
+    Imba.Touch.prototype.dx = function (){
+      return this._x - this._x0;
+    };
+    
+    /*
+      The distance the touch has moved vertically
+      @return {Number}
+      */
+    
+    Imba.Touch.prototype.dy = function (){
+      return this._y - this._y0;
+    };
+    
+    /*
+      Initial horizontal position of touch
+      @return {Number}
+      */
+    
+    Imba.Touch.prototype.x0 = function (){
+      return this._x0;
+    };
+    
+    /*
+      Initial vertical position of touch
+      @return {Number}
+      */
+    
+    Imba.Touch.prototype.y0 = function (){
+      return this._y0;
+    };
+    
+    /*
+      Horizontal position of touch
+      @return {Number}
+      */
+    
+    Imba.Touch.prototype.x = function (){
+      return this._x;
+    };
+    
+    /*
+      Vertical position of touch
+      @return {Number}
+      */
+    
+    Imba.Touch.prototype.y = function (){
+      return this._y;
+    };
+    
+    /*
+      Horizontal position of touch relative to target
+      @return {Number}
+      */
+    
+    Imba.Touch.prototype.tx = function (){
+      this._targetBox || (this._targetBox = this._target.dom().getBoundingClientRect());
+      return this._x - this._targetBox.left;
+    };
+    
+    /*
+      Vertical position of touch relative to target
+      @return {Number}
+      */
+    
+    Imba.Touch.prototype.ty = function (){
+      this._targetBox || (this._targetBox = this._target.dom().getBoundingClientRect());
+      return this._y - this._targetBox.top;
+    };
+    
+    /*
+      Button pressed in this touch. Native touches defaults to left-click (0)
+      @return {Number}
+      */
+    
+    Imba.Touch.prototype.button = function (){
+      return this._button;
+    }; // @pointer ? @pointer.button : 0
+    
+    Imba.Touch.prototype.sourceTarget = function (){
+      return this._sourceTarget;
+    };
+    
+    
+    Imba.TouchGesture = function TouchGesture(){ };
+    
+    Imba.TouchGesture.prototype.__active = {'default': false,name: 'active'};
+    Imba.TouchGesture.prototype.active = function(v){ return this._active; }
+    Imba.TouchGesture.prototype.setActive = function(v){ this._active = v; return this; }
+    Imba.TouchGesture.prototype._active = false;
+    
+    Imba.TouchGesture.prototype.ontouchstart = function (e){
+      return this;
+    };
+    
+    Imba.TouchGesture.prototype.ontouchupdate = function (e){
+      return this;
+    };
+    
+    Imba.TouchGesture.prototype.ontouchend = function (e){
+      return this;
+    };
+    
+    
+    // A Touch-event is created on mousedown (always)
+    // and while it exists, mousemove and mouseup will
+    // be delegated to this active event.
+    Imba.POINTER = new Imba.Pointer();
+    Imba.POINTERS = [Imba.POINTER];
+    
+    
+    // regular event stuff
+    Imba.KEYMAP = {
+      "8": 'backspace',
+      "9": 'tab',
+      "13": 'enter',
+      "16": 'shift',
+      "17": 'ctrl',
+      "18": 'alt',
+      "19": 'break',
+      "20": 'caps',
+      "27": 'esc',
+      "32": 'space',
+      "35": 'end',
+      "36": 'home',
+      "37": 'larr',
+      "38": 'uarr',
+      "39": 'rarr',
+      "40": 'darr',
+      "45": 'insert',
+      "46": 'delete',
+      "107": 'plus',
+      "106": 'mult',
+      "91": 'meta'
+    };
+    
+    Imba.CHARMAP = {
+      "%": 'modulo',
+      "*": 'multiply',
+      "+": 'add',
+      "-": 'sub',
+      "/": 'divide',
+      ".": 'dot'
+    };
+    
+    /*
+    Imba handles all events in the dom through a single manager,
+    listening at the root of your document. If Imba finds a tag
+    that listens to a certain event, the event will be wrapped 
+    in an `Imba.Event`, which normalizes some of the quirks and 
+    browser differences.
+    
+    @iname event
+    */
+    
+    Imba.Event = function Event(e){
+      this.setEvent(e);
+      this.setBubble(true);
+    };
+    
+    /* reference to the native event */
+    
+    Imba.Event.prototype.event = function(v){ return this._event; }
+    Imba.Event.prototype.setEvent = function(v){ this._event = v; return this; };
+    
+    /* reference to the native event */
+    
+    Imba.Event.prototype.prefix = function(v){ return this._prefix; }
+    Imba.Event.prototype.setPrefix = function(v){ this._prefix = v; return this; };
+    
+    Imba.Event.prototype.data = function(v){ return this._data; }
+    Imba.Event.prototype.setData = function(v){ this._data = v; return this; };
+    
+    /*
+      should remove this alltogether?
+      @deprecated
+      */
+    
+    Imba.Event.prototype.source = function(v){ return this._source; }
+    Imba.Event.prototype.setSource = function(v){ this._source = v; return this; };
+    
+    /* A {Boolean} indicating whether the event bubbles up or not */
+    
+    Imba.Event.prototype.__bubble = {type: Boolean,chainable: true,name: 'bubble'};
+    Imba.Event.prototype.bubble = function(v){ return v !== undefined ? (this.setBubble(v),this) : this._bubble; }
+    Imba.Event.prototype.setBubble = function(v){ this._bubble = v; return this; };
+    
+    Imba.Event.wrap = function (e){
+      return new this(e);
+    };
+    
+    Imba.Event.prototype.setType = function (type){
+      this._type = type;
+      return this;
+    };
+    
+    /*
+      @return {String} The name of the event (case-insensitive)
+      */
+    
+    Imba.Event.prototype.type = function (){
+      return this._type || this.event().type;
+    };
+    
+    Imba.Event.prototype.name = function (){
+      return this._name || (this._name = this.type().toLowerCase().replace(/\:/g,''));
+    };
+    
+    // mimc getset
+    Imba.Event.prototype.bubble = function (v){
+      if (v != undefined) {
+        this.setBubble(v);
+        return this;
+      };
+      return this._bubble;
+    };
+    
+    /*
+      Prevents further propagation of the current event.
+      @return {self}
+      */
+    
+    Imba.Event.prototype.halt = function (){
+      this.setBubble(false);
+      return this;
+    };
+    
+    /*
+      Cancel the event (if cancelable). In the case of native events it
+      will call `preventDefault` on the wrapped event object.
+      @return {self}
+      */
+    
+    Imba.Event.prototype.cancel = function (){
+      if (this.event().preventDefault) { this.event().preventDefault() };
+      this._cancel = true;
+      return this;
+    };
+    
+    Imba.Event.prototype.silence = function (){
+      this._silenced = true;
+      return this;
+    };
+    
+    Imba.Event.prototype.isSilenced = function (){
+      return !!this._silenced;
+    };
+    
+    /*
+      Indicates whether or not event.cancel has been called.
+    
+      @return {Boolean}
+      */
+    
+    Imba.Event.prototype.isPrevented = function (){
+      return this.event() && this.event().defaultPrevented || this._cancel;
+    };
+    
+    /*
+      A reference to the initial target of the event.
+      */
+    
+    Imba.Event.prototype.target = function (){
+      return tag$wrap(this.event()._target || this.event().target);
+    };
+    
+    /*
+      A reference to the object responding to the event.
+      */
+    
+    Imba.Event.prototype.responder = function (){
+      return this._responder;
+    };
+    
+    /*
+      Redirect the event to new target
+      */
+    
+    Imba.Event.prototype.redirect = function (node){
+      this._redirect = node;
+      return this;
+    };
+    
+    /*
+      Get the normalized character for KeyboardEvent/TextEvent
+      @return {String}
+      */
+    
+    Imba.Event.prototype.keychar = function (){
+      if (this.event() instanceof KeyboardEvent) {
+        var ki = this.event().keyIdentifier;
+        var sym = Imba.KEYMAP[this.event().keyCode];
+        
+        if (!sym && ki.substr(0,2) == "U+") {
+          sym = String.fromCharCode(parseInt(ki.substr(2),16));
+        };
+        return sym;
+      } else if (this.event() instanceof (window.TextEvent || window.InputEvent)) {
+        return this.event().data;
+      };
+      
+      return null;
+    };
+    
+    /*
+      @deprecated
+      */
+    
+    Imba.Event.prototype.keycombo = function (){
+      var sym;
+      if (!(sym = this.keychar())) { return };
+      sym = Imba.CHARMAP[sym] || sym;
+      var combo = [],e = this.event();
+      if (e.ctrlKey) { combo.push('ctrl') };
+      if (e.shiftKey) { combo.push('shift') };
+      if (e.altKey) { combo.push('alt') };
+      if (e.metaKey) { combo.push('cmd') };
+      combo.push(sym);
+      return combo.join("_").toLowerCase();
+    };
+    
+    
+    Imba.Event.prototype.process = function (){
+      var node;
+      var meth = ("on" + (this._prefix || '') + this.name());
+      var args = null;
+      var domtarget = this.event()._target || this.event().target;
+      // var node = <{domtarget:_responder or domtarget}>
+      // need to clean up and document this behaviour
+      
+      var domnode = domtarget._responder || domtarget;
+      // @todo need to stop infinite redirect-rules here
+      
+      var $1;while (domnode){
+        this._redirect = null;
+        if (node = tag$wrap(domnode)) { // not only tag 
+          
+          if ((typeof node[($1 = meth)]=='string'||node[$1] instanceof String)) {
+            // should remember the receiver of the event
+            meth = node[meth];
+            continue; // should not continue?
+          };
+          
+          if (node[meth] instanceof Array) {
+            args = node[meth].concat(node);
+            meth = args.shift();
+            continue; // should not continue?
+          };
+          
+          if (node[meth] instanceof Function) {
+            this._responder || (this._responder = node);
+            // should autostop bubble here?
+            args ? (node[meth].apply(node,args)) : (node[meth](this,this.data()));
+          };
+        };
+        
+        // add node.nextEventResponder as a separate method here?
+        if (!(this.bubble() && (domnode = (this._redirect || (node ? (node.parent()) : (domnode.parentNode)))))) {
+          break;
+        };
+      };
+      
+      this.processed();
+      return this;
+    };
+    
+    
+    Imba.Event.prototype.processed = function (){
+      if (!this._silenced) { Imba.emit(Imba,'event',[this]) };
+      return this;
+    };
+    
+    /*
+      Return the x/left coordinate of the mouse / pointer for this event
+      @return {Number} x coordinate of mouse / pointer for event
+      */
+    
+    Imba.Event.prototype.x = function (){
+      return this.event().x;
+    };
+    
+    /*
+      Return the y/top coordinate of the mouse / pointer for this event
+      @return {Number} y coordinate of mouse / pointer for event
+      */
+    
+    Imba.Event.prototype.y = function (){
+      return this.event().y;
+    };
+    
+    /*
+      Returns a Number representing a system and implementation
+      dependent numeric code identifying the unmodified value of the
+      pressed key; this is usually the same as keyCode.
+    
+      For mouse-events, the returned value indicates which button was
+      pressed on the mouse to trigger the event.
+    
+      @return {Number}
+      */
+    
+    Imba.Event.prototype.which = function (){
+      return this.event().which;
+    };
+    
+    
+    /*
+    
+    Manager for listening to and delegating events in Imba. A single instance
+    is always created by Imba (as `Imba.Events`), which handles and delegates all
+    events at the very root of the document. Imba does not capture all events
+    by default, so if you want to make sure exotic or custom DOMEvents are delegated
+    in Imba you will need to register them in `Imba.Events.register(myCustomEventName)`
+    
+    @iname manager
+    
+    */
+    
+    Imba.EventManager = function EventManager(node,pars){
+      var self = this;
+      if(!pars||pars.constructor !== Object) pars = {};
+      var events = pars.events !== undefined ? pars.events : [];
+      self.setRoot(node);
+      self.setCount(0);
+      self.setListeners([]);
+      self.setDelegators({});
+      self.setDelegator(function(e) {
+        // console.log "delegating event?! {e}"
+        self.delegate(e);
+        return true;
+      });
+      
+      for (var i = 0, ary = iter$(events), len = ary.length; i < len; i++) {
+        self.register(ary[i]);
+      };
+      
+      return self;
+    };
+    
+    Imba.EventManager.prototype.root = function(v){ return this._root; }
+    Imba.EventManager.prototype.setRoot = function(v){ this._root = v; return this; };
+    Imba.EventManager.prototype.count = function(v){ return this._count; }
+    Imba.EventManager.prototype.setCount = function(v){ this._count = v; return this; };
+    Imba.EventManager.prototype.__enabled = {'default': false,watch: 'enabledDidSet',name: 'enabled'};
+    Imba.EventManager.prototype.enabled = function(v){ return this._enabled; }
+    Imba.EventManager.prototype.setEnabled = function(v){
+      var a = this.enabled();
+      if(v != a) { this._enabled = v; }
+      if(v != a) { this.enabledDidSet && this.enabledDidSet(v,a,this.__enabled) }
+      return this;
+    }
+    Imba.EventManager.prototype._enabled = false;
+    Imba.EventManager.prototype.listeners = function(v){ return this._listeners; }
+    Imba.EventManager.prototype.setListeners = function(v){ this._listeners = v; return this; };
+    Imba.EventManager.prototype.delegators = function(v){ return this._delegators; }
+    Imba.EventManager.prototype.setDelegators = function(v){ this._delegators = v; return this; };
+    Imba.EventManager.prototype.delegator = function(v){ return this._delegator; }
+    Imba.EventManager.prototype.setDelegator = function(v){ this._delegator = v; return this; };
+    
+    Imba.EventManager.prototype.enabledDidSet = function (bool){
+      bool ? (this.onenable()) : (this.ondisable());
+      return this;
+    };
+    
+    /*
+    
+      Tell the current EventManager to intercept and handle event of a certain name.
+      By default, Imba.Events will register interceptors for: *keydown*, *keyup*, 
+      *keypress*, *textInput*, *input*, *change*, *submit*, *focusin*, *focusout*, 
+      *blur*, *contextmenu*, *dblclick*, *mousewheel*, *wheel*
+    
+      */
+    
+    Imba.EventManager.prototype.register = function (name,handler){
+      if(handler === undefined) handler = true;
+      if (name instanceof Array) {
+        for (var i = 0, ary = iter$(name), len = ary.length; i < len; i++) {
+          this.register(ary[i],handler);
+        };
+        return this;
+      };
+      
+      if (this.delegators()[name]) { return this };
+      // console.log("register for event {name}")
+      var fn = this.delegators()[name] = handler instanceof Function ? (handler) : (this.delegator());
+      if (this.enabled()) { return this.root().addEventListener(name,fn,true) };
+    };
+    
+    Imba.EventManager.prototype.listen = function (name,handler,capture){
+      if(capture === undefined) capture = true;
+      this.listeners().push([name,handler,capture]);
+      if (this.enabled()) { this.root().addEventListener(name,handler,capture) };
+      return this;
+    };
+    
+    Imba.EventManager.prototype.delegate = function (e){
+      this.setCount(this.count() + 1);
+      var event = Imba.Event.wrap(e);
+      event.process();
+      return this;
+    };
+    
+    /*
+    
+      Create a new Imba.Event
+    
+      */
+    
+    Imba.EventManager.prototype.create = function (type,target,pars){
+      if(!pars||pars.constructor !== Object) pars = {};
+      var data = pars.data !== undefined ? pars.data : null;
+      var source = pars.source !== undefined ? pars.source : null;
+      var event = Imba.Event.wrap({type: type,target: target});
+      if (data) { (event.setData(data),data) };
+      if (source) { (event.setSource(source),source) };
+      return event;
+    };
+    
+    /*
+    
+      Trigger / process an Imba.Event.
+    
+      */
+    
+    Imba.EventManager.prototype.trigger = function (){
+      return this.create.apply(this,arguments).process();
+    };
+    
+    Imba.EventManager.prototype.onenable = function (){
+      for (var o = this.delegators(), i = 0, keys = Object.keys(o), l = keys.length; i < l; i++){
+        this.root().addEventListener(keys[i],o[keys[i]],true);
+      };
+      
+      for (var i = 0, ary = iter$(this.listeners()), len = ary.length, item; i < len; i++) {
+        item = ary[i];
+        this.root().addEventListener(item[0],item[1],item[2]);
+      };
+      return this;
+    };
+    
+    Imba.EventManager.prototype.ondisable = function (){
+      for (var o = this.delegators(), i = 0, keys = Object.keys(o), l = keys.length; i < l; i++){
+        this.root().removeEventListener(keys[i],o[keys[i]],true);
+      };
+      
+      for (var i = 0, ary = iter$(this.listeners()), len = ary.length, item; i < len; i++) {
+        item = ary[i];
+        this.root().removeEventListener(item[0],item[1],item[2]);
+      };
+      return this;
+    };
+    
+    
+    ED = Imba.Events = new Imba.EventManager(document,{events: [
+      'keydown','keyup','keypress','textInput','input','change','submit',
+      'focusin','focusout','blur','contextmenu','dblclick',
+      'mousewheel','wheel','scroll'
+    ]});
+    
+    // should set these up inside the Imba.Events object itself
+    // so that we can have different EventManager for different roots
+    
+    if (hasTouchEvents) {
+      Imba.Events.listen('touchstart',function(e) {
+        var Events_, v_;
+        (((Events_ = Imba.Events).setCount(v_ = Events_.count() + 1),v_)) - 1;
+        return Imba.Touch.ontouchstart(e);
+      });
+      
+      Imba.Events.listen('touchmove',function(e) {
+        var Events_, v_;
+        (((Events_ = Imba.Events).setCount(v_ = Events_.count() + 1),v_)) - 1;
+        return Imba.Touch.ontouchmove(e);
+      });
+      
+      Imba.Events.listen('touchend',function(e) {
+        var Events_, v_;
+        (((Events_ = Imba.Events).setCount(v_ = Events_.count() + 1),v_)) - 1;
+        return Imba.Touch.ontouchend(e);
+      });
+      
+      Imba.Events.listen('touchcancel',function(e) {
+        var Events_, v_;
+        (((Events_ = Imba.Events).setCount(v_ = Events_.count() + 1),v_)) - 1;
+        return Imba.Touch.ontouchcancel(e);
+      });
+    };
+    
+    Imba.Events.register('click',function(e) {
+      // Only for main mousebutton, no?
+      if ((e.timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout) {
+        var tap = new Imba.Event(e);
+        tap.setType('tap');
+        tap.process();
+        if (tap._responder) {
+          return e.preventDefault();
+        };
+      };
+      // delegate the real click event
+      return Imba.Events.delegate(e);
+    });
+    
+    Imba.Events.listen('mousedown',function(e) {
+      if ((e.timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout) {
+        if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
+      };
+    });
+    
+    // Imba.Events.listen(:mousemove) do |e|
+    //  # console.log 'mousemove',e:timeStamp
+    //  if (e:timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout
+    //    Imba.POINTER.update(e).process if Imba.POINTER # .process if touch # should not happen? We process through 
+    
+    Imba.Events.listen('mouseup',function(e) {
+      // console.log 'mouseup',e:timeStamp
+      if ((e.timeStamp - lastNativeTouchTimeStamp) > lastNativeTouchTimeout) {
+        if (Imba.POINTER) { return Imba.POINTER.update(e).process() };
+      };
+    });
+    
+    
+    Imba.Events.register(['mousedown','mouseup']);
+    return (Imba.Events.setEnabled(true),true);
+
+  })()
+
+/***/ },
+/* 10 */
+/***/ function(module, exports) {
+
+  (function(){
+    function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+    var ImbaTag = Imba.TAGS.element;
+    
+    function removeNested(root,node,caret){
+      // if node/nodes isa String
+      //  we need to use the caret to remove elements
+      //  for now we will simply not support this
+      if (node instanceof ImbaTag) {
+        root.removeChild(node);
+      } else if (node instanceof Array) {
+        for (var i = 0, ary = iter$(node), len = ary.length; i < len; i++) {
+          removeNested(root,ary[i],caret);
+        };
+      } else {
+        // what if this is not null?!?!?
+        // take a chance and remove a text-elementng
+        var next = caret ? (caret.nextSibling) : (root._dom.firstChild);
+        if ((next instanceof Text) && next.textContent == node) {
+          root.removeChild(next);
+        } else {
+          throw 'cannot remove string';
+        };
+      };
+      
+      return caret;
+    };
+    
+    function appendNested(root,node){
+      if (node instanceof ImbaTag) {
+        root.appendChild(node);
+      } else if (node instanceof Array) {
+        for (var i = 0, ary = iter$(node), len = ary.length; i < len; i++) {
+          appendNested(root,ary[i]);
+        };
+      } else if (node != null && node !== false) {
+        root.appendChild(Imba.document().createTextNode(node));
+      };
+      
+      return;
+    };
+    
+    
+    // insert nodes before a certain node
+    // does not need to return any tail, as before
+    // will still be correct there
+    // before must be an actual domnode
+    function insertNestedBefore(root,node,before){
+      if (node instanceof ImbaTag) {
+        root.insertBefore(node,before);
+      } else if (node instanceof Array) {
+        for (var i = 0, ary = iter$(node), len = ary.length; i < len; i++) {
+          insertNestedBefore(root,ary[i],before);
+        };
+      } else if (node != null && node !== false) {
+        root.insertBefore(Imba.document().createTextNode(node),before);
+      };
+      
+      return before;
+    };
+    
+    // after must be an actual domnode
+    function insertNestedAfter(root,node,after){
+      var before = after ? (after.nextSibling) : (root._dom.firstChild);
+      
+      if (before) {
+        insertNestedBefore(root,node,before);
+        return before.previousSibling;
+      } else {
+        appendNested(root,node);
+        return root._dom.lastChild;
+      };
+    };
+    
+    function reconcileCollectionChanges(root,new$,old,caret){
+      
+      var newLen = new$.length;
+      var lastNew = new$[newLen - 1];
+      
+      // This re-order algorithm is based on the following principle:
+      // 
+      // We build a "chain" which shows which items are already sorted.
+      // If we're going from [1, 2, 3] -> [2, 1, 3], the tree looks like:
+      //
+      //  3 ->  0 (idx)
+      //  2 -> -1 (idx)
+      //  1 -> -1 (idx)
+      //
+      // This tells us that we have two chains of ordered items:
+      // 
+      //  (1, 3) and (2)
+      // 
+      // The optimal re-ordering then becomes two keep the longest chain intact,
+      // and move all the other items.
+      
+      var newPosition = [];
+      
+      // The tree/graph itself
+      var prevChain = [];
+      // The length of the chain
+      var lengthChain = [];
+      
+      // Keep track of the longest chain
+      var maxChainLength = 0;
+      var maxChainEnd = 0;
+      
+      for (var idx = 0, ary = iter$(old), len = ary.length, node; idx < len; idx++) {
+        node = ary[idx];
+        var newPos = new$.indexOf(node);
+        newPosition.push(newPos);
+        
+        if (newPos == -1) {
+          root.removeChild(node);
+          prevChain.push(-1);
+          lengthChain.push(-1);
+          continue;
+        };
+        
+        var prevIdx = newPosition.length - 2;
+        
+        // Build the chain:
+        while (prevIdx >= 0){
+          if (newPosition[prevIdx] == -1) {
+            prevIdx--;
+          } else if (newPos > newPosition[prevIdx]) {
+            // Yay, we're bigger than the previous!
+            break;
+          } else {
+            // Nope, let's walk back the chain
+            prevIdx = prevChain[prevIdx];
+          };
+        };
+        
+        prevChain.push(prevIdx);
+        
+        var currLength = (prevIdx == -1) ? (0) : (lengthChain[prevIdx] + 1);
+        
+        if (currLength > maxChainLength) {
+          maxChainLength = currLength;
+          maxChainEnd = idx;
+        };
+        
+        lengthChain.push(currLength);
+      };
+      
+      var stickyNodes = [];
+      
+      // Now we can walk the longest chain backwards and mark them as "sticky",
+      // which implies that they should not be moved
+      var cursor = newPosition.length - 1;
+      while (cursor >= 0){
+        if (cursor == maxChainEnd && newPosition[cursor] != -1) {
+          stickyNodes[newPosition[cursor]] = true;
+          maxChainEnd = prevChain[maxChainEnd];
+        };
+        
+        cursor -= 1;
+      };
+      
+      // And let's iterate forward, but only move non-sticky nodes
+      for (var idx1 = 0, ary = iter$(new$), len = ary.length; idx1 < len; idx1++) {
+        if (!stickyNodes[idx1]) {
+          var after = new$[idx1 - 1];
+          insertNestedAfter(root,ary[idx1],(after && after._dom) || caret);
+        };
+      };
+      
+      // should trust that the last item in new list is the caret
+      return lastNew && lastNew._dom || caret;
+    };
+    
+    
+    // expects a flat non-sparse array of nodes in both new and old, always
+    function reconcileCollection(root,new$,old,caret){
+      var k = new$.length;
+      var i = k;
+      var last = new$[k - 1];
+      
+      
+      if (k == old.length && new$[0] === old[0]) {
+        // running through to compare
+        while (i--){
+          if (new$[i] !== old[i]) { break; };
+        };
+      };
+      
+      if (i == -1) {
+        return last && last._dom || caret;
+      } else {
+        return reconcileCollectionChanges(root,new$,old,caret);
+      };
+    };
+    
+    // the general reconciler that respects conditions etc
+    // caret is the current node we want to insert things after
+    function reconcileNested(root,new$,old,caret){
+      
+      // if new == null or new === false or new === true
+      //  if new === old
+      //    return caret
+      //  if old && new != old
+      //    removeNested(root,old,caret) if old
+      // 
+      //  return caret
+      
+      // var skipnew = new == null or new === false or new === true
+      var newIsNull = new$ == null || new$ === false;
+      var oldIsNull = old == null || old === false;
+      
+      
+      if (new$ === old) {
+        // remember that the caret must be an actual dom element
+        // we should instead move the actual caret? - trust
+        if (newIsNull) {
+          return caret;
+        } else if (new$ && new$._dom) {
+          return new$._dom;
+        } else {
+          return caret ? (caret.nextSibling) : (root._dom.firstChild);
+        };
+      } else if (new$ instanceof Array) {
+        if (old instanceof Array) {
+          if (new$.static || old.static) {
+            // if the static is not nested - we could get a hint from compiler
+            // and just skip it
+            if (new$.static == old.static) {
+              for (var i = 0, ary = iter$(new$), len = ary.length; i < len; i++) {
+                // this is where we could do the triple equal directly
+                caret = reconcileNested(root,ary[i],old[i],caret);
+              };
+              return caret;
+            } else {
+              removeNested(root,old,caret);
+            };
+            
+            // if they are not the same we continue through to the default
+          } else {
+            return reconcileCollection(root,new$,old,caret);
+          };
+        } else if (old instanceof ImbaTag) {
+          root.removeChild(old);
+        } else if (!oldIsNull) {
+          // old was a string-like object?
+          root.removeChild(caret ? (caret.nextSibling) : (root._dom.firstChild));
+        };
+        
+        return insertNestedAfter(root,new$,caret);
+        // remove old
+      } else if (new$ instanceof ImbaTag) {
+        if (!oldIsNull) { removeNested(root,old,caret) };
+        insertNestedAfter(root,new$,caret);
+        return new$;
+      } else if (newIsNull) {
+        if (!oldIsNull) { removeNested(root,old,caret) };
+        return caret;
+      } else {
+        // if old did not exist we need to add a new directly
+        var nextNode;
+        // if old was array or imbatag we need to remove it and then add
+        if (old instanceof Array) {
+          removeNested(root,old,caret);
+        } else if (old instanceof ImbaTag) {
+          root.removeChild(old);
+        } else if (!oldIsNull) {
+          // ...
+          nextNode = caret ? (caret.nextSibling) : (root._dom.firstChild);
+          if ((nextNode instanceof Text) && nextNode.textContent != new$) {
+            nextNode.textContent = new$;
+            return nextNode;
+          };
+        };
+        
+        // now add the textnode
+        return insertNestedAfter(root,new$,caret);
+      };
+    };
+    
+    
+    return tag$.extendTag('htmlelement', function(tag){
+      
+      tag.prototype.setChildren = function (new$,typ){
+        var old = this._children;
+        // var isArray = nodes isa Array
+        if (new$ === old) {
+          return this;
+        };
+        
+        if (!old) {
+          this.empty();
+          appendNested(this,new$);
+        } else if (typ == 2) {
+          return this;
+        } else if (typ == 1) {
+          // here we _know _that it is an array with the same shape
+          // every time
+          var caret = null;
+          for (var i = 0, ary = iter$(new$), len = ary.length; i < len; i++) {
+            // prev = old[i]
+            caret = reconcileNested(this,ary[i],old[i],caret);
+          };
+        } else if (typ == 3) {
+          // this is possibly fully dynamic. It often is
+          // but the old or new could be static while the other is not
+          // this is not handled now
+          // what if it was previously a static array? edgecase - but must work
+          if (new$ instanceof ImbaTag) {
+            this.empty();
+            this.appendChild(new$);
+          } else if (new$ instanceof Array) {
+            if (old instanceof Array) {
+              // is this not the same as setting staticChildren now but with the
+              reconcileCollection(this,new$,old,null);
+            } else {
+              this.empty();
+              appendNested(this,new$);
+            };
+          } else {
+            this.setText(new$);
+            return this;
+          };
+        } else if ((new$ instanceof Array) && (old instanceof Array)) {
+          reconcileCollection(this,new$,old,null);
+        } else {
+          this.empty();
+          appendNested(this,new$);
+        };
+        
+        this._children = new$;
+        return this;
+      };
+      
+      
+      // only ever called with array as argument
+      tag.prototype.setStaticChildren = function (new$){
+        var old = this._children;
+        
+        var caret = null;
+        for (var i = 0, ary = iter$(new$), len = ary.length; i < len; i++) {
+          // prev = old[i]
+          caret = reconcileNested(this,ary[i],old[i],caret);
+        };
+        
+        this._children = new$;
+        return this;
+      };
+      
+      tag.prototype.content = function (){
+        return this._content || this.children().toArray();
+      };
+      
+      tag.prototype.setText = function (text){
+        if (text != this._children) {
+          this._children = text;
+          this.dom().textContent = text == null || text === false ? ('') : (text);
+        };
+        return this;
+      };
+    });
+
+  })()
+
+/***/ },
+/* 11 */
+/***/ function(module, exports) {
+
+  (function(){
+    function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+    
+    /*
+    The special syntax for selectors in Imba creates Imba.Selector
+    instances.
+    */
+    
+    Imba.Selector = function Selector(sel,scope,nodes){
+      
+      this._query = sel instanceof Imba.Selector ? (sel.query()) : (sel);
+      this._context = scope;
+      
+      if (nodes) {
+        for (var i = 0, ary = iter$(nodes), len = ary.length, res = []; i < len; i++) {
+          res.push(tag$wrap(ary[i]));
+        };
+        this._nodes = res;
+      };
+      
+      this._lazy = !nodes;
+      return this;
+    };
+    
+    Imba.Selector.one = function (sel,scope){
+      var el = (scope || Imba.document()).querySelector(sel);
+      return el && tag$wrap(el) || null;
+    };
+    
+    Imba.Selector.all = function (sel,scope){
+      return new Imba.Selector(sel,scope);
+    };
+    
+    Imba.Selector.prototype.query = function(v){ return this._query; }
+    Imba.Selector.prototype.setQuery = function(v){ this._query = v; return this; };
+    
+    Imba.Selector.prototype.reload = function (){
+      this._nodes = null;
+      return this;
+    };
+    
+    Imba.Selector.prototype.scope = function (){
+      var ctx;
+      if (this._scope) { return this._scope };
+      if (!(ctx = this._context)) { return Imba.document() };
+      return this._scope = ctx.toScope ? (ctx.toScope()) : (ctx);
+    };
+    
+    /*
+      @returns {Imba.Tag} first node matching this selector
+      */
+    
+    Imba.Selector.prototype.first = function (){
+      if (this._lazy) { return tag$wrap(this._first || (this._first = this.scope().querySelector(this.query()))) } else {
+        return this.nodes()[0];
+      };
+    };
+    
+    /*
+      @returns {Imba.Tag} last node matching this selector
+      */
+    
+    Imba.Selector.prototype.last = function (){
+      return this.nodes()[this._nodes.length - 1];
+    };
+    
+    /*
+      @returns [Imba.Tag] all nodes matching this selector
+      */
+    
+    Imba.Selector.prototype.nodes = function (){
+      if (this._nodes) { return this._nodes };
+      var items = this.scope().querySelectorAll(this.query());
+      for (var i = 0, ary = iter$(items), len = ary.length, res = []; i < len; i++) {
+        res.push(tag$wrap(ary[i]));
+      };
+      this._nodes = res;
+      this._lazy = false;
+      return this._nodes;
+    };
+    
+    /*
+      The number of nodes matching this selector
+      */
+    
+    Imba.Selector.prototype.count = function (){
+      return this.nodes().length;
+    };
+    
+    Imba.Selector.prototype.len = function (){
+      return this.nodes().length;
+    };
+    
+    /*
+      @todo Add support for block or selector?
+      */
+    
+    Imba.Selector.prototype.some = function (){
+      return this.count() >= 1;
+    };
+    
+    /*
+      Get node at index
+      */
+    
+    Imba.Selector.prototype.at = function (idx){
+      return this.nodes()[idx];
+    };
+    
+    /*
+      Loop through nodes
+      */
+    
+    Imba.Selector.prototype.forEach = function (block){
+      this.nodes().forEach(block);
+      return this;
+    };
+    
+    /*
+      Map nodes
+      */
+    
+    Imba.Selector.prototype.map = function (block){
+      return this.nodes().map(block);
+    };
+    
+    /*
+      Returns a plain array containing nodes. Implicitly called
+      when iterating over a selector in Imba `(node for node in $(selector))`
+      */
+    
+    Imba.Selector.prototype.toArray = function (){
+      return this.nodes();
+    };
+    
+    // Get the first element that matches the selector, 
+    // beginning at the current element and progressing up through the DOM tree
+    Imba.Selector.prototype.closest = function (sel){
+      // seems strange that we alter this selector?
+      this._nodes = this.map(function(node) { return node.closest(sel); });
+      return this;
+    };
+    
+    // Get the siblings of each element in the set of matched elements, 
+    // optionally filtered by a selector.
+    // TODO remove duplicates?
+    Imba.Selector.prototype.siblings = function (sel){
+      this._nodes = this.map(function(node) { return node.siblings(sel); });
+      return this;
+    };
+    
+    // Get the descendants of each element in the current set of matched 
+    // elements, filtered by a selector.
+    Imba.Selector.prototype.find = function (sel){
+      this._nodes = this.__query__(sel.query(),this.nodes());
+      return this;
+    };
+    
+    Imba.Selector.prototype.reject = function (blk){
+      return this.filter(blk,false);
+    };
+    
+    /*
+      Filter the nodes in selector by a function or other selector
+      */
+    
+    Imba.Selector.prototype.filter = function (blk,bool){
+      if(bool === undefined) bool = true;
+      var fn = (blk instanceof Function) && blk || function(n) { return n.matches(blk); };
+      var ary = this.nodes().filter(function(n) { return fn(n) == bool; });
+      // if we want to return a new selector for this, we should do that for
+      // others as well
+      return new Imba.Selector("",this._scope,ary);
+    };
+    
+    Imba.Selector.prototype.__query__ = function (query,contexts){
+      var nodes = [];
+      var i = 0;
+      var l = contexts.length;
+      
+      while (i < l){
+        nodes.push.apply(nodes,contexts[i++].querySelectorAll(query));
+      };
+      return nodes;
+    };
+    
+    Imba.Selector.prototype.__matches__ = function (){
+      return true;
+    };
+    
+    /*
+      Add specified flag to all nodes in selector
+      */
+    
+    Imba.Selector.prototype.flag = function (flag){
+      return this.forEach(function(n) { return n.flag(flag); });
+    };
+    
+    /*
+      Remove specified flag from all nodes in selector
+      */
+    
+    Imba.Selector.prototype.unflag = function (flag){
+      return this.forEach(function(n) { return n.unflag(flag); });
+    };
+    
+    
+    // def Imba.querySelectorAll
+    q$ = function(sel,scope) { return new Imba.Selector(sel,scope); };
+    
+    // def Imba.Selector.one
+    q$$ = function(sel,scope) {
+      var el = (scope || Imba.document()).querySelector(sel);
+      return el && tag$wrap(el) || null;
+    };
+    
+    
+    // extending tags with query-methods
+    // must be a better way to reopen classes
+    return tag$.extendTag('element', function(tag){
+      tag.prototype.querySelectorAll = function (q){
+        return this._dom.querySelectorAll(q);
+      };
+      tag.prototype.querySelector = function (q){
+        return this._dom.querySelector(q);
+      };
+      
+      // should be moved to Imba.Tag instead?
+      // or we should implement all of them here
+      tag.prototype.find = function (sel){
+        return new Imba.Selector(sel,this);
+      };
+    });
+    
+
+  })()
+
+/***/ }
+/******/ ]);
+/*! jQuery v2.2.1 | (c) jQuery Foundation | jquery.org/license */
+!function(a,b){"object"==typeof module&&"object"==typeof module.exports?module.exports=a.document?b(a,!0):function(a){if(!a.document)throw new Error("jQuery requires a window with a document");return b(a)}:b(a)}("undefined"!=typeof window?window:this,function(a,b){var c=[],d=a.document,e=c.slice,f=c.concat,g=c.push,h=c.indexOf,i={},j=i.toString,k=i.hasOwnProperty,l={},m="2.2.1",n=function(a,b){return new n.fn.init(a,b)},o=/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g,p=/^-ms-/,q=/-([\da-z])/gi,r=function(a,b){return b.toUpperCase()};n.fn=n.prototype={jquery:m,constructor:n,selector:"",length:0,toArray:function(){return e.call(this)},get:function(a){return null!=a?0>a?this[a+this.length]:this[a]:e.call(this)},pushStack:function(a){var b=n.merge(this.constructor(),a);return b.prevObject=this,b.context=this.context,b},each:function(a){return n.each(this,a)},map:function(a){return this.pushStack(n.map(this,function(b,c){return a.call(b,c,b)}))},slice:function(){return this.pushStack(e.apply(this,arguments))},first:function(){return this.eq(0)},last:function(){return this.eq(-1)},eq:function(a){var b=this.length,c=+a+(0>a?b:0);return this.pushStack(c>=0&&b>c?[this[c]]:[])},end:function(){return this.prevObject||this.constructor()},push:g,sort:c.sort,splice:c.splice},n.extend=n.fn.extend=function(){var a,b,c,d,e,f,g=arguments[0]||{},h=1,i=arguments.length,j=!1;for("boolean"==typeof g&&(j=g,g=arguments[h]||{},h++),"object"==typeof g||n.isFunction(g)||(g={}),h===i&&(g=this,h--);i>h;h++)if(null!=(a=arguments[h]))for(b in a)c=g[b],d=a[b],g!==d&&(j&&d&&(n.isPlainObject(d)||(e=n.isArray(d)))?(e?(e=!1,f=c&&n.isArray(c)?c:[]):f=c&&n.isPlainObject(c)?c:{},g[b]=n.extend(j,f,d)):void 0!==d&&(g[b]=d));return g},n.extend({expando:"jQuery"+(m+Math.random()).replace(/\D/g,""),isReady:!0,error:function(a){throw new Error(a)},noop:function(){},isFunction:function(a){return"function"===n.type(a)},isArray:Array.isArray,isWindow:function(a){return null!=a&&a===a.window},isNumeric:function(a){var b=a&&a.toString();return!n.isArray(a)&&b-parseFloat(b)+1>=0},isPlainObject:function(a){return"object"!==n.type(a)||a.nodeType||n.isWindow(a)?!1:a.constructor&&!k.call(a.constructor.prototype,"isPrototypeOf")?!1:!0},isEmptyObject:function(a){var b;for(b in a)return!1;return!0},type:function(a){return null==a?a+"":"object"==typeof a||"function"==typeof a?i[j.call(a)]||"object":typeof a},globalEval:function(a){var b,c=eval;a=n.trim(a),a&&(1===a.indexOf("use strict")?(b=d.createElement("script"),b.text=a,d.head.appendChild(b).parentNode.removeChild(b)):c(a))},camelCase:function(a){return a.replace(p,"ms-").replace(q,r)},nodeName:function(a,b){return a.nodeName&&a.nodeName.toLowerCase()===b.toLowerCase()},each:function(a,b){var c,d=0;if(s(a)){for(c=a.length;c>d;d++)if(b.call(a[d],d,a[d])===!1)break}else for(d in a)if(b.call(a[d],d,a[d])===!1)break;return a},trim:function(a){return null==a?"":(a+"").replace(o,"")},makeArray:function(a,b){var c=b||[];return null!=a&&(s(Object(a))?n.merge(c,"string"==typeof a?[a]:a):g.call(c,a)),c},inArray:function(a,b,c){return null==b?-1:h.call(b,a,c)},merge:function(a,b){for(var c=+b.length,d=0,e=a.length;c>d;d++)a[e++]=b[d];return a.length=e,a},grep:function(a,b,c){for(var d,e=[],f=0,g=a.length,h=!c;g>f;f++)d=!b(a[f],f),d!==h&&e.push(a[f]);return e},map:function(a,b,c){var d,e,g=0,h=[];if(s(a))for(d=a.length;d>g;g++)e=b(a[g],g,c),null!=e&&h.push(e);else for(g in a)e=b(a[g],g,c),null!=e&&h.push(e);return f.apply([],h)},guid:1,proxy:function(a,b){var c,d,f;return"string"==typeof b&&(c=a[b],b=a,a=c),n.isFunction(a)?(d=e.call(arguments,2),f=function(){return a.apply(b||this,d.concat(e.call(arguments)))},f.guid=a.guid=a.guid||n.guid++,f):void 0},now:Date.now,support:l}),"function"==typeof Symbol&&(n.fn[Symbol.iterator]=c[Symbol.iterator]),n.each("Boolean Number String Function Array Date RegExp Object Error Symbol".split(" "),function(a,b){i["[object "+b+"]"]=b.toLowerCase()});function s(a){var b=!!a&&"length"in a&&a.length,c=n.type(a);return"function"===c||n.isWindow(a)?!1:"array"===c||0===b||"number"==typeof b&&b>0&&b-1 in a}var t=function(a){var b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u="sizzle"+1*new Date,v=a.document,w=0,x=0,y=ga(),z=ga(),A=ga(),B=function(a,b){return a===b&&(l=!0),0},C=1<<31,D={}.hasOwnProperty,E=[],F=E.pop,G=E.push,H=E.push,I=E.slice,J=function(a,b){for(var c=0,d=a.length;d>c;c++)if(a[c]===b)return c;return-1},K="checked|selected|async|autofocus|autoplay|controls|defer|disabled|hidden|ismap|loop|multiple|open|readonly|required|scoped",L="[\\x20\\t\\r\\n\\f]",M="(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+",N="\\["+L+"*("+M+")(?:"+L+"*([*^$|!~]?=)"+L+"*(?:'((?:\\\\.|[^\\\\'])*)'|\"((?:\\\\.|[^\\\\\"])*)\"|("+M+"))|)"+L+"*\\]",O=":("+M+")(?:\\((('((?:\\\\.|[^\\\\'])*)'|\"((?:\\\\.|[^\\\\\"])*)\")|((?:\\\\.|[^\\\\()[\\]]|"+N+")*)|.*)\\)|)",P=new RegExp(L+"+","g"),Q=new RegExp("^"+L+"+|((?:^|[^\\\\])(?:\\\\.)*)"+L+"+$","g"),R=new RegExp("^"+L+"*,"+L+"*"),S=new RegExp("^"+L+"*([>+~]|"+L+")"+L+"*"),T=new RegExp("="+L+"*([^\\]'\"]*?)"+L+"*\\]","g"),U=new RegExp(O),V=new RegExp("^"+M+"$"),W={ID:new RegExp("^#("+M+")"),CLASS:new RegExp("^\\.("+M+")"),TAG:new RegExp("^("+M+"|[*])"),ATTR:new RegExp("^"+N),PSEUDO:new RegExp("^"+O),CHILD:new RegExp("^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\("+L+"*(even|odd|(([+-]|)(\\d*)n|)"+L+"*(?:([+-]|)"+L+"*(\\d+)|))"+L+"*\\)|)","i"),bool:new RegExp("^(?:"+K+")$","i"),needsContext:new RegExp("^"+L+"*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\\("+L+"*((?:-\\d)?\\d*)"+L+"*\\)|)(?=[^-]|$)","i")},X=/^(?:input|select|textarea|button)$/i,Y=/^h\d$/i,Z=/^[^{]+\{\s*\[native \w/,$=/^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,_=/[+~]/,aa=/'|\\/g,ba=new RegExp("\\\\([\\da-f]{1,6}"+L+"?|("+L+")|.)","ig"),ca=function(a,b,c){var d="0x"+b-65536;return d!==d||c?b:0>d?String.fromCharCode(d+65536):String.fromCharCode(d>>10|55296,1023&d|56320)},da=function(){m()};try{H.apply(E=I.call(v.childNodes),v.childNodes),E[v.childNodes.length].nodeType}catch(ea){H={apply:E.length?function(a,b){G.apply(a,I.call(b))}:function(a,b){var c=a.length,d=0;while(a[c++]=b[d++]);a.length=c-1}}}function fa(a,b,d,e){var f,h,j,k,l,o,r,s,w=b&&b.ownerDocument,x=b?b.nodeType:9;if(d=d||[],"string"!=typeof a||!a||1!==x&&9!==x&&11!==x)return d;if(!e&&((b?b.ownerDocument||b:v)!==n&&m(b),b=b||n,p)){if(11!==x&&(o=$.exec(a)))if(f=o[1]){if(9===x){if(!(j=b.getElementById(f)))return d;if(j.id===f)return d.push(j),d}else if(w&&(j=w.getElementById(f))&&t(b,j)&&j.id===f)return d.push(j),d}else{if(o[2])return H.apply(d,b.getElementsByTagName(a)),d;if((f=o[3])&&c.getElementsByClassName&&b.getElementsByClassName)return H.apply(d,b.getElementsByClassName(f)),d}if(c.qsa&&!A[a+" "]&&(!q||!q.test(a))){if(1!==x)w=b,s=a;else if("object"!==b.nodeName.toLowerCase()){(k=b.getAttribute("id"))?k=k.replace(aa,"\\$&"):b.setAttribute("id",k=u),r=g(a),h=r.length,l=V.test(k)?"#"+k:"[id='"+k+"']";while(h--)r[h]=l+" "+qa(r[h]);s=r.join(","),w=_.test(a)&&oa(b.parentNode)||b}if(s)try{return H.apply(d,w.querySelectorAll(s)),d}catch(y){}finally{k===u&&b.removeAttribute("id")}}}return i(a.replace(Q,"$1"),b,d,e)}function ga(){var a=[];function b(c,e){return a.push(c+" ")>d.cacheLength&&delete b[a.shift()],b[c+" "]=e}return b}function ha(a){return a[u]=!0,a}function ia(a){var b=n.createElement("div");try{return!!a(b)}catch(c){return!1}finally{b.parentNode&&b.parentNode.removeChild(b),b=null}}function ja(a,b){var c=a.split("|"),e=c.length;while(e--)d.attrHandle[c[e]]=b}function ka(a,b){var c=b&&a,d=c&&1===a.nodeType&&1===b.nodeType&&(~b.sourceIndex||C)-(~a.sourceIndex||C);if(d)return d;if(c)while(c=c.nextSibling)if(c===b)return-1;return a?1:-1}function la(a){return function(b){var c=b.nodeName.toLowerCase();return"input"===c&&b.type===a}}function ma(a){return function(b){var c=b.nodeName.toLowerCase();return("input"===c||"button"===c)&&b.type===a}}function na(a){return ha(function(b){return b=+b,ha(function(c,d){var e,f=a([],c.length,b),g=f.length;while(g--)c[e=f[g]]&&(c[e]=!(d[e]=c[e]))})})}function oa(a){return a&&"undefined"!=typeof a.getElementsByTagName&&a}c=fa.support={},f=fa.isXML=function(a){var b=a&&(a.ownerDocument||a).documentElement;return b?"HTML"!==b.nodeName:!1},m=fa.setDocument=function(a){var b,e,g=a?a.ownerDocument||a:v;return g!==n&&9===g.nodeType&&g.documentElement?(n=g,o=n.documentElement,p=!f(n),(e=n.defaultView)&&e.top!==e&&(e.addEventListener?e.addEventListener("unload",da,!1):e.attachEvent&&e.attachEvent("onunload",da)),c.attributes=ia(function(a){return a.className="i",!a.getAttribute("className")}),c.getElementsByTagName=ia(function(a){return a.appendChild(n.createComment("")),!a.getElementsByTagName("*").length}),c.getElementsByClassName=Z.test(n.getElementsByClassName),c.getById=ia(function(a){return o.appendChild(a).id=u,!n.getElementsByName||!n.getElementsByName(u).length}),c.getById?(d.find.ID=function(a,b){if("undefined"!=typeof b.getElementById&&p){var c=b.getElementById(a);return c?[c]:[]}},d.filter.ID=function(a){var b=a.replace(ba,ca);return function(a){return a.getAttribute("id")===b}}):(delete d.find.ID,d.filter.ID=function(a){var b=a.replace(ba,ca);return function(a){var c="undefined"!=typeof a.getAttributeNode&&a.getAttributeNode("id");return c&&c.value===b}}),d.find.TAG=c.getElementsByTagName?function(a,b){return"undefined"!=typeof b.getElementsByTagName?b.getElementsByTagName(a):c.qsa?b.querySelectorAll(a):void 0}:function(a,b){var c,d=[],e=0,f=b.getElementsByTagName(a);if("*"===a){while(c=f[e++])1===c.nodeType&&d.push(c);return d}return f},d.find.CLASS=c.getElementsByClassName&&function(a,b){return"undefined"!=typeof b.getElementsByClassName&&p?b.getElementsByClassName(a):void 0},r=[],q=[],(c.qsa=Z.test(n.querySelectorAll))&&(ia(function(a){o.appendChild(a).innerHTML="<a id='"+u+"'></a><select id='"+u+"-\r\\' msallowcapture=''><option selected=''></option></select>",a.querySelectorAll("[msallowcapture^='']").length&&q.push("[*^$]="+L+"*(?:''|\"\")"),a.querySelectorAll("[selected]").length||q.push("\\["+L+"*(?:value|"+K+")"),a.querySelectorAll("[id~="+u+"-]").length||q.push("~="),a.querySelectorAll(":checked").length||q.push(":checked"),a.querySelectorAll("a#"+u+"+*").length||q.push(".#.+[+~]")}),ia(function(a){var b=n.createElement("input");b.setAttribute("type","hidden"),a.appendChild(b).setAttribute("name","D"),a.querySelectorAll("[name=d]").length&&q.push("name"+L+"*[*^$|!~]?="),a.querySelectorAll(":enabled").length||q.push(":enabled",":disabled"),a.querySelectorAll("*,:x"),q.push(",.*:")})),(c.matchesSelector=Z.test(s=o.matches||o.webkitMatchesSelector||o.mozMatchesSelector||o.oMatchesSelector||o.msMatchesSelector))&&ia(function(a){c.disconnectedMatch=s.call(a,"div"),s.call(a,"[s!='']:x"),r.push("!=",O)}),q=q.length&&new RegExp(q.join("|")),r=r.length&&new RegExp(r.join("|")),b=Z.test(o.compareDocumentPosition),t=b||Z.test(o.contains)?function(a,b){var c=9===a.nodeType?a.documentElement:a,d=b&&b.parentNode;return a===d||!(!d||1!==d.nodeType||!(c.contains?c.contains(d):a.compareDocumentPosition&&16&a.compareDocumentPosition(d)))}:function(a,b){if(b)while(b=b.parentNode)if(b===a)return!0;return!1},B=b?function(a,b){if(a===b)return l=!0,0;var d=!a.compareDocumentPosition-!b.compareDocumentPosition;return d?d:(d=(a.ownerDocument||a)===(b.ownerDocument||b)?a.compareDocumentPosition(b):1,1&d||!c.sortDetached&&b.compareDocumentPosition(a)===d?a===n||a.ownerDocument===v&&t(v,a)?-1:b===n||b.ownerDocument===v&&t(v,b)?1:k?J(k,a)-J(k,b):0:4&d?-1:1)}:function(a,b){if(a===b)return l=!0,0;var c,d=0,e=a.parentNode,f=b.parentNode,g=[a],h=[b];if(!e||!f)return a===n?-1:b===n?1:e?-1:f?1:k?J(k,a)-J(k,b):0;if(e===f)return ka(a,b);c=a;while(c=c.parentNode)g.unshift(c);c=b;while(c=c.parentNode)h.unshift(c);while(g[d]===h[d])d++;return d?ka(g[d],h[d]):g[d]===v?-1:h[d]===v?1:0},n):n},fa.matches=function(a,b){return fa(a,null,null,b)},fa.matchesSelector=function(a,b){if((a.ownerDocument||a)!==n&&m(a),b=b.replace(T,"='$1']"),c.matchesSelector&&p&&!A[b+" "]&&(!r||!r.test(b))&&(!q||!q.test(b)))try{var d=s.call(a,b);if(d||c.disconnectedMatch||a.document&&11!==a.document.nodeType)return d}catch(e){}return fa(b,n,null,[a]).length>0},fa.contains=function(a,b){return(a.ownerDocument||a)!==n&&m(a),t(a,b)},fa.attr=function(a,b){(a.ownerDocument||a)!==n&&m(a);var e=d.attrHandle[b.toLowerCase()],f=e&&D.call(d.attrHandle,b.toLowerCase())?e(a,b,!p):void 0;return void 0!==f?f:c.attributes||!p?a.getAttribute(b):(f=a.getAttributeNode(b))&&f.specified?f.value:null},fa.error=function(a){throw new Error("Syntax error, unrecognized expression: "+a)},fa.uniqueSort=function(a){var b,d=[],e=0,f=0;if(l=!c.detectDuplicates,k=!c.sortStable&&a.slice(0),a.sort(B),l){while(b=a[f++])b===a[f]&&(e=d.push(f));while(e--)a.splice(d[e],1)}return k=null,a},e=fa.getText=function(a){var b,c="",d=0,f=a.nodeType;if(f){if(1===f||9===f||11===f){if("string"==typeof a.textContent)return a.textContent;for(a=a.firstChild;a;a=a.nextSibling)c+=e(a)}else if(3===f||4===f)return a.nodeValue}else while(b=a[d++])c+=e(b);return c},d=fa.selectors={cacheLength:50,createPseudo:ha,match:W,attrHandle:{},find:{},relative:{">":{dir:"parentNode",first:!0}," ":{dir:"parentNode"},"+":{dir:"previousSibling",first:!0},"~":{dir:"previousSibling"}},preFilter:{ATTR:function(a){return a[1]=a[1].replace(ba,ca),a[3]=(a[3]||a[4]||a[5]||"").replace(ba,ca),"~="===a[2]&&(a[3]=" "+a[3]+" "),a.slice(0,4)},CHILD:function(a){return a[1]=a[1].toLowerCase(),"nth"===a[1].slice(0,3)?(a[3]||fa.error(a[0]),a[4]=+(a[4]?a[5]+(a[6]||1):2*("even"===a[3]||"odd"===a[3])),a[5]=+(a[7]+a[8]||"odd"===a[3])):a[3]&&fa.error(a[0]),a},PSEUDO:function(a){var b,c=!a[6]&&a[2];return W.CHILD.test(a[0])?null:(a[3]?a[2]=a[4]||a[5]||"":c&&U.test(c)&&(b=g(c,!0))&&(b=c.indexOf(")",c.length-b)-c.length)&&(a[0]=a[0].slice(0,b),a[2]=c.slice(0,b)),a.slice(0,3))}},filter:{TAG:function(a){var b=a.replace(ba,ca).toLowerCase();return"*"===a?function(){return!0}:function(a){return a.nodeName&&a.nodeName.toLowerCase()===b}},CLASS:function(a){var b=y[a+" "];return b||(b=new RegExp("(^|"+L+")"+a+"("+L+"|$)"))&&y(a,function(a){return b.test("string"==typeof a.className&&a.className||"undefined"!=typeof a.getAttribute&&a.getAttribute("class")||"")})},ATTR:function(a,b,c){return function(d){var e=fa.attr(d,a);return null==e?"!="===b:b?(e+="","="===b?e===c:"!="===b?e!==c:"^="===b?c&&0===e.indexOf(c):"*="===b?c&&e.indexOf(c)>-1:"$="===b?c&&e.slice(-c.length)===c:"~="===b?(" "+e.replace(P," ")+" ").indexOf(c)>-1:"|="===b?e===c||e.slice(0,c.length+1)===c+"-":!1):!0}},CHILD:function(a,b,c,d,e){var f="nth"!==a.slice(0,3),g="last"!==a.slice(-4),h="of-type"===b;return 1===d&&0===e?function(a){return!!a.parentNode}:function(b,c,i){var j,k,l,m,n,o,p=f!==g?"nextSibling":"previousSibling",q=b.parentNode,r=h&&b.nodeName.toLowerCase(),s=!i&&!h,t=!1;if(q){if(f){while(p){m=b;while(m=m[p])if(h?m.nodeName.toLowerCase()===r:1===m.nodeType)return!1;o=p="only"===a&&!o&&"nextSibling"}return!0}if(o=[g?q.firstChild:q.lastChild],g&&s){m=q,l=m[u]||(m[u]={}),k=l[m.uniqueID]||(l[m.uniqueID]={}),j=k[a]||[],n=j[0]===w&&j[1],t=n&&j[2],m=n&&q.childNodes[n];while(m=++n&&m&&m[p]||(t=n=0)||o.pop())if(1===m.nodeType&&++t&&m===b){k[a]=[w,n,t];break}}else if(s&&(m=b,l=m[u]||(m[u]={}),k=l[m.uniqueID]||(l[m.uniqueID]={}),j=k[a]||[],n=j[0]===w&&j[1],t=n),t===!1)while(m=++n&&m&&m[p]||(t=n=0)||o.pop())if((h?m.nodeName.toLowerCase()===r:1===m.nodeType)&&++t&&(s&&(l=m[u]||(m[u]={}),k=l[m.uniqueID]||(l[m.uniqueID]={}),k[a]=[w,t]),m===b))break;return t-=e,t===d||t%d===0&&t/d>=0}}},PSEUDO:function(a,b){var c,e=d.pseudos[a]||d.setFilters[a.toLowerCase()]||fa.error("unsupported pseudo: "+a);return e[u]?e(b):e.length>1?(c=[a,a,"",b],d.setFilters.hasOwnProperty(a.toLowerCase())?ha(function(a,c){var d,f=e(a,b),g=f.length;while(g--)d=J(a,f[g]),a[d]=!(c[d]=f[g])}):function(a){return e(a,0,c)}):e}},pseudos:{not:ha(function(a){var b=[],c=[],d=h(a.replace(Q,"$1"));return d[u]?ha(function(a,b,c,e){var f,g=d(a,null,e,[]),h=a.length;while(h--)(f=g[h])&&(a[h]=!(b[h]=f))}):function(a,e,f){return b[0]=a,d(b,null,f,c),b[0]=null,!c.pop()}}),has:ha(function(a){return function(b){return fa(a,b).length>0}}),contains:ha(function(a){return a=a.replace(ba,ca),function(b){return(b.textContent||b.innerText||e(b)).indexOf(a)>-1}}),lang:ha(function(a){return V.test(a||"")||fa.error("unsupported lang: "+a),a=a.replace(ba,ca).toLowerCase(),function(b){var c;do if(c=p?b.lang:b.getAttribute("xml:lang")||b.getAttribute("lang"))return c=c.toLowerCase(),c===a||0===c.indexOf(a+"-");while((b=b.parentNode)&&1===b.nodeType);return!1}}),target:function(b){var c=a.location&&a.location.hash;return c&&c.slice(1)===b.id},root:function(a){return a===o},focus:function(a){return a===n.activeElement&&(!n.hasFocus||n.hasFocus())&&!!(a.type||a.href||~a.tabIndex)},enabled:function(a){return a.disabled===!1},disabled:function(a){return a.disabled===!0},checked:function(a){var b=a.nodeName.toLowerCase();return"input"===b&&!!a.checked||"option"===b&&!!a.selected},selected:function(a){return a.parentNode&&a.parentNode.selectedIndex,a.selected===!0},empty:function(a){for(a=a.firstChild;a;a=a.nextSibling)if(a.nodeType<6)return!1;return!0},parent:function(a){return!d.pseudos.empty(a)},header:function(a){return Y.test(a.nodeName)},input:function(a){return X.test(a.nodeName)},button:function(a){var b=a.nodeName.toLowerCase();return"input"===b&&"button"===a.type||"button"===b},text:function(a){var b;return"input"===a.nodeName.toLowerCase()&&"text"===a.type&&(null==(b=a.getAttribute("type"))||"text"===b.toLowerCase())},first:na(function(){return[0]}),last:na(function(a,b){return[b-1]}),eq:na(function(a,b,c){return[0>c?c+b:c]}),even:na(function(a,b){for(var c=0;b>c;c+=2)a.push(c);return a}),odd:na(function(a,b){for(var c=1;b>c;c+=2)a.push(c);return a}),lt:na(function(a,b,c){for(var d=0>c?c+b:c;--d>=0;)a.push(d);return a}),gt:na(function(a,b,c){for(var d=0>c?c+b:c;++d<b;)a.push(d);return a})}},d.pseudos.nth=d.pseudos.eq;for(b in{radio:!0,checkbox:!0,file:!0,password:!0,image:!0})d.pseudos[b]=la(b);for(b in{submit:!0,reset:!0})d.pseudos[b]=ma(b);function pa(){}pa.prototype=d.filters=d.pseudos,d.setFilters=new pa,g=fa.tokenize=function(a,b){var c,e,f,g,h,i,j,k=z[a+" "];if(k)return b?0:k.slice(0);h=a,i=[],j=d.preFilter;while(h){(!c||(e=R.exec(h)))&&(e&&(h=h.slice(e[0].length)||h),i.push(f=[])),c=!1,(e=S.exec(h))&&(c=e.shift(),f.push({value:c,type:e[0].replace(Q," ")}),h=h.slice(c.length));for(g in d.filter)!(e=W[g].exec(h))||j[g]&&!(e=j[g](e))||(c=e.shift(),f.push({value:c,type:g,matches:e}),h=h.slice(c.length));if(!c)break}return b?h.length:h?fa.error(a):z(a,i).slice(0)};function qa(a){for(var b=0,c=a.length,d="";c>b;b++)d+=a[b].value;return d}function ra(a,b,c){var d=b.dir,e=c&&"parentNode"===d,f=x++;return b.first?function(b,c,f){while(b=b[d])if(1===b.nodeType||e)return a(b,c,f)}:function(b,c,g){var h,i,j,k=[w,f];if(g){while(b=b[d])if((1===b.nodeType||e)&&a(b,c,g))return!0}else while(b=b[d])if(1===b.nodeType||e){if(j=b[u]||(b[u]={}),i=j[b.uniqueID]||(j[b.uniqueID]={}),(h=i[d])&&h[0]===w&&h[1]===f)return k[2]=h[2];if(i[d]=k,k[2]=a(b,c,g))return!0}}}function sa(a){return a.length>1?function(b,c,d){var e=a.length;while(e--)if(!a[e](b,c,d))return!1;return!0}:a[0]}function ta(a,b,c){for(var d=0,e=b.length;e>d;d++)fa(a,b[d],c);return c}function ua(a,b,c,d,e){for(var f,g=[],h=0,i=a.length,j=null!=b;i>h;h++)(f=a[h])&&(!c||c(f,d,e))&&(g.push(f),j&&b.push(h));return g}function va(a,b,c,d,e,f){return d&&!d[u]&&(d=va(d)),e&&!e[u]&&(e=va(e,f)),ha(function(f,g,h,i){var j,k,l,m=[],n=[],o=g.length,p=f||ta(b||"*",h.nodeType?[h]:h,[]),q=!a||!f&&b?p:ua(p,m,a,h,i),r=c?e||(f?a:o||d)?[]:g:q;if(c&&c(q,r,h,i),d){j=ua(r,n),d(j,[],h,i),k=j.length;while(k--)(l=j[k])&&(r[n[k]]=!(q[n[k]]=l))}if(f){if(e||a){if(e){j=[],k=r.length;while(k--)(l=r[k])&&j.push(q[k]=l);e(null,r=[],j,i)}k=r.length;while(k--)(l=r[k])&&(j=e?J(f,l):m[k])>-1&&(f[j]=!(g[j]=l))}}else r=ua(r===g?r.splice(o,r.length):r),e?e(null,g,r,i):H.apply(g,r)})}function wa(a){for(var b,c,e,f=a.length,g=d.relative[a[0].type],h=g||d.relative[" "],i=g?1:0,k=ra(function(a){return a===b},h,!0),l=ra(function(a){return J(b,a)>-1},h,!0),m=[function(a,c,d){var e=!g&&(d||c!==j)||((b=c).nodeType?k(a,c,d):l(a,c,d));return b=null,e}];f>i;i++)if(c=d.relative[a[i].type])m=[ra(sa(m),c)];else{if(c=d.filter[a[i].type].apply(null,a[i].matches),c[u]){for(e=++i;f>e;e++)if(d.relative[a[e].type])break;return va(i>1&&sa(m),i>1&&qa(a.slice(0,i-1).concat({value:" "===a[i-2].type?"*":""})).replace(Q,"$1"),c,e>i&&wa(a.slice(i,e)),f>e&&wa(a=a.slice(e)),f>e&&qa(a))}m.push(c)}return sa(m)}function xa(a,b){var c=b.length>0,e=a.length>0,f=function(f,g,h,i,k){var l,o,q,r=0,s="0",t=f&&[],u=[],v=j,x=f||e&&d.find.TAG("*",k),y=w+=null==v?1:Math.random()||.1,z=x.length;for(k&&(j=g===n||g||k);s!==z&&null!=(l=x[s]);s++){if(e&&l){o=0,g||l.ownerDocument===n||(m(l),h=!p);while(q=a[o++])if(q(l,g||n,h)){i.push(l);break}k&&(w=y)}c&&((l=!q&&l)&&r--,f&&t.push(l))}if(r+=s,c&&s!==r){o=0;while(q=b[o++])q(t,u,g,h);if(f){if(r>0)while(s--)t[s]||u[s]||(u[s]=F.call(i));u=ua(u)}H.apply(i,u),k&&!f&&u.length>0&&r+b.length>1&&fa.uniqueSort(i)}return k&&(w=y,j=v),t};return c?ha(f):f}return h=fa.compile=function(a,b){var c,d=[],e=[],f=A[a+" "];if(!f){b||(b=g(a)),c=b.length;while(c--)f=wa(b[c]),f[u]?d.push(f):e.push(f);f=A(a,xa(e,d)),f.selector=a}return f},i=fa.select=function(a,b,e,f){var i,j,k,l,m,n="function"==typeof a&&a,o=!f&&g(a=n.selector||a);if(e=e||[],1===o.length){if(j=o[0]=o[0].slice(0),j.length>2&&"ID"===(k=j[0]).type&&c.getById&&9===b.nodeType&&p&&d.relative[j[1].type]){if(b=(d.find.ID(k.matches[0].replace(ba,ca),b)||[])[0],!b)return e;n&&(b=b.parentNode),a=a.slice(j.shift().value.length)}i=W.needsContext.test(a)?0:j.length;while(i--){if(k=j[i],d.relative[l=k.type])break;if((m=d.find[l])&&(f=m(k.matches[0].replace(ba,ca),_.test(j[0].type)&&oa(b.parentNode)||b))){if(j.splice(i,1),a=f.length&&qa(j),!a)return H.apply(e,f),e;break}}}return(n||h(a,o))(f,b,!p,e,!b||_.test(a)&&oa(b.parentNode)||b),e},c.sortStable=u.split("").sort(B).join("")===u,c.detectDuplicates=!!l,m(),c.sortDetached=ia(function(a){return 1&a.compareDocumentPosition(n.createElement("div"))}),ia(function(a){return a.innerHTML="<a href='#'></a>","#"===a.firstChild.getAttribute("href")})||ja("type|href|height|width",function(a,b,c){return c?void 0:a.getAttribute(b,"type"===b.toLowerCase()?1:2)}),c.attributes&&ia(function(a){return a.innerHTML="<input/>",a.firstChild.setAttribute("value",""),""===a.firstChild.getAttribute("value")})||ja("value",function(a,b,c){return c||"input"!==a.nodeName.toLowerCase()?void 0:a.defaultValue}),ia(function(a){return null==a.getAttribute("disabled")})||ja(K,function(a,b,c){var d;return c?void 0:a[b]===!0?b.toLowerCase():(d=a.getAttributeNode(b))&&d.specified?d.value:null}),fa}(a);n.find=t,n.expr=t.selectors,n.expr[":"]=n.expr.pseudos,n.uniqueSort=n.unique=t.uniqueSort,n.text=t.getText,n.isXMLDoc=t.isXML,n.contains=t.contains;var u=function(a,b,c){var d=[],e=void 0!==c;while((a=a[b])&&9!==a.nodeType)if(1===a.nodeType){if(e&&n(a).is(c))break;d.push(a)}return d},v=function(a,b){for(var c=[];a;a=a.nextSibling)1===a.nodeType&&a!==b&&c.push(a);return c},w=n.expr.match.needsContext,x=/^<([\w-]+)\s*\/?>(?:<\/\1>|)$/,y=/^.[^:#\[\.,]*$/;function z(a,b,c){if(n.isFunction(b))return n.grep(a,function(a,d){return!!b.call(a,d,a)!==c});if(b.nodeType)return n.grep(a,function(a){return a===b!==c});if("string"==typeof b){if(y.test(b))return n.filter(b,a,c);b=n.filter(b,a)}return n.grep(a,function(a){return h.call(b,a)>-1!==c})}n.filter=function(a,b,c){var d=b[0];return c&&(a=":not("+a+")"),1===b.length&&1===d.nodeType?n.find.matchesSelector(d,a)?[d]:[]:n.find.matches(a,n.grep(b,function(a){return 1===a.nodeType}))},n.fn.extend({find:function(a){var b,c=this.length,d=[],e=this;if("string"!=typeof a)return this.pushStack(n(a).filter(function(){for(b=0;c>b;b++)if(n.contains(e[b],this))return!0}));for(b=0;c>b;b++)n.find(a,e[b],d);return d=this.pushStack(c>1?n.unique(d):d),d.selector=this.selector?this.selector+" "+a:a,d},filter:function(a){return this.pushStack(z(this,a||[],!1))},not:function(a){return this.pushStack(z(this,a||[],!0))},is:function(a){return!!z(this,"string"==typeof a&&w.test(a)?n(a):a||[],!1).length}});var A,B=/^(?:\s*(<[\w\W]+>)[^>]*|#([\w-]*))$/,C=n.fn.init=function(a,b,c){var e,f;if(!a)return this;if(c=c||A,"string"==typeof a){if(e="<"===a[0]&&">"===a[a.length-1]&&a.length>=3?[null,a,null]:B.exec(a),!e||!e[1]&&b)return!b||b.jquery?(b||c).find(a):this.constructor(b).find(a);if(e[1]){if(b=b instanceof n?b[0]:b,n.merge(this,n.parseHTML(e[1],b&&b.nodeType?b.ownerDocument||b:d,!0)),x.test(e[1])&&n.isPlainObject(b))for(e in b)n.isFunction(this[e])?this[e](b[e]):this.attr(e,b[e]);return this}return f=d.getElementById(e[2]),f&&f.parentNode&&(this.length=1,this[0]=f),this.context=d,this.selector=a,this}return a.nodeType?(this.context=this[0]=a,this.length=1,this):n.isFunction(a)?void 0!==c.ready?c.ready(a):a(n):(void 0!==a.selector&&(this.selector=a.selector,this.context=a.context),n.makeArray(a,this))};C.prototype=n.fn,A=n(d);var D=/^(?:parents|prev(?:Until|All))/,E={children:!0,contents:!0,next:!0,prev:!0};n.fn.extend({has:function(a){var b=n(a,this),c=b.length;return this.filter(function(){for(var a=0;c>a;a++)if(n.contains(this,b[a]))return!0})},closest:function(a,b){for(var c,d=0,e=this.length,f=[],g=w.test(a)||"string"!=typeof a?n(a,b||this.context):0;e>d;d++)for(c=this[d];c&&c!==b;c=c.parentNode)if(c.nodeType<11&&(g?g.index(c)>-1:1===c.nodeType&&n.find.matchesSelector(c,a))){f.push(c);break}return this.pushStack(f.length>1?n.uniqueSort(f):f)},index:function(a){return a?"string"==typeof a?h.call(n(a),this[0]):h.call(this,a.jquery?a[0]:a):this[0]&&this[0].parentNode?this.first().prevAll().length:-1},add:function(a,b){return this.pushStack(n.uniqueSort(n.merge(this.get(),n(a,b))))},addBack:function(a){return this.add(null==a?this.prevObject:this.prevObject.filter(a))}});function F(a,b){while((a=a[b])&&1!==a.nodeType);return a}n.each({parent:function(a){var b=a.parentNode;return b&&11!==b.nodeType?b:null},parents:function(a){return u(a,"parentNode")},parentsUntil:function(a,b,c){return u(a,"parentNode",c)},next:function(a){return F(a,"nextSibling")},prev:function(a){return F(a,"previousSibling")},nextAll:function(a){return u(a,"nextSibling")},prevAll:function(a){return u(a,"previousSibling")},nextUntil:function(a,b,c){return u(a,"nextSibling",c)},prevUntil:function(a,b,c){return u(a,"previousSibling",c)},siblings:function(a){return v((a.parentNode||{}).firstChild,a)},children:function(a){return v(a.firstChild)},contents:function(a){return a.contentDocument||n.merge([],a.childNodes)}},function(a,b){n.fn[a]=function(c,d){var e=n.map(this,b,c);return"Until"!==a.slice(-5)&&(d=c),d&&"string"==typeof d&&(e=n.filter(d,e)),this.length>1&&(E[a]||n.uniqueSort(e),D.test(a)&&e.reverse()),this.pushStack(e)}});var G=/\S+/g;function H(a){var b={};return n.each(a.match(G)||[],function(a,c){b[c]=!0}),b}n.Callbacks=function(a){a="string"==typeof a?H(a):n.extend({},a);var b,c,d,e,f=[],g=[],h=-1,i=function(){for(e=a.once,d=b=!0;g.length;h=-1){c=g.shift();while(++h<f.length)f[h].apply(c[0],c[1])===!1&&a.stopOnFalse&&(h=f.length,c=!1)}a.memory||(c=!1),b=!1,e&&(f=c?[]:"")},j={add:function(){return f&&(c&&!b&&(h=f.length-1,g.push(c)),function d(b){n.each(b,function(b,c){n.isFunction(c)?a.unique&&j.has(c)||f.push(c):c&&c.length&&"string"!==n.type(c)&&d(c)})}(arguments),c&&!b&&i()),this},remove:function(){return n.each(arguments,function(a,b){var c;while((c=n.inArray(b,f,c))>-1)f.splice(c,1),h>=c&&h--}),this},has:function(a){return a?n.inArray(a,f)>-1:f.length>0},empty:function(){return f&&(f=[]),this},disable:function(){return e=g=[],f=c="",this},disabled:function(){return!f},lock:function(){return e=g=[],c||(f=c=""),this},locked:function(){return!!e},fireWith:function(a,c){return e||(c=c||[],c=[a,c.slice?c.slice():c],g.push(c),b||i()),this},fire:function(){return j.fireWith(this,arguments),this},fired:function(){return!!d}};return j},n.extend({Deferred:function(a){var b=[["resolve","done",n.Callbacks("once memory"),"resolved"],["reject","fail",n.Callbacks("once memory"),"rejected"],["notify","progress",n.Callbacks("memory")]],c="pending",d={state:function(){return c},always:function(){return e.done(arguments).fail(arguments),this},then:function(){var a=arguments;return n.Deferred(function(c){n.each(b,function(b,f){var g=n.isFunction(a[b])&&a[b];e[f[1]](function(){var a=g&&g.apply(this,arguments);a&&n.isFunction(a.promise)?a.promise().progress(c.notify).done(c.resolve).fail(c.reject):c[f[0]+"With"](this===d?c.promise():this,g?[a]:arguments)})}),a=null}).promise()},promise:function(a){return null!=a?n.extend(a,d):d}},e={};return d.pipe=d.then,n.each(b,function(a,f){var g=f[2],h=f[3];d[f[1]]=g.add,h&&g.add(function(){c=h},b[1^a][2].disable,b[2][2].lock),e[f[0]]=function(){return e[f[0]+"With"](this===e?d:this,arguments),this},e[f[0]+"With"]=g.fireWith}),d.promise(e),a&&a.call(e,e),e},when:function(a){var b=0,c=e.call(arguments),d=c.length,f=1!==d||a&&n.isFunction(a.promise)?d:0,g=1===f?a:n.Deferred(),h=function(a,b,c){return function(d){b[a]=this,c[a]=arguments.length>1?e.call(arguments):d,c===i?g.notifyWith(b,c):--f||g.resolveWith(b,c)}},i,j,k;if(d>1)for(i=new Array(d),j=new Array(d),k=new Array(d);d>b;b++)c[b]&&n.isFunction(c[b].promise)?c[b].promise().progress(h(b,j,i)).done(h(b,k,c)).fail(g.reject):--f;return f||g.resolveWith(k,c),g.promise()}});var I;n.fn.ready=function(a){return n.ready.promise().done(a),this},n.extend({isReady:!1,readyWait:1,holdReady:function(a){a?n.readyWait++:n.ready(!0)},ready:function(a){(a===!0?--n.readyWait:n.isReady)||(n.isReady=!0,a!==!0&&--n.readyWait>0||(I.resolveWith(d,[n]),n.fn.triggerHandler&&(n(d).triggerHandler("ready"),n(d).off("ready"))))}});function J(){d.removeEventListener("DOMContentLoaded",J),a.removeEventListener("load",J),n.ready()}n.ready.promise=function(b){return I||(I=n.Deferred(),"complete"===d.readyState||"loading"!==d.readyState&&!d.documentElement.doScroll?a.setTimeout(n.ready):(d.addEventListener("DOMContentLoaded",J),a.addEventListener("load",J))),I.promise(b)},n.ready.promise();var K=function(a,b,c,d,e,f,g){var h=0,i=a.length,j=null==c;if("object"===n.type(c)){e=!0;for(h in c)K(a,b,h,c[h],!0,f,g)}else if(void 0!==d&&(e=!0,n.isFunction(d)||(g=!0),j&&(g?(b.call(a,d),b=null):(j=b,b=function(a,b,c){return j.call(n(a),c)})),b))for(;i>h;h++)b(a[h],c,g?d:d.call(a[h],h,b(a[h],c)));return e?a:j?b.call(a):i?b(a[0],c):f},L=function(a){return 1===a.nodeType||9===a.nodeType||!+a.nodeType};function M(){this.expando=n.expando+M.uid++}M.uid=1,M.prototype={register:function(a,b){var c=b||{};return a.nodeType?a[this.expando]=c:Object.defineProperty(a,this.expando,{value:c,writable:!0,configurable:!0}),a[this.expando]},cache:function(a){if(!L(a))return{};var b=a[this.expando];return b||(b={},L(a)&&(a.nodeType?a[this.expando]=b:Object.defineProperty(a,this.expando,{value:b,configurable:!0}))),b},set:function(a,b,c){var d,e=this.cache(a);if("string"==typeof b)e[b]=c;else for(d in b)e[d]=b[d];return e},get:function(a,b){return void 0===b?this.cache(a):a[this.expando]&&a[this.expando][b]},access:function(a,b,c){var d;return void 0===b||b&&"string"==typeof b&&void 0===c?(d=this.get(a,b),void 0!==d?d:this.get(a,n.camelCase(b))):(this.set(a,b,c),void 0!==c?c:b)},remove:function(a,b){var c,d,e,f=a[this.expando];if(void 0!==f){if(void 0===b)this.register(a);else{n.isArray(b)?d=b.concat(b.map(n.camelCase)):(e=n.camelCase(b),b in f?d=[b,e]:(d=e,d=d in f?[d]:d.match(G)||[])),c=d.length;while(c--)delete f[d[c]]}(void 0===b||n.isEmptyObject(f))&&(a.nodeType?a[this.expando]=void 0:delete a[this.expando])}},hasData:function(a){var b=a[this.expando];return void 0!==b&&!n.isEmptyObject(b)}};var N=new M,O=new M,P=/^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,Q=/[A-Z]/g;function R(a,b,c){var d;if(void 0===c&&1===a.nodeType)if(d="data-"+b.replace(Q,"-$&").toLowerCase(),c=a.getAttribute(d),"string"==typeof c){try{c="true"===c?!0:"false"===c?!1:"null"===c?null:+c+""===c?+c:P.test(c)?n.parseJSON(c):c}catch(e){}O.set(a,b,c);
+}else c=void 0;return c}n.extend({hasData:function(a){return O.hasData(a)||N.hasData(a)},data:function(a,b,c){return O.access(a,b,c)},removeData:function(a,b){O.remove(a,b)},_data:function(a,b,c){return N.access(a,b,c)},_removeData:function(a,b){N.remove(a,b)}}),n.fn.extend({data:function(a,b){var c,d,e,f=this[0],g=f&&f.attributes;if(void 0===a){if(this.length&&(e=O.get(f),1===f.nodeType&&!N.get(f,"hasDataAttrs"))){c=g.length;while(c--)g[c]&&(d=g[c].name,0===d.indexOf("data-")&&(d=n.camelCase(d.slice(5)),R(f,d,e[d])));N.set(f,"hasDataAttrs",!0)}return e}return"object"==typeof a?this.each(function(){O.set(this,a)}):K(this,function(b){var c,d;if(f&&void 0===b){if(c=O.get(f,a)||O.get(f,a.replace(Q,"-$&").toLowerCase()),void 0!==c)return c;if(d=n.camelCase(a),c=O.get(f,d),void 0!==c)return c;if(c=R(f,d,void 0),void 0!==c)return c}else d=n.camelCase(a),this.each(function(){var c=O.get(this,d);O.set(this,d,b),a.indexOf("-")>-1&&void 0!==c&&O.set(this,a,b)})},null,b,arguments.length>1,null,!0)},removeData:function(a){return this.each(function(){O.remove(this,a)})}}),n.extend({queue:function(a,b,c){var d;return a?(b=(b||"fx")+"queue",d=N.get(a,b),c&&(!d||n.isArray(c)?d=N.access(a,b,n.makeArray(c)):d.push(c)),d||[]):void 0},dequeue:function(a,b){b=b||"fx";var c=n.queue(a,b),d=c.length,e=c.shift(),f=n._queueHooks(a,b),g=function(){n.dequeue(a,b)};"inprogress"===e&&(e=c.shift(),d--),e&&("fx"===b&&c.unshift("inprogress"),delete f.stop,e.call(a,g,f)),!d&&f&&f.empty.fire()},_queueHooks:function(a,b){var c=b+"queueHooks";return N.get(a,c)||N.access(a,c,{empty:n.Callbacks("once memory").add(function(){N.remove(a,[b+"queue",c])})})}}),n.fn.extend({queue:function(a,b){var c=2;return"string"!=typeof a&&(b=a,a="fx",c--),arguments.length<c?n.queue(this[0],a):void 0===b?this:this.each(function(){var c=n.queue(this,a,b);n._queueHooks(this,a),"fx"===a&&"inprogress"!==c[0]&&n.dequeue(this,a)})},dequeue:function(a){return this.each(function(){n.dequeue(this,a)})},clearQueue:function(a){return this.queue(a||"fx",[])},promise:function(a,b){var c,d=1,e=n.Deferred(),f=this,g=this.length,h=function(){--d||e.resolveWith(f,[f])};"string"!=typeof a&&(b=a,a=void 0),a=a||"fx";while(g--)c=N.get(f[g],a+"queueHooks"),c&&c.empty&&(d++,c.empty.add(h));return h(),e.promise(b)}});var S=/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/.source,T=new RegExp("^(?:([+-])=|)("+S+")([a-z%]*)$","i"),U=["Top","Right","Bottom","Left"],V=function(a,b){return a=b||a,"none"===n.css(a,"display")||!n.contains(a.ownerDocument,a)};function W(a,b,c,d){var e,f=1,g=20,h=d?function(){return d.cur()}:function(){return n.css(a,b,"")},i=h(),j=c&&c[3]||(n.cssNumber[b]?"":"px"),k=(n.cssNumber[b]||"px"!==j&&+i)&&T.exec(n.css(a,b));if(k&&k[3]!==j){j=j||k[3],c=c||[],k=+i||1;do f=f||".5",k/=f,n.style(a,b,k+j);while(f!==(f=h()/i)&&1!==f&&--g)}return c&&(k=+k||+i||0,e=c[1]?k+(c[1]+1)*c[2]:+c[2],d&&(d.unit=j,d.start=k,d.end=e)),e}var X=/^(?:checkbox|radio)$/i,Y=/<([\w:-]+)/,Z=/^$|\/(?:java|ecma)script/i,$={option:[1,"<select multiple='multiple'>","</select>"],thead:[1,"<table>","</table>"],col:[2,"<table><colgroup>","</colgroup></table>"],tr:[2,"<table><tbody>","</tbody></table>"],td:[3,"<table><tbody><tr>","</tr></tbody></table>"],_default:[0,"",""]};$.optgroup=$.option,$.tbody=$.tfoot=$.colgroup=$.caption=$.thead,$.th=$.td;function _(a,b){var c="undefined"!=typeof a.getElementsByTagName?a.getElementsByTagName(b||"*"):"undefined"!=typeof a.querySelectorAll?a.querySelectorAll(b||"*"):[];return void 0===b||b&&n.nodeName(a,b)?n.merge([a],c):c}function aa(a,b){for(var c=0,d=a.length;d>c;c++)N.set(a[c],"globalEval",!b||N.get(b[c],"globalEval"))}var ba=/<|&#?\w+;/;function ca(a,b,c,d,e){for(var f,g,h,i,j,k,l=b.createDocumentFragment(),m=[],o=0,p=a.length;p>o;o++)if(f=a[o],f||0===f)if("object"===n.type(f))n.merge(m,f.nodeType?[f]:f);else if(ba.test(f)){g=g||l.appendChild(b.createElement("div")),h=(Y.exec(f)||["",""])[1].toLowerCase(),i=$[h]||$._default,g.innerHTML=i[1]+n.htmlPrefilter(f)+i[2],k=i[0];while(k--)g=g.lastChild;n.merge(m,g.childNodes),g=l.firstChild,g.textContent=""}else m.push(b.createTextNode(f));l.textContent="",o=0;while(f=m[o++])if(d&&n.inArray(f,d)>-1)e&&e.push(f);else if(j=n.contains(f.ownerDocument,f),g=_(l.appendChild(f),"script"),j&&aa(g),c){k=0;while(f=g[k++])Z.test(f.type||"")&&c.push(f)}return l}!function(){var a=d.createDocumentFragment(),b=a.appendChild(d.createElement("div")),c=d.createElement("input");c.setAttribute("type","radio"),c.setAttribute("checked","checked"),c.setAttribute("name","t"),b.appendChild(c),l.checkClone=b.cloneNode(!0).cloneNode(!0).lastChild.checked,b.innerHTML="<textarea>x</textarea>",l.noCloneChecked=!!b.cloneNode(!0).lastChild.defaultValue}();var da=/^key/,ea=/^(?:mouse|pointer|contextmenu|drag|drop)|click/,fa=/^([^.]*)(?:\.(.+)|)/;function ga(){return!0}function ha(){return!1}function ia(){try{return d.activeElement}catch(a){}}function ja(a,b,c,d,e,f){var g,h;if("object"==typeof b){"string"!=typeof c&&(d=d||c,c=void 0);for(h in b)ja(a,h,c,d,b[h],f);return a}if(null==d&&null==e?(e=c,d=c=void 0):null==e&&("string"==typeof c?(e=d,d=void 0):(e=d,d=c,c=void 0)),e===!1)e=ha;else if(!e)return a;return 1===f&&(g=e,e=function(a){return n().off(a),g.apply(this,arguments)},e.guid=g.guid||(g.guid=n.guid++)),a.each(function(){n.event.add(this,b,e,d,c)})}n.event={global:{},add:function(a,b,c,d,e){var f,g,h,i,j,k,l,m,o,p,q,r=N.get(a);if(r){c.handler&&(f=c,c=f.handler,e=f.selector),c.guid||(c.guid=n.guid++),(i=r.events)||(i=r.events={}),(g=r.handle)||(g=r.handle=function(b){return"undefined"!=typeof n&&n.event.triggered!==b.type?n.event.dispatch.apply(a,arguments):void 0}),b=(b||"").match(G)||[""],j=b.length;while(j--)h=fa.exec(b[j])||[],o=q=h[1],p=(h[2]||"").split(".").sort(),o&&(l=n.event.special[o]||{},o=(e?l.delegateType:l.bindType)||o,l=n.event.special[o]||{},k=n.extend({type:o,origType:q,data:d,handler:c,guid:c.guid,selector:e,needsContext:e&&n.expr.match.needsContext.test(e),namespace:p.join(".")},f),(m=i[o])||(m=i[o]=[],m.delegateCount=0,l.setup&&l.setup.call(a,d,p,g)!==!1||a.addEventListener&&a.addEventListener(o,g)),l.add&&(l.add.call(a,k),k.handler.guid||(k.handler.guid=c.guid)),e?m.splice(m.delegateCount++,0,k):m.push(k),n.event.global[o]=!0)}},remove:function(a,b,c,d,e){var f,g,h,i,j,k,l,m,o,p,q,r=N.hasData(a)&&N.get(a);if(r&&(i=r.events)){b=(b||"").match(G)||[""],j=b.length;while(j--)if(h=fa.exec(b[j])||[],o=q=h[1],p=(h[2]||"").split(".").sort(),o){l=n.event.special[o]||{},o=(d?l.delegateType:l.bindType)||o,m=i[o]||[],h=h[2]&&new RegExp("(^|\\.)"+p.join("\\.(?:.*\\.|)")+"(\\.|$)"),g=f=m.length;while(f--)k=m[f],!e&&q!==k.origType||c&&c.guid!==k.guid||h&&!h.test(k.namespace)||d&&d!==k.selector&&("**"!==d||!k.selector)||(m.splice(f,1),k.selector&&m.delegateCount--,l.remove&&l.remove.call(a,k));g&&!m.length&&(l.teardown&&l.teardown.call(a,p,r.handle)!==!1||n.removeEvent(a,o,r.handle),delete i[o])}else for(o in i)n.event.remove(a,o+b[j],c,d,!0);n.isEmptyObject(i)&&N.remove(a,"handle events")}},dispatch:function(a){a=n.event.fix(a);var b,c,d,f,g,h=[],i=e.call(arguments),j=(N.get(this,"events")||{})[a.type]||[],k=n.event.special[a.type]||{};if(i[0]=a,a.delegateTarget=this,!k.preDispatch||k.preDispatch.call(this,a)!==!1){h=n.event.handlers.call(this,a,j),b=0;while((f=h[b++])&&!a.isPropagationStopped()){a.currentTarget=f.elem,c=0;while((g=f.handlers[c++])&&!a.isImmediatePropagationStopped())(!a.rnamespace||a.rnamespace.test(g.namespace))&&(a.handleObj=g,a.data=g.data,d=((n.event.special[g.origType]||{}).handle||g.handler).apply(f.elem,i),void 0!==d&&(a.result=d)===!1&&(a.preventDefault(),a.stopPropagation()))}return k.postDispatch&&k.postDispatch.call(this,a),a.result}},handlers:function(a,b){var c,d,e,f,g=[],h=b.delegateCount,i=a.target;if(h&&i.nodeType&&("click"!==a.type||isNaN(a.button)||a.button<1))for(;i!==this;i=i.parentNode||this)if(1===i.nodeType&&(i.disabled!==!0||"click"!==a.type)){for(d=[],c=0;h>c;c++)f=b[c],e=f.selector+" ",void 0===d[e]&&(d[e]=f.needsContext?n(e,this).index(i)>-1:n.find(e,this,null,[i]).length),d[e]&&d.push(f);d.length&&g.push({elem:i,handlers:d})}return h<b.length&&g.push({elem:this,handlers:b.slice(h)}),g},props:"altKey bubbles cancelable ctrlKey currentTarget detail eventPhase metaKey relatedTarget shiftKey target timeStamp view which".split(" "),fixHooks:{},keyHooks:{props:"char charCode key keyCode".split(" "),filter:function(a,b){return null==a.which&&(a.which=null!=b.charCode?b.charCode:b.keyCode),a}},mouseHooks:{props:"button buttons clientX clientY offsetX offsetY pageX pageY screenX screenY toElement".split(" "),filter:function(a,b){var c,e,f,g=b.button;return null==a.pageX&&null!=b.clientX&&(c=a.target.ownerDocument||d,e=c.documentElement,f=c.body,a.pageX=b.clientX+(e&&e.scrollLeft||f&&f.scrollLeft||0)-(e&&e.clientLeft||f&&f.clientLeft||0),a.pageY=b.clientY+(e&&e.scrollTop||f&&f.scrollTop||0)-(e&&e.clientTop||f&&f.clientTop||0)),a.which||void 0===g||(a.which=1&g?1:2&g?3:4&g?2:0),a}},fix:function(a){if(a[n.expando])return a;var b,c,e,f=a.type,g=a,h=this.fixHooks[f];h||(this.fixHooks[f]=h=ea.test(f)?this.mouseHooks:da.test(f)?this.keyHooks:{}),e=h.props?this.props.concat(h.props):this.props,a=new n.Event(g),b=e.length;while(b--)c=e[b],a[c]=g[c];return a.target||(a.target=d),3===a.target.nodeType&&(a.target=a.target.parentNode),h.filter?h.filter(a,g):a},special:{load:{noBubble:!0},focus:{trigger:function(){return this!==ia()&&this.focus?(this.focus(),!1):void 0},delegateType:"focusin"},blur:{trigger:function(){return this===ia()&&this.blur?(this.blur(),!1):void 0},delegateType:"focusout"},click:{trigger:function(){return"checkbox"===this.type&&this.click&&n.nodeName(this,"input")?(this.click(),!1):void 0},_default:function(a){return n.nodeName(a.target,"a")}},beforeunload:{postDispatch:function(a){void 0!==a.result&&a.originalEvent&&(a.originalEvent.returnValue=a.result)}}}},n.removeEvent=function(a,b,c){a.removeEventListener&&a.removeEventListener(b,c)},n.Event=function(a,b){return this instanceof n.Event?(a&&a.type?(this.originalEvent=a,this.type=a.type,this.isDefaultPrevented=a.defaultPrevented||void 0===a.defaultPrevented&&a.returnValue===!1?ga:ha):this.type=a,b&&n.extend(this,b),this.timeStamp=a&&a.timeStamp||n.now(),void(this[n.expando]=!0)):new n.Event(a,b)},n.Event.prototype={constructor:n.Event,isDefaultPrevented:ha,isPropagationStopped:ha,isImmediatePropagationStopped:ha,preventDefault:function(){var a=this.originalEvent;this.isDefaultPrevented=ga,a&&a.preventDefault()},stopPropagation:function(){var a=this.originalEvent;this.isPropagationStopped=ga,a&&a.stopPropagation()},stopImmediatePropagation:function(){var a=this.originalEvent;this.isImmediatePropagationStopped=ga,a&&a.stopImmediatePropagation(),this.stopPropagation()}},n.each({mouseenter:"mouseover",mouseleave:"mouseout",pointerenter:"pointerover",pointerleave:"pointerout"},function(a,b){n.event.special[a]={delegateType:b,bindType:b,handle:function(a){var c,d=this,e=a.relatedTarget,f=a.handleObj;return(!e||e!==d&&!n.contains(d,e))&&(a.type=f.origType,c=f.handler.apply(this,arguments),a.type=b),c}}}),n.fn.extend({on:function(a,b,c,d){return ja(this,a,b,c,d)},one:function(a,b,c,d){return ja(this,a,b,c,d,1)},off:function(a,b,c){var d,e;if(a&&a.preventDefault&&a.handleObj)return d=a.handleObj,n(a.delegateTarget).off(d.namespace?d.origType+"."+d.namespace:d.origType,d.selector,d.handler),this;if("object"==typeof a){for(e in a)this.off(e,b,a[e]);return this}return(b===!1||"function"==typeof b)&&(c=b,b=void 0),c===!1&&(c=ha),this.each(function(){n.event.remove(this,a,c,b)})}});var ka=/<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:-]+)[^>]*)\/>/gi,la=/<script|<style|<link/i,ma=/checked\s*(?:[^=]|=\s*.checked.)/i,na=/^true\/(.*)/,oa=/^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g;function pa(a,b){return n.nodeName(a,"table")&&n.nodeName(11!==b.nodeType?b:b.firstChild,"tr")?a.getElementsByTagName("tbody")[0]||a.appendChild(a.ownerDocument.createElement("tbody")):a}function qa(a){return a.type=(null!==a.getAttribute("type"))+"/"+a.type,a}function ra(a){var b=na.exec(a.type);return b?a.type=b[1]:a.removeAttribute("type"),a}function sa(a,b){var c,d,e,f,g,h,i,j;if(1===b.nodeType){if(N.hasData(a)&&(f=N.access(a),g=N.set(b,f),j=f.events)){delete g.handle,g.events={};for(e in j)for(c=0,d=j[e].length;d>c;c++)n.event.add(b,e,j[e][c])}O.hasData(a)&&(h=O.access(a),i=n.extend({},h),O.set(b,i))}}function ta(a,b){var c=b.nodeName.toLowerCase();"input"===c&&X.test(a.type)?b.checked=a.checked:("input"===c||"textarea"===c)&&(b.defaultValue=a.defaultValue)}function ua(a,b,c,d){b=f.apply([],b);var e,g,h,i,j,k,m=0,o=a.length,p=o-1,q=b[0],r=n.isFunction(q);if(r||o>1&&"string"==typeof q&&!l.checkClone&&ma.test(q))return a.each(function(e){var f=a.eq(e);r&&(b[0]=q.call(this,e,f.html())),ua(f,b,c,d)});if(o&&(e=ca(b,a[0].ownerDocument,!1,a,d),g=e.firstChild,1===e.childNodes.length&&(e=g),g||d)){for(h=n.map(_(e,"script"),qa),i=h.length;o>m;m++)j=e,m!==p&&(j=n.clone(j,!0,!0),i&&n.merge(h,_(j,"script"))),c.call(a[m],j,m);if(i)for(k=h[h.length-1].ownerDocument,n.map(h,ra),m=0;i>m;m++)j=h[m],Z.test(j.type||"")&&!N.access(j,"globalEval")&&n.contains(k,j)&&(j.src?n._evalUrl&&n._evalUrl(j.src):n.globalEval(j.textContent.replace(oa,"")))}return a}function va(a,b,c){for(var d,e=b?n.filter(b,a):a,f=0;null!=(d=e[f]);f++)c||1!==d.nodeType||n.cleanData(_(d)),d.parentNode&&(c&&n.contains(d.ownerDocument,d)&&aa(_(d,"script")),d.parentNode.removeChild(d));return a}n.extend({htmlPrefilter:function(a){return a.replace(ka,"<$1></$2>")},clone:function(a,b,c){var d,e,f,g,h=a.cloneNode(!0),i=n.contains(a.ownerDocument,a);if(!(l.noCloneChecked||1!==a.nodeType&&11!==a.nodeType||n.isXMLDoc(a)))for(g=_(h),f=_(a),d=0,e=f.length;e>d;d++)ta(f[d],g[d]);if(b)if(c)for(f=f||_(a),g=g||_(h),d=0,e=f.length;e>d;d++)sa(f[d],g[d]);else sa(a,h);return g=_(h,"script"),g.length>0&&aa(g,!i&&_(a,"script")),h},cleanData:function(a){for(var b,c,d,e=n.event.special,f=0;void 0!==(c=a[f]);f++)if(L(c)){if(b=c[N.expando]){if(b.events)for(d in b.events)e[d]?n.event.remove(c,d):n.removeEvent(c,d,b.handle);c[N.expando]=void 0}c[O.expando]&&(c[O.expando]=void 0)}}}),n.fn.extend({domManip:ua,detach:function(a){return va(this,a,!0)},remove:function(a){return va(this,a)},text:function(a){return K(this,function(a){return void 0===a?n.text(this):this.empty().each(function(){(1===this.nodeType||11===this.nodeType||9===this.nodeType)&&(this.textContent=a)})},null,a,arguments.length)},append:function(){return ua(this,arguments,function(a){if(1===this.nodeType||11===this.nodeType||9===this.nodeType){var b=pa(this,a);b.appendChild(a)}})},prepend:function(){return ua(this,arguments,function(a){if(1===this.nodeType||11===this.nodeType||9===this.nodeType){var b=pa(this,a);b.insertBefore(a,b.firstChild)}})},before:function(){return ua(this,arguments,function(a){this.parentNode&&this.parentNode.insertBefore(a,this)})},after:function(){return ua(this,arguments,function(a){this.parentNode&&this.parentNode.insertBefore(a,this.nextSibling)})},empty:function(){for(var a,b=0;null!=(a=this[b]);b++)1===a.nodeType&&(n.cleanData(_(a,!1)),a.textContent="");return this},clone:function(a,b){return a=null==a?!1:a,b=null==b?a:b,this.map(function(){return n.clone(this,a,b)})},html:function(a){return K(this,function(a){var b=this[0]||{},c=0,d=this.length;if(void 0===a&&1===b.nodeType)return b.innerHTML;if("string"==typeof a&&!la.test(a)&&!$[(Y.exec(a)||["",""])[1].toLowerCase()]){a=n.htmlPrefilter(a);try{for(;d>c;c++)b=this[c]||{},1===b.nodeType&&(n.cleanData(_(b,!1)),b.innerHTML=a);b=0}catch(e){}}b&&this.empty().append(a)},null,a,arguments.length)},replaceWith:function(){var a=[];return ua(this,arguments,function(b){var c=this.parentNode;n.inArray(this,a)<0&&(n.cleanData(_(this)),c&&c.replaceChild(b,this))},a)}}),n.each({appendTo:"append",prependTo:"prepend",insertBefore:"before",insertAfter:"after",replaceAll:"replaceWith"},function(a,b){n.fn[a]=function(a){for(var c,d=[],e=n(a),f=e.length-1,h=0;f>=h;h++)c=h===f?this:this.clone(!0),n(e[h])[b](c),g.apply(d,c.get());return this.pushStack(d)}});var wa,xa={HTML:"block",BODY:"block"};function ya(a,b){var c=n(b.createElement(a)).appendTo(b.body),d=n.css(c[0],"display");return c.detach(),d}function za(a){var b=d,c=xa[a];return c||(c=ya(a,b),"none"!==c&&c||(wa=(wa||n("<iframe frameborder='0' width='0' height='0'/>")).appendTo(b.documentElement),b=wa[0].contentDocument,b.write(),b.close(),c=ya(a,b),wa.detach()),xa[a]=c),c}var Aa=/^margin/,Ba=new RegExp("^("+S+")(?!px)[a-z%]+$","i"),Ca=function(b){var c=b.ownerDocument.defaultView;return c&&c.opener||(c=a),c.getComputedStyle(b)},Da=function(a,b,c,d){var e,f,g={};for(f in b)g[f]=a.style[f],a.style[f]=b[f];e=c.apply(a,d||[]);for(f in b)a.style[f]=g[f];return e},Ea=d.documentElement;!function(){var b,c,e,f,g=d.createElement("div"),h=d.createElement("div");if(h.style){h.style.backgroundClip="content-box",h.cloneNode(!0).style.backgroundClip="",l.clearCloneStyle="content-box"===h.style.backgroundClip,g.style.cssText="border:0;width:8px;height:0;top:0;left:-9999px;padding:0;margin-top:1px;position:absolute",g.appendChild(h);function i(){h.style.cssText="-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;position:relative;display:block;margin:auto;border:1px;padding:1px;top:1%;width:50%",h.innerHTML="",Ea.appendChild(g);var d=a.getComputedStyle(h);b="1%"!==d.top,f="2px"===d.marginLeft,c="4px"===d.width,h.style.marginRight="50%",e="4px"===d.marginRight,Ea.removeChild(g)}n.extend(l,{pixelPosition:function(){return i(),b},boxSizingReliable:function(){return null==c&&i(),c},pixelMarginRight:function(){return null==c&&i(),e},reliableMarginLeft:function(){return null==c&&i(),f},reliableMarginRight:function(){var b,c=h.appendChild(d.createElement("div"));return c.style.cssText=h.style.cssText="-webkit-box-sizing:content-box;box-sizing:content-box;display:block;margin:0;border:0;padding:0",c.style.marginRight=c.style.width="0",h.style.width="1px",Ea.appendChild(g),b=!parseFloat(a.getComputedStyle(c).marginRight),Ea.removeChild(g),h.removeChild(c),b}})}}();function Fa(a,b,c){var d,e,f,g,h=a.style;return c=c||Ca(a),g=c?c.getPropertyValue(b)||c[b]:void 0,""!==g&&void 0!==g||n.contains(a.ownerDocument,a)||(g=n.style(a,b)),c&&!l.pixelMarginRight()&&Ba.test(g)&&Aa.test(b)&&(d=h.width,e=h.minWidth,f=h.maxWidth,h.minWidth=h.maxWidth=h.width=g,g=c.width,h.width=d,h.minWidth=e,h.maxWidth=f),void 0!==g?g+"":g}function Ga(a,b){return{get:function(){return a()?void delete this.get:(this.get=b).apply(this,arguments)}}}var Ha=/^(none|table(?!-c[ea]).+)/,Ia={position:"absolute",visibility:"hidden",display:"block"},Ja={letterSpacing:"0",fontWeight:"400"},Ka=["Webkit","O","Moz","ms"],La=d.createElement("div").style;function Ma(a){if(a in La)return a;var b=a[0].toUpperCase()+a.slice(1),c=Ka.length;while(c--)if(a=Ka[c]+b,a in La)return a}function Na(a,b,c){var d=T.exec(b);return d?Math.max(0,d[2]-(c||0))+(d[3]||"px"):b}function Oa(a,b,c,d,e){for(var f=c===(d?"border":"content")?4:"width"===b?1:0,g=0;4>f;f+=2)"margin"===c&&(g+=n.css(a,c+U[f],!0,e)),d?("content"===c&&(g-=n.css(a,"padding"+U[f],!0,e)),"margin"!==c&&(g-=n.css(a,"border"+U[f]+"Width",!0,e))):(g+=n.css(a,"padding"+U[f],!0,e),"padding"!==c&&(g+=n.css(a,"border"+U[f]+"Width",!0,e)));return g}function Pa(b,c,e){var f=!0,g="width"===c?b.offsetWidth:b.offsetHeight,h=Ca(b),i="border-box"===n.css(b,"boxSizing",!1,h);if(d.msFullscreenElement&&a.top!==a&&b.getClientRects().length&&(g=Math.round(100*b.getBoundingClientRect()[c])),0>=g||null==g){if(g=Fa(b,c,h),(0>g||null==g)&&(g=b.style[c]),Ba.test(g))return g;f=i&&(l.boxSizingReliable()||g===b.style[c]),g=parseFloat(g)||0}return g+Oa(b,c,e||(i?"border":"content"),f,h)+"px"}function Qa(a,b){for(var c,d,e,f=[],g=0,h=a.length;h>g;g++)d=a[g],d.style&&(f[g]=N.get(d,"olddisplay"),c=d.style.display,b?(f[g]||"none"!==c||(d.style.display=""),""===d.style.display&&V(d)&&(f[g]=N.access(d,"olddisplay",za(d.nodeName)))):(e=V(d),"none"===c&&e||N.set(d,"olddisplay",e?c:n.css(d,"display"))));for(g=0;h>g;g++)d=a[g],d.style&&(b&&"none"!==d.style.display&&""!==d.style.display||(d.style.display=b?f[g]||"":"none"));return a}n.extend({cssHooks:{opacity:{get:function(a,b){if(b){var c=Fa(a,"opacity");return""===c?"1":c}}}},cssNumber:{animationIterationCount:!0,columnCount:!0,fillOpacity:!0,flexGrow:!0,flexShrink:!0,fontWeight:!0,lineHeight:!0,opacity:!0,order:!0,orphans:!0,widows:!0,zIndex:!0,zoom:!0},cssProps:{"float":"cssFloat"},style:function(a,b,c,d){if(a&&3!==a.nodeType&&8!==a.nodeType&&a.style){var e,f,g,h=n.camelCase(b),i=a.style;return b=n.cssProps[h]||(n.cssProps[h]=Ma(h)||h),g=n.cssHooks[b]||n.cssHooks[h],void 0===c?g&&"get"in g&&void 0!==(e=g.get(a,!1,d))?e:i[b]:(f=typeof c,"string"===f&&(e=T.exec(c))&&e[1]&&(c=W(a,b,e),f="number"),null!=c&&c===c&&("number"===f&&(c+=e&&e[3]||(n.cssNumber[h]?"":"px")),l.clearCloneStyle||""!==c||0!==b.indexOf("background")||(i[b]="inherit"),g&&"set"in g&&void 0===(c=g.set(a,c,d))||(i[b]=c)),void 0)}},css:function(a,b,c,d){var e,f,g,h=n.camelCase(b);return b=n.cssProps[h]||(n.cssProps[h]=Ma(h)||h),g=n.cssHooks[b]||n.cssHooks[h],g&&"get"in g&&(e=g.get(a,!0,c)),void 0===e&&(e=Fa(a,b,d)),"normal"===e&&b in Ja&&(e=Ja[b]),""===c||c?(f=parseFloat(e),c===!0||isFinite(f)?f||0:e):e}}),n.each(["height","width"],function(a,b){n.cssHooks[b]={get:function(a,c,d){return c?Ha.test(n.css(a,"display"))&&0===a.offsetWidth?Da(a,Ia,function(){return Pa(a,b,d)}):Pa(a,b,d):void 0},set:function(a,c,d){var e,f=d&&Ca(a),g=d&&Oa(a,b,d,"border-box"===n.css(a,"boxSizing",!1,f),f);return g&&(e=T.exec(c))&&"px"!==(e[3]||"px")&&(a.style[b]=c,c=n.css(a,b)),Na(a,c,g)}}}),n.cssHooks.marginLeft=Ga(l.reliableMarginLeft,function(a,b){return b?(parseFloat(Fa(a,"marginLeft"))||a.getBoundingClientRect().left-Da(a,{marginLeft:0},function(){return a.getBoundingClientRect().left}))+"px":void 0}),n.cssHooks.marginRight=Ga(l.reliableMarginRight,function(a,b){return b?Da(a,{display:"inline-block"},Fa,[a,"marginRight"]):void 0}),n.each({margin:"",padding:"",border:"Width"},function(a,b){n.cssHooks[a+b]={expand:function(c){for(var d=0,e={},f="string"==typeof c?c.split(" "):[c];4>d;d++)e[a+U[d]+b]=f[d]||f[d-2]||f[0];return e}},Aa.test(a)||(n.cssHooks[a+b].set=Na)}),n.fn.extend({css:function(a,b){return K(this,function(a,b,c){var d,e,f={},g=0;if(n.isArray(b)){for(d=Ca(a),e=b.length;e>g;g++)f[b[g]]=n.css(a,b[g],!1,d);return f}return void 0!==c?n.style(a,b,c):n.css(a,b)},a,b,arguments.length>1)},show:function(){return Qa(this,!0)},hide:function(){return Qa(this)},toggle:function(a){return"boolean"==typeof a?a?this.show():this.hide():this.each(function(){V(this)?n(this).show():n(this).hide()})}});function Ra(a,b,c,d,e){return new Ra.prototype.init(a,b,c,d,e)}n.Tween=Ra,Ra.prototype={constructor:Ra,init:function(a,b,c,d,e,f){this.elem=a,this.prop=c,this.easing=e||n.easing._default,this.options=b,this.start=this.now=this.cur(),this.end=d,this.unit=f||(n.cssNumber[c]?"":"px")},cur:function(){var a=Ra.propHooks[this.prop];return a&&a.get?a.get(this):Ra.propHooks._default.get(this)},run:function(a){var b,c=Ra.propHooks[this.prop];return this.options.duration?this.pos=b=n.easing[this.easing](a,this.options.duration*a,0,1,this.options.duration):this.pos=b=a,this.now=(this.end-this.start)*b+this.start,this.options.step&&this.options.step.call(this.elem,this.now,this),c&&c.set?c.set(this):Ra.propHooks._default.set(this),this}},Ra.prototype.init.prototype=Ra.prototype,Ra.propHooks={_default:{get:function(a){var b;return 1!==a.elem.nodeType||null!=a.elem[a.prop]&&null==a.elem.style[a.prop]?a.elem[a.prop]:(b=n.css(a.elem,a.prop,""),b&&"auto"!==b?b:0)},set:function(a){n.fx.step[a.prop]?n.fx.step[a.prop](a):1!==a.elem.nodeType||null==a.elem.style[n.cssProps[a.prop]]&&!n.cssHooks[a.prop]?a.elem[a.prop]=a.now:n.style(a.elem,a.prop,a.now+a.unit)}}},Ra.propHooks.scrollTop=Ra.propHooks.scrollLeft={set:function(a){a.elem.nodeType&&a.elem.parentNode&&(a.elem[a.prop]=a.now)}},n.easing={linear:function(a){return a},swing:function(a){return.5-Math.cos(a*Math.PI)/2},_default:"swing"},n.fx=Ra.prototype.init,n.fx.step={};var Sa,Ta,Ua=/^(?:toggle|show|hide)$/,Va=/queueHooks$/;function Wa(){return a.setTimeout(function(){Sa=void 0}),Sa=n.now()}function Xa(a,b){var c,d=0,e={height:a};for(b=b?1:0;4>d;d+=2-b)c=U[d],e["margin"+c]=e["padding"+c]=a;return b&&(e.opacity=e.width=a),e}function Ya(a,b,c){for(var d,e=(_a.tweeners[b]||[]).concat(_a.tweeners["*"]),f=0,g=e.length;g>f;f++)if(d=e[f].call(c,b,a))return d}function Za(a,b,c){var d,e,f,g,h,i,j,k,l=this,m={},o=a.style,p=a.nodeType&&V(a),q=N.get(a,"fxshow");c.queue||(h=n._queueHooks(a,"fx"),null==h.unqueued&&(h.unqueued=0,i=h.empty.fire,h.empty.fire=function(){h.unqueued||i()}),h.unqueued++,l.always(function(){l.always(function(){h.unqueued--,n.queue(a,"fx").length||h.empty.fire()})})),1===a.nodeType&&("height"in b||"width"in b)&&(c.overflow=[o.overflow,o.overflowX,o.overflowY],j=n.css(a,"display"),k="none"===j?N.get(a,"olddisplay")||za(a.nodeName):j,"inline"===k&&"none"===n.css(a,"float")&&(o.display="inline-block")),c.overflow&&(o.overflow="hidden",l.always(function(){o.overflow=c.overflow[0],o.overflowX=c.overflow[1],o.overflowY=c.overflow[2]}));for(d in b)if(e=b[d],Ua.exec(e)){if(delete b[d],f=f||"toggle"===e,e===(p?"hide":"show")){if("show"!==e||!q||void 0===q[d])continue;p=!0}m[d]=q&&q[d]||n.style(a,d)}else j=void 0;if(n.isEmptyObject(m))"inline"===("none"===j?za(a.nodeName):j)&&(o.display=j);else{q?"hidden"in q&&(p=q.hidden):q=N.access(a,"fxshow",{}),f&&(q.hidden=!p),p?n(a).show():l.done(function(){n(a).hide()}),l.done(function(){var b;N.remove(a,"fxshow");for(b in m)n.style(a,b,m[b])});for(d in m)g=Ya(p?q[d]:0,d,l),d in q||(q[d]=g.start,p&&(g.end=g.start,g.start="width"===d||"height"===d?1:0))}}function $a(a,b){var c,d,e,f,g;for(c in a)if(d=n.camelCase(c),e=b[d],f=a[c],n.isArray(f)&&(e=f[1],f=a[c]=f[0]),c!==d&&(a[d]=f,delete a[c]),g=n.cssHooks[d],g&&"expand"in g){f=g.expand(f),delete a[d];for(c in f)c in a||(a[c]=f[c],b[c]=e)}else b[d]=e}function _a(a,b,c){var d,e,f=0,g=_a.prefilters.length,h=n.Deferred().always(function(){delete i.elem}),i=function(){if(e)return!1;for(var b=Sa||Wa(),c=Math.max(0,j.startTime+j.duration-b),d=c/j.duration||0,f=1-d,g=0,i=j.tweens.length;i>g;g++)j.tweens[g].run(f);return h.notifyWith(a,[j,f,c]),1>f&&i?c:(h.resolveWith(a,[j]),!1)},j=h.promise({elem:a,props:n.extend({},b),opts:n.extend(!0,{specialEasing:{},easing:n.easing._default},c),originalProperties:b,originalOptions:c,startTime:Sa||Wa(),duration:c.duration,tweens:[],createTween:function(b,c){var d=n.Tween(a,j.opts,b,c,j.opts.specialEasing[b]||j.opts.easing);return j.tweens.push(d),d},stop:function(b){var c=0,d=b?j.tweens.length:0;if(e)return this;for(e=!0;d>c;c++)j.tweens[c].run(1);return b?(h.notifyWith(a,[j,1,0]),h.resolveWith(a,[j,b])):h.rejectWith(a,[j,b]),this}}),k=j.props;for($a(k,j.opts.specialEasing);g>f;f++)if(d=_a.prefilters[f].call(j,a,k,j.opts))return n.isFunction(d.stop)&&(n._queueHooks(j.elem,j.opts.queue).stop=n.proxy(d.stop,d)),d;return n.map(k,Ya,j),n.isFunction(j.opts.start)&&j.opts.start.call(a,j),n.fx.timer(n.extend(i,{elem:a,anim:j,queue:j.opts.queue})),j.progress(j.opts.progress).done(j.opts.done,j.opts.complete).fail(j.opts.fail).always(j.opts.always)}n.Animation=n.extend(_a,{tweeners:{"*":[function(a,b){var c=this.createTween(a,b);return W(c.elem,a,T.exec(b),c),c}]},tweener:function(a,b){n.isFunction(a)?(b=a,a=["*"]):a=a.match(G);for(var c,d=0,e=a.length;e>d;d++)c=a[d],_a.tweeners[c]=_a.tweeners[c]||[],_a.tweeners[c].unshift(b)},prefilters:[Za],prefilter:function(a,b){b?_a.prefilters.unshift(a):_a.prefilters.push(a)}}),n.speed=function(a,b,c){var d=a&&"object"==typeof a?n.extend({},a):{complete:c||!c&&b||n.isFunction(a)&&a,duration:a,easing:c&&b||b&&!n.isFunction(b)&&b};return d.duration=n.fx.off?0:"number"==typeof d.duration?d.duration:d.duration in n.fx.speeds?n.fx.speeds[d.duration]:n.fx.speeds._default,(null==d.queue||d.queue===!0)&&(d.queue="fx"),d.old=d.complete,d.complete=function(){n.isFunction(d.old)&&d.old.call(this),d.queue&&n.dequeue(this,d.queue)},d},n.fn.extend({fadeTo:function(a,b,c,d){return this.filter(V).css("opacity",0).show().end().animate({opacity:b},a,c,d)},animate:function(a,b,c,d){var e=n.isEmptyObject(a),f=n.speed(b,c,d),g=function(){var b=_a(this,n.extend({},a),f);(e||N.get(this,"finish"))&&b.stop(!0)};return g.finish=g,e||f.queue===!1?this.each(g):this.queue(f.queue,g)},stop:function(a,b,c){var d=function(a){var b=a.stop;delete a.stop,b(c)};return"string"!=typeof a&&(c=b,b=a,a=void 0),b&&a!==!1&&this.queue(a||"fx",[]),this.each(function(){var b=!0,e=null!=a&&a+"queueHooks",f=n.timers,g=N.get(this);if(e)g[e]&&g[e].stop&&d(g[e]);else for(e in g)g[e]&&g[e].stop&&Va.test(e)&&d(g[e]);for(e=f.length;e--;)f[e].elem!==this||null!=a&&f[e].queue!==a||(f[e].anim.stop(c),b=!1,f.splice(e,1));(b||!c)&&n.dequeue(this,a)})},finish:function(a){return a!==!1&&(a=a||"fx"),this.each(function(){var b,c=N.get(this),d=c[a+"queue"],e=c[a+"queueHooks"],f=n.timers,g=d?d.length:0;for(c.finish=!0,n.queue(this,a,[]),e&&e.stop&&e.stop.call(this,!0),b=f.length;b--;)f[b].elem===this&&f[b].queue===a&&(f[b].anim.stop(!0),f.splice(b,1));for(b=0;g>b;b++)d[b]&&d[b].finish&&d[b].finish.call(this);delete c.finish})}}),n.each(["toggle","show","hide"],function(a,b){var c=n.fn[b];n.fn[b]=function(a,d,e){return null==a||"boolean"==typeof a?c.apply(this,arguments):this.animate(Xa(b,!0),a,d,e)}}),n.each({slideDown:Xa("show"),slideUp:Xa("hide"),slideToggle:Xa("toggle"),fadeIn:{opacity:"show"},fadeOut:{opacity:"hide"},fadeToggle:{opacity:"toggle"}},function(a,b){n.fn[a]=function(a,c,d){return this.animate(b,a,c,d)}}),n.timers=[],n.fx.tick=function(){var a,b=0,c=n.timers;for(Sa=n.now();b<c.length;b++)a=c[b],a()||c[b]!==a||c.splice(b--,1);c.length||n.fx.stop(),Sa=void 0},n.fx.timer=function(a){n.timers.push(a),a()?n.fx.start():n.timers.pop()},n.fx.interval=13,n.fx.start=function(){Ta||(Ta=a.setInterval(n.fx.tick,n.fx.interval))},n.fx.stop=function(){a.clearInterval(Ta),Ta=null},n.fx.speeds={slow:600,fast:200,_default:400},n.fn.delay=function(b,c){return b=n.fx?n.fx.speeds[b]||b:b,c=c||"fx",this.queue(c,function(c,d){var e=a.setTimeout(c,b);d.stop=function(){a.clearTimeout(e)}})},function(){var a=d.createElement("input"),b=d.createElement("select"),c=b.appendChild(d.createElement("option"));a.type="checkbox",l.checkOn=""!==a.value,l.optSelected=c.selected,b.disabled=!0,l.optDisabled=!c.disabled,a=d.createElement("input"),a.value="t",a.type="radio",l.radioValue="t"===a.value}();var ab,bb=n.expr.attrHandle;n.fn.extend({attr:function(a,b){return K(this,n.attr,a,b,arguments.length>1)},removeAttr:function(a){return this.each(function(){n.removeAttr(this,a)})}}),n.extend({attr:function(a,b,c){var d,e,f=a.nodeType;if(3!==f&&8!==f&&2!==f)return"undefined"==typeof a.getAttribute?n.prop(a,b,c):(1===f&&n.isXMLDoc(a)||(b=b.toLowerCase(),e=n.attrHooks[b]||(n.expr.match.bool.test(b)?ab:void 0)),void 0!==c?null===c?void n.removeAttr(a,b):e&&"set"in e&&void 0!==(d=e.set(a,c,b))?d:(a.setAttribute(b,c+""),c):e&&"get"in e&&null!==(d=e.get(a,b))?d:(d=n.find.attr(a,b),null==d?void 0:d))},attrHooks:{type:{set:function(a,b){if(!l.radioValue&&"radio"===b&&n.nodeName(a,"input")){var c=a.value;return a.setAttribute("type",b),c&&(a.value=c),b}}}},removeAttr:function(a,b){var c,d,e=0,f=b&&b.match(G);if(f&&1===a.nodeType)while(c=f[e++])d=n.propFix[c]||c,n.expr.match.bool.test(c)&&(a[d]=!1),a.removeAttribute(c)}}),ab={set:function(a,b,c){return b===!1?n.removeAttr(a,c):a.setAttribute(c,c),c}},n.each(n.expr.match.bool.source.match(/\w+/g),function(a,b){var c=bb[b]||n.find.attr;bb[b]=function(a,b,d){var e,f;return d||(f=bb[b],bb[b]=e,e=null!=c(a,b,d)?b.toLowerCase():null,bb[b]=f),e}});var cb=/^(?:input|select|textarea|button)$/i,db=/^(?:a|area)$/i;n.fn.extend({prop:function(a,b){return K(this,n.prop,a,b,arguments.length>1)},removeProp:function(a){return this.each(function(){delete this[n.propFix[a]||a]})}}),n.extend({prop:function(a,b,c){var d,e,f=a.nodeType;if(3!==f&&8!==f&&2!==f)return 1===f&&n.isXMLDoc(a)||(b=n.propFix[b]||b,
+e=n.propHooks[b]),void 0!==c?e&&"set"in e&&void 0!==(d=e.set(a,c,b))?d:a[b]=c:e&&"get"in e&&null!==(d=e.get(a,b))?d:a[b]},propHooks:{tabIndex:{get:function(a){var b=n.find.attr(a,"tabindex");return b?parseInt(b,10):cb.test(a.nodeName)||db.test(a.nodeName)&&a.href?0:-1}}},propFix:{"for":"htmlFor","class":"className"}}),l.optSelected||(n.propHooks.selected={get:function(a){var b=a.parentNode;return b&&b.parentNode&&b.parentNode.selectedIndex,null}}),n.each(["tabIndex","readOnly","maxLength","cellSpacing","cellPadding","rowSpan","colSpan","useMap","frameBorder","contentEditable"],function(){n.propFix[this.toLowerCase()]=this});var eb=/[\t\r\n\f]/g;function fb(a){return a.getAttribute&&a.getAttribute("class")||""}n.fn.extend({addClass:function(a){var b,c,d,e,f,g,h,i=0;if(n.isFunction(a))return this.each(function(b){n(this).addClass(a.call(this,b,fb(this)))});if("string"==typeof a&&a){b=a.match(G)||[];while(c=this[i++])if(e=fb(c),d=1===c.nodeType&&(" "+e+" ").replace(eb," ")){g=0;while(f=b[g++])d.indexOf(" "+f+" ")<0&&(d+=f+" ");h=n.trim(d),e!==h&&c.setAttribute("class",h)}}return this},removeClass:function(a){var b,c,d,e,f,g,h,i=0;if(n.isFunction(a))return this.each(function(b){n(this).removeClass(a.call(this,b,fb(this)))});if(!arguments.length)return this.attr("class","");if("string"==typeof a&&a){b=a.match(G)||[];while(c=this[i++])if(e=fb(c),d=1===c.nodeType&&(" "+e+" ").replace(eb," ")){g=0;while(f=b[g++])while(d.indexOf(" "+f+" ")>-1)d=d.replace(" "+f+" "," ");h=n.trim(d),e!==h&&c.setAttribute("class",h)}}return this},toggleClass:function(a,b){var c=typeof a;return"boolean"==typeof b&&"string"===c?b?this.addClass(a):this.removeClass(a):n.isFunction(a)?this.each(function(c){n(this).toggleClass(a.call(this,c,fb(this),b),b)}):this.each(function(){var b,d,e,f;if("string"===c){d=0,e=n(this),f=a.match(G)||[];while(b=f[d++])e.hasClass(b)?e.removeClass(b):e.addClass(b)}else(void 0===a||"boolean"===c)&&(b=fb(this),b&&N.set(this,"__className__",b),this.setAttribute&&this.setAttribute("class",b||a===!1?"":N.get(this,"__className__")||""))})},hasClass:function(a){var b,c,d=0;b=" "+a+" ";while(c=this[d++])if(1===c.nodeType&&(" "+fb(c)+" ").replace(eb," ").indexOf(b)>-1)return!0;return!1}});var gb=/\r/g;n.fn.extend({val:function(a){var b,c,d,e=this[0];{if(arguments.length)return d=n.isFunction(a),this.each(function(c){var e;1===this.nodeType&&(e=d?a.call(this,c,n(this).val()):a,null==e?e="":"number"==typeof e?e+="":n.isArray(e)&&(e=n.map(e,function(a){return null==a?"":a+""})),b=n.valHooks[this.type]||n.valHooks[this.nodeName.toLowerCase()],b&&"set"in b&&void 0!==b.set(this,e,"value")||(this.value=e))});if(e)return b=n.valHooks[e.type]||n.valHooks[e.nodeName.toLowerCase()],b&&"get"in b&&void 0!==(c=b.get(e,"value"))?c:(c=e.value,"string"==typeof c?c.replace(gb,""):null==c?"":c)}}}),n.extend({valHooks:{option:{get:function(a){return n.trim(a.value)}},select:{get:function(a){for(var b,c,d=a.options,e=a.selectedIndex,f="select-one"===a.type||0>e,g=f?null:[],h=f?e+1:d.length,i=0>e?h:f?e:0;h>i;i++)if(c=d[i],(c.selected||i===e)&&(l.optDisabled?!c.disabled:null===c.getAttribute("disabled"))&&(!c.parentNode.disabled||!n.nodeName(c.parentNode,"optgroup"))){if(b=n(c).val(),f)return b;g.push(b)}return g},set:function(a,b){var c,d,e=a.options,f=n.makeArray(b),g=e.length;while(g--)d=e[g],(d.selected=n.inArray(n.valHooks.option.get(d),f)>-1)&&(c=!0);return c||(a.selectedIndex=-1),f}}}}),n.each(["radio","checkbox"],function(){n.valHooks[this]={set:function(a,b){return n.isArray(b)?a.checked=n.inArray(n(a).val(),b)>-1:void 0}},l.checkOn||(n.valHooks[this].get=function(a){return null===a.getAttribute("value")?"on":a.value})});var hb=/^(?:focusinfocus|focusoutblur)$/;n.extend(n.event,{trigger:function(b,c,e,f){var g,h,i,j,l,m,o,p=[e||d],q=k.call(b,"type")?b.type:b,r=k.call(b,"namespace")?b.namespace.split("."):[];if(h=i=e=e||d,3!==e.nodeType&&8!==e.nodeType&&!hb.test(q+n.event.triggered)&&(q.indexOf(".")>-1&&(r=q.split("."),q=r.shift(),r.sort()),l=q.indexOf(":")<0&&"on"+q,b=b[n.expando]?b:new n.Event(q,"object"==typeof b&&b),b.isTrigger=f?2:3,b.namespace=r.join("."),b.rnamespace=b.namespace?new RegExp("(^|\\.)"+r.join("\\.(?:.*\\.|)")+"(\\.|$)"):null,b.result=void 0,b.target||(b.target=e),c=null==c?[b]:n.makeArray(c,[b]),o=n.event.special[q]||{},f||!o.trigger||o.trigger.apply(e,c)!==!1)){if(!f&&!o.noBubble&&!n.isWindow(e)){for(j=o.delegateType||q,hb.test(j+q)||(h=h.parentNode);h;h=h.parentNode)p.push(h),i=h;i===(e.ownerDocument||d)&&p.push(i.defaultView||i.parentWindow||a)}g=0;while((h=p[g++])&&!b.isPropagationStopped())b.type=g>1?j:o.bindType||q,m=(N.get(h,"events")||{})[b.type]&&N.get(h,"handle"),m&&m.apply(h,c),m=l&&h[l],m&&m.apply&&L(h)&&(b.result=m.apply(h,c),b.result===!1&&b.preventDefault());return b.type=q,f||b.isDefaultPrevented()||o._default&&o._default.apply(p.pop(),c)!==!1||!L(e)||l&&n.isFunction(e[q])&&!n.isWindow(e)&&(i=e[l],i&&(e[l]=null),n.event.triggered=q,e[q](),n.event.triggered=void 0,i&&(e[l]=i)),b.result}},simulate:function(a,b,c){var d=n.extend(new n.Event,c,{type:a,isSimulated:!0});n.event.trigger(d,null,b),d.isDefaultPrevented()&&c.preventDefault()}}),n.fn.extend({trigger:function(a,b){return this.each(function(){n.event.trigger(a,b,this)})},triggerHandler:function(a,b){var c=this[0];return c?n.event.trigger(a,b,c,!0):void 0}}),n.each("blur focus focusin focusout load resize scroll unload click dblclick mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave change select submit keydown keypress keyup error contextmenu".split(" "),function(a,b){n.fn[b]=function(a,c){return arguments.length>0?this.on(b,null,a,c):this.trigger(b)}}),n.fn.extend({hover:function(a,b){return this.mouseenter(a).mouseleave(b||a)}}),l.focusin="onfocusin"in a,l.focusin||n.each({focus:"focusin",blur:"focusout"},function(a,b){var c=function(a){n.event.simulate(b,a.target,n.event.fix(a))};n.event.special[b]={setup:function(){var d=this.ownerDocument||this,e=N.access(d,b);e||d.addEventListener(a,c,!0),N.access(d,b,(e||0)+1)},teardown:function(){var d=this.ownerDocument||this,e=N.access(d,b)-1;e?N.access(d,b,e):(d.removeEventListener(a,c,!0),N.remove(d,b))}}});var ib=a.location,jb=n.now(),kb=/\?/;n.parseJSON=function(a){return JSON.parse(a+"")},n.parseXML=function(b){var c;if(!b||"string"!=typeof b)return null;try{c=(new a.DOMParser).parseFromString(b,"text/xml")}catch(d){c=void 0}return(!c||c.getElementsByTagName("parsererror").length)&&n.error("Invalid XML: "+b),c};var lb=/#.*$/,mb=/([?&])_=[^&]*/,nb=/^(.*?):[ \t]*([^\r\n]*)$/gm,ob=/^(?:about|app|app-storage|.+-extension|file|res|widget):$/,pb=/^(?:GET|HEAD)$/,qb=/^\/\//,rb={},sb={},tb="*/".concat("*"),ub=d.createElement("a");ub.href=ib.href;function vb(a){return function(b,c){"string"!=typeof b&&(c=b,b="*");var d,e=0,f=b.toLowerCase().match(G)||[];if(n.isFunction(c))while(d=f[e++])"+"===d[0]?(d=d.slice(1)||"*",(a[d]=a[d]||[]).unshift(c)):(a[d]=a[d]||[]).push(c)}}function wb(a,b,c,d){var e={},f=a===sb;function g(h){var i;return e[h]=!0,n.each(a[h]||[],function(a,h){var j=h(b,c,d);return"string"!=typeof j||f||e[j]?f?!(i=j):void 0:(b.dataTypes.unshift(j),g(j),!1)}),i}return g(b.dataTypes[0])||!e["*"]&&g("*")}function xb(a,b){var c,d,e=n.ajaxSettings.flatOptions||{};for(c in b)void 0!==b[c]&&((e[c]?a:d||(d={}))[c]=b[c]);return d&&n.extend(!0,a,d),a}function yb(a,b,c){var d,e,f,g,h=a.contents,i=a.dataTypes;while("*"===i[0])i.shift(),void 0===d&&(d=a.mimeType||b.getResponseHeader("Content-Type"));if(d)for(e in h)if(h[e]&&h[e].test(d)){i.unshift(e);break}if(i[0]in c)f=i[0];else{for(e in c){if(!i[0]||a.converters[e+" "+i[0]]){f=e;break}g||(g=e)}f=f||g}return f?(f!==i[0]&&i.unshift(f),c[f]):void 0}function zb(a,b,c,d){var e,f,g,h,i,j={},k=a.dataTypes.slice();if(k[1])for(g in a.converters)j[g.toLowerCase()]=a.converters[g];f=k.shift();while(f)if(a.responseFields[f]&&(c[a.responseFields[f]]=b),!i&&d&&a.dataFilter&&(b=a.dataFilter(b,a.dataType)),i=f,f=k.shift())if("*"===f)f=i;else if("*"!==i&&i!==f){if(g=j[i+" "+f]||j["* "+f],!g)for(e in j)if(h=e.split(" "),h[1]===f&&(g=j[i+" "+h[0]]||j["* "+h[0]])){g===!0?g=j[e]:j[e]!==!0&&(f=h[0],k.unshift(h[1]));break}if(g!==!0)if(g&&a["throws"])b=g(b);else try{b=g(b)}catch(l){return{state:"parsererror",error:g?l:"No conversion from "+i+" to "+f}}}return{state:"success",data:b}}n.extend({active:0,lastModified:{},etag:{},ajaxSettings:{url:ib.href,type:"GET",isLocal:ob.test(ib.protocol),global:!0,processData:!0,async:!0,contentType:"application/x-www-form-urlencoded; charset=UTF-8",accepts:{"*":tb,text:"text/plain",html:"text/html",xml:"application/xml, text/xml",json:"application/json, text/javascript"},contents:{xml:/\bxml\b/,html:/\bhtml/,json:/\bjson\b/},responseFields:{xml:"responseXML",text:"responseText",json:"responseJSON"},converters:{"* text":String,"text html":!0,"text json":n.parseJSON,"text xml":n.parseXML},flatOptions:{url:!0,context:!0}},ajaxSetup:function(a,b){return b?xb(xb(a,n.ajaxSettings),b):xb(n.ajaxSettings,a)},ajaxPrefilter:vb(rb),ajaxTransport:vb(sb),ajax:function(b,c){"object"==typeof b&&(c=b,b=void 0),c=c||{};var e,f,g,h,i,j,k,l,m=n.ajaxSetup({},c),o=m.context||m,p=m.context&&(o.nodeType||o.jquery)?n(o):n.event,q=n.Deferred(),r=n.Callbacks("once memory"),s=m.statusCode||{},t={},u={},v=0,w="canceled",x={readyState:0,getResponseHeader:function(a){var b;if(2===v){if(!h){h={};while(b=nb.exec(g))h[b[1].toLowerCase()]=b[2]}b=h[a.toLowerCase()]}return null==b?null:b},getAllResponseHeaders:function(){return 2===v?g:null},setRequestHeader:function(a,b){var c=a.toLowerCase();return v||(a=u[c]=u[c]||a,t[a]=b),this},overrideMimeType:function(a){return v||(m.mimeType=a),this},statusCode:function(a){var b;if(a)if(2>v)for(b in a)s[b]=[s[b],a[b]];else x.always(a[x.status]);return this},abort:function(a){var b=a||w;return e&&e.abort(b),z(0,b),this}};if(q.promise(x).complete=r.add,x.success=x.done,x.error=x.fail,m.url=((b||m.url||ib.href)+"").replace(lb,"").replace(qb,ib.protocol+"//"),m.type=c.method||c.type||m.method||m.type,m.dataTypes=n.trim(m.dataType||"*").toLowerCase().match(G)||[""],null==m.crossDomain){j=d.createElement("a");try{j.href=m.url,j.href=j.href,m.crossDomain=ub.protocol+"//"+ub.host!=j.protocol+"//"+j.host}catch(y){m.crossDomain=!0}}if(m.data&&m.processData&&"string"!=typeof m.data&&(m.data=n.param(m.data,m.traditional)),wb(rb,m,c,x),2===v)return x;k=n.event&&m.global,k&&0===n.active++&&n.event.trigger("ajaxStart"),m.type=m.type.toUpperCase(),m.hasContent=!pb.test(m.type),f=m.url,m.hasContent||(m.data&&(f=m.url+=(kb.test(f)?"&":"?")+m.data,delete m.data),m.cache===!1&&(m.url=mb.test(f)?f.replace(mb,"$1_="+jb++):f+(kb.test(f)?"&":"?")+"_="+jb++)),m.ifModified&&(n.lastModified[f]&&x.setRequestHeader("If-Modified-Since",n.lastModified[f]),n.etag[f]&&x.setRequestHeader("If-None-Match",n.etag[f])),(m.data&&m.hasContent&&m.contentType!==!1||c.contentType)&&x.setRequestHeader("Content-Type",m.contentType),x.setRequestHeader("Accept",m.dataTypes[0]&&m.accepts[m.dataTypes[0]]?m.accepts[m.dataTypes[0]]+("*"!==m.dataTypes[0]?", "+tb+"; q=0.01":""):m.accepts["*"]);for(l in m.headers)x.setRequestHeader(l,m.headers[l]);if(m.beforeSend&&(m.beforeSend.call(o,x,m)===!1||2===v))return x.abort();w="abort";for(l in{success:1,error:1,complete:1})x[l](m[l]);if(e=wb(sb,m,c,x)){if(x.readyState=1,k&&p.trigger("ajaxSend",[x,m]),2===v)return x;m.async&&m.timeout>0&&(i=a.setTimeout(function(){x.abort("timeout")},m.timeout));try{v=1,e.send(t,z)}catch(y){if(!(2>v))throw y;z(-1,y)}}else z(-1,"No Transport");function z(b,c,d,h){var j,l,t,u,w,y=c;2!==v&&(v=2,i&&a.clearTimeout(i),e=void 0,g=h||"",x.readyState=b>0?4:0,j=b>=200&&300>b||304===b,d&&(u=yb(m,x,d)),u=zb(m,u,x,j),j?(m.ifModified&&(w=x.getResponseHeader("Last-Modified"),w&&(n.lastModified[f]=w),w=x.getResponseHeader("etag"),w&&(n.etag[f]=w)),204===b||"HEAD"===m.type?y="nocontent":304===b?y="notmodified":(y=u.state,l=u.data,t=u.error,j=!t)):(t=y,(b||!y)&&(y="error",0>b&&(b=0))),x.status=b,x.statusText=(c||y)+"",j?q.resolveWith(o,[l,y,x]):q.rejectWith(o,[x,y,t]),x.statusCode(s),s=void 0,k&&p.trigger(j?"ajaxSuccess":"ajaxError",[x,m,j?l:t]),r.fireWith(o,[x,y]),k&&(p.trigger("ajaxComplete",[x,m]),--n.active||n.event.trigger("ajaxStop")))}return x},getJSON:function(a,b,c){return n.get(a,b,c,"json")},getScript:function(a,b){return n.get(a,void 0,b,"script")}}),n.each(["get","post"],function(a,b){n[b]=function(a,c,d,e){return n.isFunction(c)&&(e=e||d,d=c,c=void 0),n.ajax(n.extend({url:a,type:b,dataType:e,data:c,success:d},n.isPlainObject(a)&&a))}}),n._evalUrl=function(a){return n.ajax({url:a,type:"GET",dataType:"script",async:!1,global:!1,"throws":!0})},n.fn.extend({wrapAll:function(a){var b;return n.isFunction(a)?this.each(function(b){n(this).wrapAll(a.call(this,b))}):(this[0]&&(b=n(a,this[0].ownerDocument).eq(0).clone(!0),this[0].parentNode&&b.insertBefore(this[0]),b.map(function(){var a=this;while(a.firstElementChild)a=a.firstElementChild;return a}).append(this)),this)},wrapInner:function(a){return n.isFunction(a)?this.each(function(b){n(this).wrapInner(a.call(this,b))}):this.each(function(){var b=n(this),c=b.contents();c.length?c.wrapAll(a):b.append(a)})},wrap:function(a){var b=n.isFunction(a);return this.each(function(c){n(this).wrapAll(b?a.call(this,c):a)})},unwrap:function(){return this.parent().each(function(){n.nodeName(this,"body")||n(this).replaceWith(this.childNodes)}).end()}}),n.expr.filters.hidden=function(a){return!n.expr.filters.visible(a)},n.expr.filters.visible=function(a){return a.offsetWidth>0||a.offsetHeight>0||a.getClientRects().length>0};var Ab=/%20/g,Bb=/\[\]$/,Cb=/\r?\n/g,Db=/^(?:submit|button|image|reset|file)$/i,Eb=/^(?:input|select|textarea|keygen)/i;function Fb(a,b,c,d){var e;if(n.isArray(b))n.each(b,function(b,e){c||Bb.test(a)?d(a,e):Fb(a+"["+("object"==typeof e&&null!=e?b:"")+"]",e,c,d)});else if(c||"object"!==n.type(b))d(a,b);else for(e in b)Fb(a+"["+e+"]",b[e],c,d)}n.param=function(a,b){var c,d=[],e=function(a,b){b=n.isFunction(b)?b():null==b?"":b,d[d.length]=encodeURIComponent(a)+"="+encodeURIComponent(b)};if(void 0===b&&(b=n.ajaxSettings&&n.ajaxSettings.traditional),n.isArray(a)||a.jquery&&!n.isPlainObject(a))n.each(a,function(){e(this.name,this.value)});else for(c in a)Fb(c,a[c],b,e);return d.join("&").replace(Ab,"+")},n.fn.extend({serialize:function(){return n.param(this.serializeArray())},serializeArray:function(){return this.map(function(){var a=n.prop(this,"elements");return a?n.makeArray(a):this}).filter(function(){var a=this.type;return this.name&&!n(this).is(":disabled")&&Eb.test(this.nodeName)&&!Db.test(a)&&(this.checked||!X.test(a))}).map(function(a,b){var c=n(this).val();return null==c?null:n.isArray(c)?n.map(c,function(a){return{name:b.name,value:a.replace(Cb,"\r\n")}}):{name:b.name,value:c.replace(Cb,"\r\n")}}).get()}}),n.ajaxSettings.xhr=function(){try{return new a.XMLHttpRequest}catch(b){}};var Gb={0:200,1223:204},Hb=n.ajaxSettings.xhr();l.cors=!!Hb&&"withCredentials"in Hb,l.ajax=Hb=!!Hb,n.ajaxTransport(function(b){var c,d;return l.cors||Hb&&!b.crossDomain?{send:function(e,f){var g,h=b.xhr();if(h.open(b.type,b.url,b.async,b.username,b.password),b.xhrFields)for(g in b.xhrFields)h[g]=b.xhrFields[g];b.mimeType&&h.overrideMimeType&&h.overrideMimeType(b.mimeType),b.crossDomain||e["X-Requested-With"]||(e["X-Requested-With"]="XMLHttpRequest");for(g in e)h.setRequestHeader(g,e[g]);c=function(a){return function(){c&&(c=d=h.onload=h.onerror=h.onabort=h.onreadystatechange=null,"abort"===a?h.abort():"error"===a?"number"!=typeof h.status?f(0,"error"):f(h.status,h.statusText):f(Gb[h.status]||h.status,h.statusText,"text"!==(h.responseType||"text")||"string"!=typeof h.responseText?{binary:h.response}:{text:h.responseText},h.getAllResponseHeaders()))}},h.onload=c(),d=h.onerror=c("error"),void 0!==h.onabort?h.onabort=d:h.onreadystatechange=function(){4===h.readyState&&a.setTimeout(function(){c&&d()})},c=c("abort");try{h.send(b.hasContent&&b.data||null)}catch(i){if(c)throw i}},abort:function(){c&&c()}}:void 0}),n.ajaxSetup({accepts:{script:"text/javascript, application/javascript, application/ecmascript, application/x-ecmascript"},contents:{script:/\b(?:java|ecma)script\b/},converters:{"text script":function(a){return n.globalEval(a),a}}}),n.ajaxPrefilter("script",function(a){void 0===a.cache&&(a.cache=!1),a.crossDomain&&(a.type="GET")}),n.ajaxTransport("script",function(a){if(a.crossDomain){var b,c;return{send:function(e,f){b=n("<script>").prop({charset:a.scriptCharset,src:a.url}).on("load error",c=function(a){b.remove(),c=null,a&&f("error"===a.type?404:200,a.type)}),d.head.appendChild(b[0])},abort:function(){c&&c()}}}});var Ib=[],Jb=/(=)\?(?=&|$)|\?\?/;n.ajaxSetup({jsonp:"callback",jsonpCallback:function(){var a=Ib.pop()||n.expando+"_"+jb++;return this[a]=!0,a}}),n.ajaxPrefilter("json jsonp",function(b,c,d){var e,f,g,h=b.jsonp!==!1&&(Jb.test(b.url)?"url":"string"==typeof b.data&&0===(b.contentType||"").indexOf("application/x-www-form-urlencoded")&&Jb.test(b.data)&&"data");return h||"jsonp"===b.dataTypes[0]?(e=b.jsonpCallback=n.isFunction(b.jsonpCallback)?b.jsonpCallback():b.jsonpCallback,h?b[h]=b[h].replace(Jb,"$1"+e):b.jsonp!==!1&&(b.url+=(kb.test(b.url)?"&":"?")+b.jsonp+"="+e),b.converters["script json"]=function(){return g||n.error(e+" was not called"),g[0]},b.dataTypes[0]="json",f=a[e],a[e]=function(){g=arguments},d.always(function(){void 0===f?n(a).removeProp(e):a[e]=f,b[e]&&(b.jsonpCallback=c.jsonpCallback,Ib.push(e)),g&&n.isFunction(f)&&f(g[0]),g=f=void 0}),"script"):void 0}),l.createHTMLDocument=function(){var a=d.implementation.createHTMLDocument("").body;return a.innerHTML="<form></form><form></form>",2===a.childNodes.length}(),n.parseHTML=function(a,b,c){if(!a||"string"!=typeof a)return null;"boolean"==typeof b&&(c=b,b=!1),b=b||(l.createHTMLDocument?d.implementation.createHTMLDocument(""):d);var e=x.exec(a),f=!c&&[];return e?[b.createElement(e[1])]:(e=ca([a],b,f),f&&f.length&&n(f).remove(),n.merge([],e.childNodes))};var Kb=n.fn.load;n.fn.load=function(a,b,c){if("string"!=typeof a&&Kb)return Kb.apply(this,arguments);var d,e,f,g=this,h=a.indexOf(" ");return h>-1&&(d=n.trim(a.slice(h)),a=a.slice(0,h)),n.isFunction(b)?(c=b,b=void 0):b&&"object"==typeof b&&(e="POST"),g.length>0&&n.ajax({url:a,type:e||"GET",dataType:"html",data:b}).done(function(a){f=arguments,g.html(d?n("<div>").append(n.parseHTML(a)).find(d):a)}).always(c&&function(a,b){g.each(function(){c.apply(g,f||[a.responseText,b,a])})}),this},n.each(["ajaxStart","ajaxStop","ajaxComplete","ajaxError","ajaxSuccess","ajaxSend"],function(a,b){n.fn[b]=function(a){return this.on(b,a)}}),n.expr.filters.animated=function(a){return n.grep(n.timers,function(b){return a===b.elem}).length};function Lb(a){return n.isWindow(a)?a:9===a.nodeType&&a.defaultView}n.offset={setOffset:function(a,b,c){var d,e,f,g,h,i,j,k=n.css(a,"position"),l=n(a),m={};"static"===k&&(a.style.position="relative"),h=l.offset(),f=n.css(a,"top"),i=n.css(a,"left"),j=("absolute"===k||"fixed"===k)&&(f+i).indexOf("auto")>-1,j?(d=l.position(),g=d.top,e=d.left):(g=parseFloat(f)||0,e=parseFloat(i)||0),n.isFunction(b)&&(b=b.call(a,c,n.extend({},h))),null!=b.top&&(m.top=b.top-h.top+g),null!=b.left&&(m.left=b.left-h.left+e),"using"in b?b.using.call(a,m):l.css(m)}},n.fn.extend({offset:function(a){if(arguments.length)return void 0===a?this:this.each(function(b){n.offset.setOffset(this,a,b)});var b,c,d=this[0],e={top:0,left:0},f=d&&d.ownerDocument;if(f)return b=f.documentElement,n.contains(b,d)?(e=d.getBoundingClientRect(),c=Lb(f),{top:e.top+c.pageYOffset-b.clientTop,left:e.left+c.pageXOffset-b.clientLeft}):e},position:function(){if(this[0]){var a,b,c=this[0],d={top:0,left:0};return"fixed"===n.css(c,"position")?b=c.getBoundingClientRect():(a=this.offsetParent(),b=this.offset(),n.nodeName(a[0],"html")||(d=a.offset()),d.top+=n.css(a[0],"borderTopWidth",!0),d.left+=n.css(a[0],"borderLeftWidth",!0)),{top:b.top-d.top-n.css(c,"marginTop",!0),left:b.left-d.left-n.css(c,"marginLeft",!0)}}},offsetParent:function(){return this.map(function(){var a=this.offsetParent;while(a&&"static"===n.css(a,"position"))a=a.offsetParent;return a||Ea})}}),n.each({scrollLeft:"pageXOffset",scrollTop:"pageYOffset"},function(a,b){var c="pageYOffset"===b;n.fn[a]=function(d){return K(this,function(a,d,e){var f=Lb(a);return void 0===e?f?f[b]:a[d]:void(f?f.scrollTo(c?f.pageXOffset:e,c?e:f.pageYOffset):a[d]=e)},a,d,arguments.length)}}),n.each(["top","left"],function(a,b){n.cssHooks[b]=Ga(l.pixelPosition,function(a,c){return c?(c=Fa(a,b),Ba.test(c)?n(a).position()[b]+"px":c):void 0})}),n.each({Height:"height",Width:"width"},function(a,b){n.each({padding:"inner"+a,content:b,"":"outer"+a},function(c,d){n.fn[d]=function(d,e){var f=arguments.length&&(c||"boolean"!=typeof d),g=c||(d===!0||e===!0?"margin":"border");return K(this,function(b,c,d){var e;return n.isWindow(b)?b.document.documentElement["client"+a]:9===b.nodeType?(e=b.documentElement,Math.max(b.body["scroll"+a],e["scroll"+a],b.body["offset"+a],e["offset"+a],e["client"+a])):void 0===d?n.css(b,c,g):n.style(b,c,d,g)},b,f?d:void 0,f,null)}})}),n.fn.extend({bind:function(a,b,c){return this.on(a,null,b,c)},unbind:function(a,b){return this.off(a,null,b)},delegate:function(a,b,c,d){return this.on(b,a,c,d)},undelegate:function(a,b,c){return 1===arguments.length?this.off(a,"**"):this.off(b,a||"**",c)},size:function(){return this.length}}),n.fn.andSelf=n.fn.addBack,"function"==typeof define&&define.amd&&define("jquery",[],function(){return n});var Mb=a.jQuery,Nb=a.$;return n.noConflict=function(b){return a.$===n&&(a.$=Nb),b&&a.jQuery===n&&(a.jQuery=Mb),n},b||(a.jQuery=a.$=n),n});
+
+/*!
+ * Materialize v0.97.5 (http://materializecss.com)
+ * Copyright 2014-2015 Materialize
+ * MIT License (https://raw.githubusercontent.com/Dogfalo/materialize/master/LICENSE)
+ */
+if("undefined"==typeof jQuery){var jQuery;jQuery="function"==typeof require?$=require("jQuery"):$}jQuery.easing.jswing=jQuery.easing.swing,jQuery.extend(jQuery.easing,{def:"easeOutQuad",swing:function(a,b,c,d,e){return jQuery.easing[jQuery.easing.def](a,b,c,d,e)},easeInQuad:function(a,b,c,d,e){return d*(b/=e)*b+c},easeOutQuad:function(a,b,c,d,e){return-d*(b/=e)*(b-2)+c},easeInOutQuad:function(a,b,c,d,e){return(b/=e/2)<1?d/2*b*b+c:-d/2*(--b*(b-2)-1)+c},easeInCubic:function(a,b,c,d,e){return d*(b/=e)*b*b+c},easeOutCubic:function(a,b,c,d,e){return d*((b=b/e-1)*b*b+1)+c},easeInOutCubic:function(a,b,c,d,e){return(b/=e/2)<1?d/2*b*b*b+c:d/2*((b-=2)*b*b+2)+c},easeInQuart:function(a,b,c,d,e){return d*(b/=e)*b*b*b+c},easeOutQuart:function(a,b,c,d,e){return-d*((b=b/e-1)*b*b*b-1)+c},easeInOutQuart:function(a,b,c,d,e){return(b/=e/2)<1?d/2*b*b*b*b+c:-d/2*((b-=2)*b*b*b-2)+c},easeInQuint:function(a,b,c,d,e){return d*(b/=e)*b*b*b*b+c},easeOutQuint:function(a,b,c,d,e){return d*((b=b/e-1)*b*b*b*b+1)+c},easeInOutQuint:function(a,b,c,d,e){return(b/=e/2)<1?d/2*b*b*b*b*b+c:d/2*((b-=2)*b*b*b*b+2)+c},easeInSine:function(a,b,c,d,e){return-d*Math.cos(b/e*(Math.PI/2))+d+c},easeOutSine:function(a,b,c,d,e){return d*Math.sin(b/e*(Math.PI/2))+c},easeInOutSine:function(a,b,c,d,e){return-d/2*(Math.cos(Math.PI*b/e)-1)+c},easeInExpo:function(a,b,c,d,e){return 0==b?c:d*Math.pow(2,10*(b/e-1))+c},easeOutExpo:function(a,b,c,d,e){return b==e?c+d:d*(-Math.pow(2,-10*b/e)+1)+c},easeInOutExpo:function(a,b,c,d,e){return 0==b?c:b==e?c+d:(b/=e/2)<1?d/2*Math.pow(2,10*(b-1))+c:d/2*(-Math.pow(2,-10*--b)+2)+c},easeInCirc:function(a,b,c,d,e){return-d*(Math.sqrt(1-(b/=e)*b)-1)+c},easeOutCirc:function(a,b,c,d,e){return d*Math.sqrt(1-(b=b/e-1)*b)+c},easeInOutCirc:function(a,b,c,d,e){return(b/=e/2)<1?-d/2*(Math.sqrt(1-b*b)-1)+c:d/2*(Math.sqrt(1-(b-=2)*b)+1)+c},easeInElastic:function(a,b,c,d,e){var f=1.70158,g=0,h=d;if(0==b)return c;if(1==(b/=e))return c+d;if(g||(g=.3*e),h<Math.abs(d)){h=d;var f=g/4}else var f=g/(2*Math.PI)*Math.asin(d/h);return-(h*Math.pow(2,10*(b-=1))*Math.sin((b*e-f)*(2*Math.PI)/g))+c},easeOutElastic:function(a,b,c,d,e){var f=1.70158,g=0,h=d;if(0==b)return c;if(1==(b/=e))return c+d;if(g||(g=.3*e),h<Math.abs(d)){h=d;var f=g/4}else var f=g/(2*Math.PI)*Math.asin(d/h);return h*Math.pow(2,-10*b)*Math.sin((b*e-f)*(2*Math.PI)/g)+d+c},easeInOutElastic:function(a,b,c,d,e){var f=1.70158,g=0,h=d;if(0==b)return c;if(2==(b/=e/2))return c+d;if(g||(g=e*(.3*1.5)),h<Math.abs(d)){h=d;var f=g/4}else var f=g/(2*Math.PI)*Math.asin(d/h);return 1>b?-.5*(h*Math.pow(2,10*(b-=1))*Math.sin((b*e-f)*(2*Math.PI)/g))+c:h*Math.pow(2,-10*(b-=1))*Math.sin((b*e-f)*(2*Math.PI)/g)*.5+d+c},easeInBack:function(a,b,c,d,e,f){return void 0==f&&(f=1.70158),d*(b/=e)*b*((f+1)*b-f)+c},easeOutBack:function(a,b,c,d,e,f){return void 0==f&&(f=1.70158),d*((b=b/e-1)*b*((f+1)*b+f)+1)+c},easeInOutBack:function(a,b,c,d,e,f){return void 0==f&&(f=1.70158),(b/=e/2)<1?d/2*(b*b*(((f*=1.525)+1)*b-f))+c:d/2*((b-=2)*b*(((f*=1.525)+1)*b+f)+2)+c},easeInBounce:function(a,b,c,d,e){return d-jQuery.easing.easeOutBounce(a,e-b,0,d,e)+c},easeOutBounce:function(a,b,c,d,e){return(b/=e)<1/2.75?d*(7.5625*b*b)+c:2/2.75>b?d*(7.5625*(b-=1.5/2.75)*b+.75)+c:2.5/2.75>b?d*(7.5625*(b-=2.25/2.75)*b+.9375)+c:d*(7.5625*(b-=2.625/2.75)*b+.984375)+c},easeInOutBounce:function(a,b,c,d,e){return e/2>b?.5*jQuery.easing.easeInBounce(a,2*b,0,d,e)+c:.5*jQuery.easing.easeOutBounce(a,2*b-e,0,d,e)+.5*d+c}}),jQuery.extend(jQuery.easing,{easeInOutMaterial:function(a,b,c,d,e){return(b/=e/2)<1?d/2*b*b+c:d/4*((b-=2)*b*b+2)+c}}),jQuery.Velocity?console.log("Velocity is already loaded. You may be needlessly importing Velocity again; note that Materialize includes Velocity."):(!function(a){function b(a){var b=a.length,d=c.type(a);return"function"===d||c.isWindow(a)?!1:1===a.nodeType&&b?!0:"array"===d||0===b||"number"==typeof b&&b>0&&b-1 in a}if(!a.jQuery){var c=function(a,b){return new c.fn.init(a,b)};c.isWindow=function(a){return null!=a&&a==a.window},c.type=function(a){return null==a?a+"":"object"==typeof a||"function"==typeof a?e[g.call(a)]||"object":typeof a},c.isArray=Array.isArray||function(a){return"array"===c.type(a)},c.isPlainObject=function(a){var b;if(!a||"object"!==c.type(a)||a.nodeType||c.isWindow(a))return!1;try{if(a.constructor&&!f.call(a,"constructor")&&!f.call(a.constructor.prototype,"isPrototypeOf"))return!1}catch(d){return!1}for(b in a);return void 0===b||f.call(a,b)},c.each=function(a,c,d){var e,f=0,g=a.length,h=b(a);if(d){if(h)for(;g>f&&(e=c.apply(a[f],d),e!==!1);f++);else for(f in a)if(e=c.apply(a[f],d),e===!1)break}else if(h)for(;g>f&&(e=c.call(a[f],f,a[f]),e!==!1);f++);else for(f in a)if(e=c.call(a[f],f,a[f]),e===!1)break;return a},c.data=function(a,b,e){if(void 0===e){var f=a[c.expando],g=f&&d[f];if(void 0===b)return g;if(g&&b in g)return g[b]}else if(void 0!==b){var f=a[c.expando]||(a[c.expando]=++c.uuid);return d[f]=d[f]||{},d[f][b]=e,e}},c.removeData=function(a,b){var e=a[c.expando],f=e&&d[e];f&&c.each(b,function(a,b){delete f[b]})},c.extend=function(){var a,b,d,e,f,g,h=arguments[0]||{},i=1,j=arguments.length,k=!1;for("boolean"==typeof h&&(k=h,h=arguments[i]||{},i++),"object"!=typeof h&&"function"!==c.type(h)&&(h={}),i===j&&(h=this,i--);j>i;i++)if(null!=(f=arguments[i]))for(e in f)a=h[e],d=f[e],h!==d&&(k&&d&&(c.isPlainObject(d)||(b=c.isArray(d)))?(b?(b=!1,g=a&&c.isArray(a)?a:[]):g=a&&c.isPlainObject(a)?a:{},h[e]=c.extend(k,g,d)):void 0!==d&&(h[e]=d));return h},c.queue=function(a,d,e){function f(a,c){var d=c||[];return null!=a&&(b(Object(a))?!function(a,b){for(var c=+b.length,d=0,e=a.length;c>d;)a[e++]=b[d++];if(c!==c)for(;void 0!==b[d];)a[e++]=b[d++];return a.length=e,a}(d,"string"==typeof a?[a]:a):[].push.call(d,a)),d}if(a){d=(d||"fx")+"queue";var g=c.data(a,d);return e?(!g||c.isArray(e)?g=c.data(a,d,f(e)):g.push(e),g):g||[]}},c.dequeue=function(a,b){c.each(a.nodeType?[a]:a,function(a,d){b=b||"fx";var e=c.queue(d,b),f=e.shift();"inprogress"===f&&(f=e.shift()),f&&("fx"===b&&e.unshift("inprogress"),f.call(d,function(){c.dequeue(d,b)}))})},c.fn=c.prototype={init:function(a){if(a.nodeType)return this[0]=a,this;throw new Error("Not a DOM node.")},offset:function(){var b=this[0].getBoundingClientRect?this[0].getBoundingClientRect():{top:0,left:0};return{top:b.top+(a.pageYOffset||document.scrollTop||0)-(document.clientTop||0),left:b.left+(a.pageXOffset||document.scrollLeft||0)-(document.clientLeft||0)}},position:function(){function a(){for(var a=this.offsetParent||document;a&&"html"===!a.nodeType.toLowerCase&&"static"===a.style.position;)a=a.offsetParent;return a||document}var b=this[0],a=a.apply(b),d=this.offset(),e=/^(?:body|html)$/i.test(a.nodeName)?{top:0,left:0}:c(a).offset();return d.top-=parseFloat(b.style.marginTop)||0,d.left-=parseFloat(b.style.marginLeft)||0,a.style&&(e.top+=parseFloat(a.style.borderTopWidth)||0,e.left+=parseFloat(a.style.borderLeftWidth)||0),{top:d.top-e.top,left:d.left-e.left}}};var d={};c.expando="velocity"+(new Date).getTime(),c.uuid=0;for(var e={},f=e.hasOwnProperty,g=e.toString,h="Boolean Number String Function Array Date RegExp Object Error".split(" "),i=0;i<h.length;i++)e["[object "+h[i]+"]"]=h[i].toLowerCase();c.fn.init.prototype=c.fn,a.Velocity={Utilities:c}}}(window),function(a){"object"==typeof module&&"object"==typeof module.exports?module.exports=a():"function"==typeof define&&define.amd?define(a):a()}(function(){return function(a,b,c,d){function e(a){for(var b=-1,c=a?a.length:0,d=[];++b<c;){var e=a[b];e&&d.push(e)}return d}function f(a){return p.isWrapped(a)?a=[].slice.call(a):p.isNode(a)&&(a=[a]),a}function g(a){var b=m.data(a,"velocity");return null===b?d:b}function h(a){return function(b){return Math.round(b*a)*(1/a)}}function i(a,c,d,e){function f(a,b){return 1-3*b+3*a}function g(a,b){return 3*b-6*a}function h(a){return 3*a}function i(a,b,c){return((f(b,c)*a+g(b,c))*a+h(b))*a}function j(a,b,c){return 3*f(b,c)*a*a+2*g(b,c)*a+h(b)}function k(b,c){for(var e=0;p>e;++e){var f=j(c,a,d);if(0===f)return c;var g=i(c,a,d)-b;c-=g/f}return c}function l(){for(var b=0;t>b;++b)x[b]=i(b*u,a,d)}function m(b,c,e){var f,g,h=0;do g=c+(e-c)/2,f=i(g,a,d)-b,f>0?e=g:c=g;while(Math.abs(f)>r&&++h<s);return g}function n(b){for(var c=0,e=1,f=t-1;e!=f&&x[e]<=b;++e)c+=u;--e;var g=(b-x[e])/(x[e+1]-x[e]),h=c+g*u,i=j(h,a,d);return i>=q?k(b,h):0==i?h:m(b,c,c+u)}function o(){y=!0,(a!=c||d!=e)&&l()}var p=4,q=.001,r=1e-7,s=10,t=11,u=1/(t-1),v="Float32Array"in b;if(4!==arguments.length)return!1;for(var w=0;4>w;++w)if("number"!=typeof arguments[w]||isNaN(arguments[w])||!isFinite(arguments[w]))return!1;a=Math.min(a,1),d=Math.min(d,1),a=Math.max(a,0),d=Math.max(d,0);var x=v?new Float32Array(t):new Array(t),y=!1,z=function(b){return y||o(),a===c&&d===e?b:0===b?0:1===b?1:i(n(b),c,e)};z.getControlPoints=function(){return[{x:a,y:c},{x:d,y:e}]};var A="generateBezier("+[a,c,d,e]+")";return z.toString=function(){return A},z}function j(a,b){var c=a;return p.isString(a)?t.Easings[a]||(c=!1):c=p.isArray(a)&&1===a.length?h.apply(null,a):p.isArray(a)&&2===a.length?u.apply(null,a.concat([b])):p.isArray(a)&&4===a.length?i.apply(null,a):!1,c===!1&&(c=t.Easings[t.defaults.easing]?t.defaults.easing:s),c}function k(a){if(a){var b=(new Date).getTime(),c=t.State.calls.length;c>1e4&&(t.State.calls=e(t.State.calls));for(var f=0;c>f;f++)if(t.State.calls[f]){var h=t.State.calls[f],i=h[0],j=h[2],n=h[3],o=!!n,q=null;n||(n=t.State.calls[f][3]=b-16);for(var r=Math.min((b-n)/j.duration,1),s=0,u=i.length;u>s;s++){var w=i[s],y=w.element;if(g(y)){var z=!1;if(j.display!==d&&null!==j.display&&"none"!==j.display){if("flex"===j.display){var A=["-webkit-box","-moz-box","-ms-flexbox","-webkit-flex"];m.each(A,function(a,b){v.setPropertyValue(y,"display",b)})}v.setPropertyValue(y,"display",j.display)}j.visibility!==d&&"hidden"!==j.visibility&&v.setPropertyValue(y,"visibility",j.visibility);for(var B in w)if("element"!==B){var C,D=w[B],E=p.isString(D.easing)?t.Easings[D.easing]:D.easing;if(1===r)C=D.endValue;else{var F=D.endValue-D.startValue;if(C=D.startValue+F*E(r,j,F),!o&&C===D.currentValue)continue}if(D.currentValue=C,"tween"===B)q=C;else{if(v.Hooks.registered[B]){var G=v.Hooks.getRoot(B),H=g(y).rootPropertyValueCache[G];H&&(D.rootPropertyValue=H)}var I=v.setPropertyValue(y,B,D.currentValue+(0===parseFloat(C)?"":D.unitType),D.rootPropertyValue,D.scrollData);v.Hooks.registered[B]&&(g(y).rootPropertyValueCache[G]=v.Normalizations.registered[G]?v.Normalizations.registered[G]("extract",null,I[1]):I[1]),"transform"===I[0]&&(z=!0)}}j.mobileHA&&g(y).transformCache.translate3d===d&&(g(y).transformCache.translate3d="(0px, 0px, 0px)",z=!0),z&&v.flushTransformCache(y)}}j.display!==d&&"none"!==j.display&&(t.State.calls[f][2].display=!1),j.visibility!==d&&"hidden"!==j.visibility&&(t.State.calls[f][2].visibility=!1),j.progress&&j.progress.call(h[1],h[1],r,Math.max(0,n+j.duration-b),n,q),1===r&&l(f)}}t.State.isTicking&&x(k)}function l(a,b){if(!t.State.calls[a])return!1;for(var c=t.State.calls[a][0],e=t.State.calls[a][1],f=t.State.calls[a][2],h=t.State.calls[a][4],i=!1,j=0,k=c.length;k>j;j++){var l=c[j].element;if(b||f.loop||("none"===f.display&&v.setPropertyValue(l,"display",f.display),"hidden"===f.visibility&&v.setPropertyValue(l,"visibility",f.visibility)),f.loop!==!0&&(m.queue(l)[1]===d||!/\.velocityQueueEntryFlag/i.test(m.queue(l)[1]))&&g(l)){g(l).isAnimating=!1,g(l).rootPropertyValueCache={};var n=!1;m.each(v.Lists.transforms3D,function(a,b){var c=/^scale/.test(b)?1:0,e=g(l).transformCache[b];g(l).transformCache[b]!==d&&new RegExp("^\\("+c+"[^.]").test(e)&&(n=!0,delete g(l).transformCache[b])}),f.mobileHA&&(n=!0,delete g(l).transformCache.translate3d),n&&v.flushTransformCache(l),v.Values.removeClass(l,"velocity-animating")}if(!b&&f.complete&&!f.loop&&j===k-1)try{f.complete.call(e,e)}catch(o){setTimeout(function(){throw o},1)}h&&f.loop!==!0&&h(e),g(l)&&f.loop===!0&&!b&&(m.each(g(l).tweensContainer,function(a,b){/^rotate/.test(a)&&360===parseFloat(b.endValue)&&(b.endValue=0,b.startValue=360),/^backgroundPosition/.test(a)&&100===parseFloat(b.endValue)&&"%"===b.unitType&&(b.endValue=0,b.startValue=100)}),t(l,"reverse",{loop:!0,delay:f.delay})),f.queue!==!1&&m.dequeue(l,f.queue)}t.State.calls[a]=!1;for(var p=0,q=t.State.calls.length;q>p;p++)if(t.State.calls[p]!==!1){i=!0;break}i===!1&&(t.State.isTicking=!1,delete t.State.calls,t.State.calls=[])}var m,n=function(){if(c.documentMode)return c.documentMode;for(var a=7;a>4;a--){var b=c.createElement("div");if(b.innerHTML="<!--[if IE "+a+"]><span></span><![endif]-->",b.getElementsByTagName("span").length)return b=null,a}return d}(),o=function(){var a=0;return b.webkitRequestAnimationFrame||b.mozRequestAnimationFrame||function(b){var c,d=(new Date).getTime();return c=Math.max(0,16-(d-a)),a=d+c,setTimeout(function(){b(d+c)},c)}}(),p={isString:function(a){return"string"==typeof a},isArray:Array.isArray||function(a){return"[object Array]"===Object.prototype.toString.call(a)},isFunction:function(a){return"[object Function]"===Object.prototype.toString.call(a)},isNode:function(a){return a&&a.nodeType},isNodeList:function(a){return"object"==typeof a&&/^\[object (HTMLCollection|NodeList|Object)\]$/.test(Object.prototype.toString.call(a))&&a.length!==d&&(0===a.length||"object"==typeof a[0]&&a[0].nodeType>0)},isWrapped:function(a){return a&&(a.jquery||b.Zepto&&b.Zepto.zepto.isZ(a))},isSVG:function(a){return b.SVGElement&&a instanceof b.SVGElement},isEmptyObject:function(a){for(var b in a)return!1;return!0}},q=!1;if(a.fn&&a.fn.jquery?(m=a,q=!0):m=b.Velocity.Utilities,8>=n&&!q)throw new Error("Velocity: IE8 and below require jQuery to be loaded before Velocity.");if(7>=n)return void(jQuery.fn.velocity=jQuery.fn.animate);var r=400,s="swing",t={State:{isMobile:/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),isAndroid:/Android/i.test(navigator.userAgent),isGingerbread:/Android 2\.3\.[3-7]/i.test(navigator.userAgent),isChrome:b.chrome,isFirefox:/Firefox/i.test(navigator.userAgent),prefixElement:c.createElement("div"),prefixMatches:{},scrollAnchor:null,scrollPropertyLeft:null,scrollPropertyTop:null,isTicking:!1,calls:[]},CSS:{},Utilities:m,Redirects:{},Easings:{},Promise:b.Promise,defaults:{queue:"",duration:r,easing:s,begin:d,complete:d,progress:d,display:d,visibility:d,loop:!1,delay:!1,mobileHA:!0,_cacheValues:!0},init:function(a){m.data(a,"velocity",{isSVG:p.isSVG(a),isAnimating:!1,computedStyle:null,tweensContainer:null,rootPropertyValueCache:{},transformCache:{}})},hook:null,mock:!1,version:{major:1,minor:2,patch:2},debug:!1};b.pageYOffset!==d?(t.State.scrollAnchor=b,t.State.scrollPropertyLeft="pageXOffset",t.State.scrollPropertyTop="pageYOffset"):(t.State.scrollAnchor=c.documentElement||c.body.parentNode||c.body,t.State.scrollPropertyLeft="scrollLeft",t.State.scrollPropertyTop="scrollTop");var u=function(){function a(a){return-a.tension*a.x-a.friction*a.v}function b(b,c,d){var e={x:b.x+d.dx*c,v:b.v+d.dv*c,tension:b.tension,friction:b.friction};return{dx:e.v,dv:a(e)}}function c(c,d){var e={dx:c.v,dv:a(c)},f=b(c,.5*d,e),g=b(c,.5*d,f),h=b(c,d,g),i=1/6*(e.dx+2*(f.dx+g.dx)+h.dx),j=1/6*(e.dv+2*(f.dv+g.dv)+h.dv);return c.x=c.x+i*d,c.v=c.v+j*d,c}return function d(a,b,e){var f,g,h,i={x:-1,v:0,tension:null,friction:null},j=[0],k=0,l=1e-4,m=.016;for(a=parseFloat(a)||500,b=parseFloat(b)||20,e=e||null,i.tension=a,i.friction=b,f=null!==e,f?(k=d(a,b),g=k/e*m):g=m;h=c(h||i,g),j.push(1+h.x),k+=16,Math.abs(h.x)>l&&Math.abs(h.v)>l;);return f?function(a){return j[a*(j.length-1)|0]}:k}}();t.Easings={linear:function(a){return a},swing:function(a){return.5-Math.cos(a*Math.PI)/2},spring:function(a){return 1-Math.cos(4.5*a*Math.PI)*Math.exp(6*-a)}},m.each([["ease",[.25,.1,.25,1]],["ease-in",[.42,0,1,1]],["ease-out",[0,0,.58,1]],["ease-in-out",[.42,0,.58,1]],["easeInSine",[.47,0,.745,.715]],["easeOutSine",[.39,.575,.565,1]],["easeInOutSine",[.445,.05,.55,.95]],["easeInQuad",[.55,.085,.68,.53]],["easeOutQuad",[.25,.46,.45,.94]],["easeInOutQuad",[.455,.03,.515,.955]],["easeInCubic",[.55,.055,.675,.19]],["easeOutCubic",[.215,.61,.355,1]],["easeInOutCubic",[.645,.045,.355,1]],["easeInQuart",[.895,.03,.685,.22]],["easeOutQuart",[.165,.84,.44,1]],["easeInOutQuart",[.77,0,.175,1]],["easeInQuint",[.755,.05,.855,.06]],["easeOutQuint",[.23,1,.32,1]],["easeInOutQuint",[.86,0,.07,1]],["easeInExpo",[.95,.05,.795,.035]],["easeOutExpo",[.19,1,.22,1]],["easeInOutExpo",[1,0,0,1]],["easeInCirc",[.6,.04,.98,.335]],["easeOutCirc",[.075,.82,.165,1]],["easeInOutCirc",[.785,.135,.15,.86]]],function(a,b){t.Easings[b[0]]=i.apply(null,b[1])});var v=t.CSS={RegEx:{isHex:/^#([A-f\d]{3}){1,2}$/i,valueUnwrap:/^[A-z]+\((.*)\)$/i,wrappedValueAlreadyExtracted:/[0-9.]+ [0-9.]+ [0-9.]+( [0-9.]+)?/,valueSplit:/([A-z]+\(.+\))|(([A-z0-9#-.]+?)(?=\s|$))/gi},Lists:{colors:["fill","stroke","stopColor","color","backgroundColor","borderColor","borderTopColor","borderRightColor","borderBottomColor","borderLeftColor","outlineColor"],transformsBase:["translateX","translateY","scale","scaleX","scaleY","skewX","skewY","rotateZ"],transforms3D:["transformPerspective","translateZ","scaleZ","rotateX","rotateY"]},Hooks:{templates:{textShadow:["Color X Y Blur","black 0px 0px 0px"],boxShadow:["Color X Y Blur Spread","black 0px 0px 0px 0px"],clip:["Top Right Bottom Left","0px 0px 0px 0px"],backgroundPosition:["X Y","0% 0%"],transformOrigin:["X Y Z","50% 50% 0px"],perspectiveOrigin:["X Y","50% 50%"]},registered:{},register:function(){for(var a=0;a<v.Lists.colors.length;a++){var b="color"===v.Lists.colors[a]?"0 0 0 1":"255 255 255 1";v.Hooks.templates[v.Lists.colors[a]]=["Red Green Blue Alpha",b]}var c,d,e;if(n)for(c in v.Hooks.templates){d=v.Hooks.templates[c],e=d[0].split(" ");var f=d[1].match(v.RegEx.valueSplit);"Color"===e[0]&&(e.push(e.shift()),f.push(f.shift()),v.Hooks.templates[c]=[e.join(" "),f.join(" ")])}for(c in v.Hooks.templates){d=v.Hooks.templates[c],e=d[0].split(" ");for(var a in e){var g=c+e[a],h=a;v.Hooks.registered[g]=[c,h]}}},getRoot:function(a){var b=v.Hooks.registered[a];return b?b[0]:a},cleanRootPropertyValue:function(a,b){return v.RegEx.valueUnwrap.test(b)&&(b=b.match(v.RegEx.valueUnwrap)[1]),v.Values.isCSSNullValue(b)&&(b=v.Hooks.templates[a][1]),b},extractValue:function(a,b){var c=v.Hooks.registered[a];if(c){var d=c[0],e=c[1];return b=v.Hooks.cleanRootPropertyValue(d,b),b.toString().match(v.RegEx.valueSplit)[e]}return b},injectValue:function(a,b,c){var d=v.Hooks.registered[a];if(d){var e,f,g=d[0],h=d[1];return c=v.Hooks.cleanRootPropertyValue(g,c),e=c.toString().match(v.RegEx.valueSplit),e[h]=b,f=e.join(" ")}return c}},Normalizations:{registered:{clip:function(a,b,c){switch(a){case"name":return"clip";case"extract":var d;return v.RegEx.wrappedValueAlreadyExtracted.test(c)?d=c:(d=c.toString().match(v.RegEx.valueUnwrap),d=d?d[1].replace(/,(\s+)?/g," "):c),d;case"inject":return"rect("+c+")"}},blur:function(a,b,c){switch(a){case"name":return t.State.isFirefox?"filter":"-webkit-filter";case"extract":var d=parseFloat(c);if(!d&&0!==d){var e=c.toString().match(/blur\(([0-9]+[A-z]+)\)/i);d=e?e[1]:0}return d;case"inject":return parseFloat(c)?"blur("+c+")":"none"}},opacity:function(a,b,c){if(8>=n)switch(a){case"name":return"filter";case"extract":var d=c.toString().match(/alpha\(opacity=(.*)\)/i);return c=d?d[1]/100:1;case"inject":return b.style.zoom=1,parseFloat(c)>=1?"":"alpha(opacity="+parseInt(100*parseFloat(c),10)+")"}else switch(a){case"name":return"opacity";case"extract":return c;case"inject":return c}}},register:function(){9>=n||t.State.isGingerbread||(v.Lists.transformsBase=v.Lists.transformsBase.concat(v.Lists.transforms3D));for(var a=0;a<v.Lists.transformsBase.length;a++)!function(){var b=v.Lists.transformsBase[a];v.Normalizations.registered[b]=function(a,c,e){switch(a){case"name":return"transform";case"extract":return g(c)===d||g(c).transformCache[b]===d?/^scale/i.test(b)?1:0:g(c).transformCache[b].replace(/[()]/g,"");case"inject":var f=!1;switch(b.substr(0,b.length-1)){case"translate":f=!/(%|px|em|rem|vw|vh|\d)$/i.test(e);break;case"scal":case"scale":t.State.isAndroid&&g(c).transformCache[b]===d&&1>e&&(e=1),f=!/(\d)$/i.test(e);break;case"skew":f=!/(deg|\d)$/i.test(e);break;case"rotate":f=!/(deg|\d)$/i.test(e)}return f||(g(c).transformCache[b]="("+e+")"),g(c).transformCache[b]}}}();for(var a=0;a<v.Lists.colors.length;a++)!function(){var b=v.Lists.colors[a];v.Normalizations.registered[b]=function(a,c,e){switch(a){case"name":return b;case"extract":var f;if(v.RegEx.wrappedValueAlreadyExtracted.test(e))f=e;else{var g,h={black:"rgb(0, 0, 0)",blue:"rgb(0, 0, 255)",gray:"rgb(128, 128, 128)",green:"rgb(0, 128, 0)",red:"rgb(255, 0, 0)",white:"rgb(255, 255, 255)"};/^[A-z]+$/i.test(e)?g=h[e]!==d?h[e]:h.black:v.RegEx.isHex.test(e)?g="rgb("+v.Values.hexToRgb(e).join(" ")+")":/^rgba?\(/i.test(e)||(g=h.black),f=(g||e).toString().match(v.RegEx.valueUnwrap)[1].replace(/,(\s+)?/g," ")}return 8>=n||3!==f.split(" ").length||(f+=" 1"),f;case"inject":return 8>=n?4===e.split(" ").length&&(e=e.split(/\s+/).slice(0,3).join(" ")):3===e.split(" ").length&&(e+=" 1"),(8>=n?"rgb":"rgba")+"("+e.replace(/\s+/g,",").replace(/\.(\d)+(?=,)/g,"")+")"}}}()}},Names:{camelCase:function(a){return a.replace(/-(\w)/g,function(a,b){return b.toUpperCase()})},SVGAttribute:function(a){var b="width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2";return(n||t.State.isAndroid&&!t.State.isChrome)&&(b+="|transform"),new RegExp("^("+b+")$","i").test(a)},prefixCheck:function(a){if(t.State.prefixMatches[a])return[t.State.prefixMatches[a],!0];for(var b=["","Webkit","Moz","ms","O"],c=0,d=b.length;d>c;c++){var e;if(e=0===c?a:b[c]+a.replace(/^\w/,function(a){return a.toUpperCase()}),p.isString(t.State.prefixElement.style[e]))return t.State.prefixMatches[a]=e,[e,!0]}return[a,!1]}},Values:{hexToRgb:function(a){var b,c=/^#?([a-f\d])([a-f\d])([a-f\d])$/i,d=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i;return a=a.replace(c,function(a,b,c,d){return b+b+c+c+d+d}),b=d.exec(a),b?[parseInt(b[1],16),parseInt(b[2],16),parseInt(b[3],16)]:[0,0,0]},isCSSNullValue:function(a){return 0==a||/^(none|auto|transparent|(rgba\(0, ?0, ?0, ?0\)))$/i.test(a)},getUnitType:function(a){return/^(rotate|skew)/i.test(a)?"deg":/(^(scale|scaleX|scaleY|scaleZ|alpha|flexGrow|flexHeight|zIndex|fontWeight)$)|((opacity|red|green|blue|alpha)$)/i.test(a)?"":"px"},getDisplayType:function(a){var b=a&&a.tagName.toString().toLowerCase();return/^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i.test(b)?"inline":/^(li)$/i.test(b)?"list-item":/^(tr)$/i.test(b)?"table-row":/^(table)$/i.test(b)?"table":/^(tbody)$/i.test(b)?"table-row-group":"block"},addClass:function(a,b){a.classList?a.classList.add(b):a.className+=(a.className.length?" ":"")+b},removeClass:function(a,b){a.classList?a.classList.remove(b):a.className=a.className.toString().replace(new RegExp("(^|\\s)"+b.split(" ").join("|")+"(\\s|$)","gi")," ")}},getPropertyValue:function(a,c,e,f){function h(a,c){function e(){j&&v.setPropertyValue(a,"display","none")}var i=0;if(8>=n)i=m.css(a,c);else{var j=!1;if(/^(width|height)$/.test(c)&&0===v.getPropertyValue(a,"display")&&(j=!0,v.setPropertyValue(a,"display",v.Values.getDisplayType(a))),!f){if("height"===c&&"border-box"!==v.getPropertyValue(a,"boxSizing").toString().toLowerCase()){var k=a.offsetHeight-(parseFloat(v.getPropertyValue(a,"borderTopWidth"))||0)-(parseFloat(v.getPropertyValue(a,"borderBottomWidth"))||0)-(parseFloat(v.getPropertyValue(a,"paddingTop"))||0)-(parseFloat(v.getPropertyValue(a,"paddingBottom"))||0);return e(),k}if("width"===c&&"border-box"!==v.getPropertyValue(a,"boxSizing").toString().toLowerCase()){var l=a.offsetWidth-(parseFloat(v.getPropertyValue(a,"borderLeftWidth"))||0)-(parseFloat(v.getPropertyValue(a,"borderRightWidth"))||0)-(parseFloat(v.getPropertyValue(a,"paddingLeft"))||0)-(parseFloat(v.getPropertyValue(a,"paddingRight"))||0);return e(),l}}var o;o=g(a)===d?b.getComputedStyle(a,null):g(a).computedStyle?g(a).computedStyle:g(a).computedStyle=b.getComputedStyle(a,null),"borderColor"===c&&(c="borderTopColor"),i=9===n&&"filter"===c?o.getPropertyValue(c):o[c],(""===i||null===i)&&(i=a.style[c]),e()}if("auto"===i&&/^(top|right|bottom|left)$/i.test(c)){var p=h(a,"position");("fixed"===p||"absolute"===p&&/top|left/i.test(c))&&(i=m(a).position()[c]+"px")}return i}var i;if(v.Hooks.registered[c]){var j=c,k=v.Hooks.getRoot(j);e===d&&(e=v.getPropertyValue(a,v.Names.prefixCheck(k)[0])),v.Normalizations.registered[k]&&(e=v.Normalizations.registered[k]("extract",a,e)),i=v.Hooks.extractValue(j,e)}else if(v.Normalizations.registered[c]){var l,o;l=v.Normalizations.registered[c]("name",a),"transform"!==l&&(o=h(a,v.Names.prefixCheck(l)[0]),v.Values.isCSSNullValue(o)&&v.Hooks.templates[c]&&(o=v.Hooks.templates[c][1])),i=v.Normalizations.registered[c]("extract",a,o)}if(!/^[\d-]/.test(i))if(g(a)&&g(a).isSVG&&v.Names.SVGAttribute(c))if(/^(height|width)$/i.test(c))try{i=a.getBBox()[c]}catch(p){i=0}else i=a.getAttribute(c);else i=h(a,v.Names.prefixCheck(c)[0]);return v.Values.isCSSNullValue(i)&&(i=0),t.debug>=2&&console.log("Get "+c+": "+i),i},setPropertyValue:function(a,c,d,e,f){var h=c;if("scroll"===c)f.container?f.container["scroll"+f.direction]=d:"Left"===f.direction?b.scrollTo(d,f.alternateValue):b.scrollTo(f.alternateValue,d);else if(v.Normalizations.registered[c]&&"transform"===v.Normalizations.registered[c]("name",a))v.Normalizations.registered[c]("inject",a,d),h="transform",d=g(a).transformCache[c];else{if(v.Hooks.registered[c]){var i=c,j=v.Hooks.getRoot(c);e=e||v.getPropertyValue(a,j),d=v.Hooks.injectValue(i,d,e),c=j}if(v.Normalizations.registered[c]&&(d=v.Normalizations.registered[c]("inject",a,d),c=v.Normalizations.registered[c]("name",a)),h=v.Names.prefixCheck(c)[0],8>=n)try{a.style[h]=d}catch(k){t.debug&&console.log("Browser does not support ["+d+"] for ["+h+"]")}else g(a)&&g(a).isSVG&&v.Names.SVGAttribute(c)?a.setAttribute(c,d):a.style[h]=d;t.debug>=2&&console.log("Set "+c+" ("+h+"): "+d)}return[h,d]},flushTransformCache:function(a){function b(b){return parseFloat(v.getPropertyValue(a,b))}var c="";if((n||t.State.isAndroid&&!t.State.isChrome)&&g(a).isSVG){var d={translate:[b("translateX"),b("translateY")],skewX:[b("skewX")],skewY:[b("skewY")],scale:1!==b("scale")?[b("scale"),b("scale")]:[b("scaleX"),b("scaleY")],rotate:[b("rotateZ"),0,0]};m.each(g(a).transformCache,function(a){/^translate/i.test(a)?a="translate":/^scale/i.test(a)?a="scale":/^rotate/i.test(a)&&(a="rotate"),d[a]&&(c+=a+"("+d[a].join(" ")+") ",delete d[a])})}else{var e,f;m.each(g(a).transformCache,function(b){return e=g(a).transformCache[b],"transformPerspective"===b?(f=e,!0):(9===n&&"rotateZ"===b&&(b="rotate"),void(c+=b+e+" "))}),f&&(c="perspective"+f+" "+c)}v.setPropertyValue(a,"transform",c)}};v.Hooks.register(),v.Normalizations.register(),t.hook=function(a,b,c){var e=d;return a=f(a),m.each(a,function(a,f){if(g(f)===d&&t.init(f),c===d)e===d&&(e=t.CSS.getPropertyValue(f,b));else{var h=t.CSS.setPropertyValue(f,b,c);"transform"===h[0]&&t.CSS.flushTransformCache(f),e=h}}),e};var w=function(){function a(){return h?B.promise||null:i}function e(){function a(a){function l(a,b){var c=d,e=d,g=d;return p.isArray(a)?(c=a[0],!p.isArray(a[1])&&/^[\d-]/.test(a[1])||p.isFunction(a[1])||v.RegEx.isHex.test(a[1])?g=a[1]:(p.isString(a[1])&&!v.RegEx.isHex.test(a[1])||p.isArray(a[1]))&&(e=b?a[1]:j(a[1],h.duration),a[2]!==d&&(g=a[2]))):c=a,b||(e=e||h.easing),p.isFunction(c)&&(c=c.call(f,y,x)),p.isFunction(g)&&(g=g.call(f,y,x)),[c||0,e,g]}function n(a,b){var c,d;return d=(b||"0").toString().toLowerCase().replace(/[%A-z]+$/,function(a){return c=a,""}),c||(c=v.Values.getUnitType(a)),[d,c]}function r(){var a={myParent:f.parentNode||c.body,position:v.getPropertyValue(f,"position"),fontSize:v.getPropertyValue(f,"fontSize")},d=a.position===I.lastPosition&&a.myParent===I.lastParent,e=a.fontSize===I.lastFontSize;I.lastParent=a.myParent,I.lastPosition=a.position,I.lastFontSize=a.fontSize;var h=100,i={};if(e&&d)i.emToPx=I.lastEmToPx,i.percentToPxWidth=I.lastPercentToPxWidth,i.percentToPxHeight=I.lastPercentToPxHeight;else{var j=g(f).isSVG?c.createElementNS("http://www.w3.org/2000/svg","rect"):c.createElement("div");t.init(j),a.myParent.appendChild(j),m.each(["overflow","overflowX","overflowY"],function(a,b){t.CSS.setPropertyValue(j,b,"hidden")}),t.CSS.setPropertyValue(j,"position",a.position),t.CSS.setPropertyValue(j,"fontSize",a.fontSize),t.CSS.setPropertyValue(j,"boxSizing","content-box"),m.each(["minWidth","maxWidth","width","minHeight","maxHeight","height"],function(a,b){t.CSS.setPropertyValue(j,b,h+"%")}),t.CSS.setPropertyValue(j,"paddingLeft",h+"em"),i.percentToPxWidth=I.lastPercentToPxWidth=(parseFloat(v.getPropertyValue(j,"width",null,!0))||1)/h,i.percentToPxHeight=I.lastPercentToPxHeight=(parseFloat(v.getPropertyValue(j,"height",null,!0))||1)/h,i.emToPx=I.lastEmToPx=(parseFloat(v.getPropertyValue(j,"paddingLeft"))||1)/h,a.myParent.removeChild(j)}return null===I.remToPx&&(I.remToPx=parseFloat(v.getPropertyValue(c.body,"fontSize"))||16),null===I.vwToPx&&(I.vwToPx=parseFloat(b.innerWidth)/100,I.vhToPx=parseFloat(b.innerHeight)/100),i.remToPx=I.remToPx,i.vwToPx=I.vwToPx,i.vhToPx=I.vhToPx,t.debug>=1&&console.log("Unit ratios: "+JSON.stringify(i),f),i}if(h.begin&&0===y)try{h.begin.call(o,o)}catch(u){setTimeout(function(){throw u},1)}if("scroll"===C){var w,z,A,D=/^x$/i.test(h.axis)?"Left":"Top",E=parseFloat(h.offset)||0;h.container?p.isWrapped(h.container)||p.isNode(h.container)?(h.container=h.container[0]||h.container,w=h.container["scroll"+D],A=w+m(f).position()[D.toLowerCase()]+E):h.container=null:(w=t.State.scrollAnchor[t.State["scrollProperty"+D]],z=t.State.scrollAnchor[t.State["scrollProperty"+("Left"===D?"Top":"Left")]],A=m(f).offset()[D.toLowerCase()]+E),i={scroll:{rootPropertyValue:!1,startValue:w,currentValue:w,endValue:A,unitType:"",easing:h.easing,scrollData:{container:h.container,direction:D,alternateValue:z}},element:f},t.debug&&console.log("tweensContainer (scroll): ",i.scroll,f)}else if("reverse"===C){if(!g(f).tweensContainer)return void m.dequeue(f,h.queue);"none"===g(f).opts.display&&(g(f).opts.display="auto"),"hidden"===g(f).opts.visibility&&(g(f).opts.visibility="visible"),g(f).opts.loop=!1,g(f).opts.begin=null,g(f).opts.complete=null,s.easing||delete h.easing,s.duration||delete h.duration,h=m.extend({},g(f).opts,h);var F=m.extend(!0,{},g(f).tweensContainer);for(var G in F)if("element"!==G){var H=F[G].startValue;F[G].startValue=F[G].currentValue=F[G].endValue,F[G].endValue=H,p.isEmptyObject(s)||(F[G].easing=h.easing),t.debug&&console.log("reverse tweensContainer ("+G+"): "+JSON.stringify(F[G]),f)}i=F}else if("start"===C){var F;g(f).tweensContainer&&g(f).isAnimating===!0&&(F=g(f).tweensContainer),m.each(q,function(a,b){if(RegExp("^"+v.Lists.colors.join("$|^")+"$").test(a)){var c=l(b,!0),e=c[0],f=c[1],g=c[2];if(v.RegEx.isHex.test(e)){for(var h=["Red","Green","Blue"],i=v.Values.hexToRgb(e),j=g?v.Values.hexToRgb(g):d,k=0;k<h.length;k++){var m=[i[k]];f&&m.push(f),j!==d&&m.push(j[k]),q[a+h[k]]=m}delete q[a]}}});for(var K in q){var L=l(q[K]),M=L[0],N=L[1],O=L[2];K=v.Names.camelCase(K);var P=v.Hooks.getRoot(K),Q=!1;if(g(f).isSVG||"tween"===P||v.Names.prefixCheck(P)[1]!==!1||v.Normalizations.registered[P]!==d){(h.display!==d&&null!==h.display&&"none"!==h.display||h.visibility!==d&&"hidden"!==h.visibility)&&/opacity|filter/.test(K)&&!O&&0!==M&&(O=0),h._cacheValues&&F&&F[K]?(O===d&&(O=F[K].endValue+F[K].unitType),Q=g(f).rootPropertyValueCache[P]):v.Hooks.registered[K]?O===d?(Q=v.getPropertyValue(f,P),O=v.getPropertyValue(f,K,Q)):Q=v.Hooks.templates[P][1]:O===d&&(O=v.getPropertyValue(f,K));var R,S,T,U=!1;if(R=n(K,O),O=R[0],T=R[1],R=n(K,M),M=R[0].replace(/^([+-\/*])=/,function(a,b){return U=b,""}),S=R[1],O=parseFloat(O)||0,M=parseFloat(M)||0,"%"===S&&(/^(fontSize|lineHeight)$/.test(K)?(M/=100,S="em"):/^scale/.test(K)?(M/=100,S=""):/(Red|Green|Blue)$/i.test(K)&&(M=M/100*255,S="")),/[\/*]/.test(U))S=T;else if(T!==S&&0!==O)if(0===M)S=T;else{e=e||r();var V=/margin|padding|left|right|width|text|word|letter/i.test(K)||/X$/.test(K)||"x"===K?"x":"y";
+switch(T){case"%":O*="x"===V?e.percentToPxWidth:e.percentToPxHeight;break;case"px":break;default:O*=e[T+"ToPx"]}switch(S){case"%":O*=1/("x"===V?e.percentToPxWidth:e.percentToPxHeight);break;case"px":break;default:O*=1/e[S+"ToPx"]}}switch(U){case"+":M=O+M;break;case"-":M=O-M;break;case"*":M=O*M;break;case"/":M=O/M}i[K]={rootPropertyValue:Q,startValue:O,currentValue:O,endValue:M,unitType:S,easing:N},t.debug&&console.log("tweensContainer ("+K+"): "+JSON.stringify(i[K]),f)}else t.debug&&console.log("Skipping ["+P+"] due to a lack of browser support.")}i.element=f}i.element&&(v.Values.addClass(f,"velocity-animating"),J.push(i),""===h.queue&&(g(f).tweensContainer=i,g(f).opts=h),g(f).isAnimating=!0,y===x-1?(t.State.calls.push([J,o,h,null,B.resolver]),t.State.isTicking===!1&&(t.State.isTicking=!0,k())):y++)}var e,f=this,h=m.extend({},t.defaults,s),i={};switch(g(f)===d&&t.init(f),parseFloat(h.delay)&&h.queue!==!1&&m.queue(f,h.queue,function(a){t.velocityQueueEntryFlag=!0,g(f).delayTimer={setTimeout:setTimeout(a,parseFloat(h.delay)),next:a}}),h.duration.toString().toLowerCase()){case"fast":h.duration=200;break;case"normal":h.duration=r;break;case"slow":h.duration=600;break;default:h.duration=parseFloat(h.duration)||1}t.mock!==!1&&(t.mock===!0?h.duration=h.delay=1:(h.duration*=parseFloat(t.mock)||1,h.delay*=parseFloat(t.mock)||1)),h.easing=j(h.easing,h.duration),h.begin&&!p.isFunction(h.begin)&&(h.begin=null),h.progress&&!p.isFunction(h.progress)&&(h.progress=null),h.complete&&!p.isFunction(h.complete)&&(h.complete=null),h.display!==d&&null!==h.display&&(h.display=h.display.toString().toLowerCase(),"auto"===h.display&&(h.display=t.CSS.Values.getDisplayType(f))),h.visibility!==d&&null!==h.visibility&&(h.visibility=h.visibility.toString().toLowerCase()),h.mobileHA=h.mobileHA&&t.State.isMobile&&!t.State.isGingerbread,h.queue===!1?h.delay?setTimeout(a,h.delay):a():m.queue(f,h.queue,function(b,c){return c===!0?(B.promise&&B.resolver(o),!0):(t.velocityQueueEntryFlag=!0,void a(b))}),""!==h.queue&&"fx"!==h.queue||"inprogress"===m.queue(f)[0]||m.dequeue(f)}var h,i,n,o,q,s,u=arguments[0]&&(arguments[0].p||m.isPlainObject(arguments[0].properties)&&!arguments[0].properties.names||p.isString(arguments[0].properties));if(p.isWrapped(this)?(h=!1,n=0,o=this,i=this):(h=!0,n=1,o=u?arguments[0].elements||arguments[0].e:arguments[0]),o=f(o)){u?(q=arguments[0].properties||arguments[0].p,s=arguments[0].options||arguments[0].o):(q=arguments[n],s=arguments[n+1]);var x=o.length,y=0;if(!/^(stop|finish)$/i.test(q)&&!m.isPlainObject(s)){var z=n+1;s={};for(var A=z;A<arguments.length;A++)p.isArray(arguments[A])||!/^(fast|normal|slow)$/i.test(arguments[A])&&!/^\d/.test(arguments[A])?p.isString(arguments[A])||p.isArray(arguments[A])?s.easing=arguments[A]:p.isFunction(arguments[A])&&(s.complete=arguments[A]):s.duration=arguments[A]}var B={promise:null,resolver:null,rejecter:null};h&&t.Promise&&(B.promise=new t.Promise(function(a,b){B.resolver=a,B.rejecter=b}));var C;switch(q){case"scroll":C="scroll";break;case"reverse":C="reverse";break;case"finish":case"stop":m.each(o,function(a,b){g(b)&&g(b).delayTimer&&(clearTimeout(g(b).delayTimer.setTimeout),g(b).delayTimer.next&&g(b).delayTimer.next(),delete g(b).delayTimer)});var D=[];return m.each(t.State.calls,function(a,b){b&&m.each(b[1],function(c,e){var f=s===d?"":s;return f===!0||b[2].queue===f||s===d&&b[2].queue===!1?void m.each(o,function(c,d){d===e&&((s===!0||p.isString(s))&&(m.each(m.queue(d,p.isString(s)?s:""),function(a,b){p.isFunction(b)&&b(null,!0)}),m.queue(d,p.isString(s)?s:"",[])),"stop"===q?(g(d)&&g(d).tweensContainer&&f!==!1&&m.each(g(d).tweensContainer,function(a,b){b.endValue=b.currentValue}),D.push(a)):"finish"===q&&(b[2].duration=1))}):!0})}),"stop"===q&&(m.each(D,function(a,b){l(b,!0)}),B.promise&&B.resolver(o)),a();default:if(!m.isPlainObject(q)||p.isEmptyObject(q)){if(p.isString(q)&&t.Redirects[q]){var E=m.extend({},s),F=E.duration,G=E.delay||0;return E.backwards===!0&&(o=m.extend(!0,[],o).reverse()),m.each(o,function(a,b){parseFloat(E.stagger)?E.delay=G+parseFloat(E.stagger)*a:p.isFunction(E.stagger)&&(E.delay=G+E.stagger.call(b,a,x)),E.drag&&(E.duration=parseFloat(F)||(/^(callout|transition)/.test(q)?1e3:r),E.duration=Math.max(E.duration*(E.backwards?1-a/x:(a+1)/x),.75*E.duration,200)),t.Redirects[q].call(b,b,E||{},a,x,o,B.promise?B:d)}),a()}var H="Velocity: First argument ("+q+") was not a property map, a known action, or a registered redirect. Aborting.";return B.promise?B.rejecter(new Error(H)):console.log(H),a()}C="start"}var I={lastParent:null,lastPosition:null,lastFontSize:null,lastPercentToPxWidth:null,lastPercentToPxHeight:null,lastEmToPx:null,remToPx:null,vwToPx:null,vhToPx:null},J=[];m.each(o,function(a,b){p.isNode(b)&&e.call(b)});var K,E=m.extend({},t.defaults,s);if(E.loop=parseInt(E.loop),K=2*E.loop-1,E.loop)for(var L=0;K>L;L++){var M={delay:E.delay,progress:E.progress};L===K-1&&(M.display=E.display,M.visibility=E.visibility,M.complete=E.complete),w(o,"reverse",M)}return a()}};t=m.extend(w,t),t.animate=w;var x=b.requestAnimationFrame||o;return t.State.isMobile||c.hidden===d||c.addEventListener("visibilitychange",function(){c.hidden?(x=function(a){return setTimeout(function(){a(!0)},16)},k()):x=b.requestAnimationFrame||o}),a.Velocity=t,a!==b&&(a.fn.velocity=w,a.fn.velocity.defaults=t.defaults),m.each(["Down","Up"],function(a,b){t.Redirects["slide"+b]=function(a,c,e,f,g,h){var i=m.extend({},c),j=i.begin,k=i.complete,l={height:"",marginTop:"",marginBottom:"",paddingTop:"",paddingBottom:""},n={};i.display===d&&(i.display="Down"===b?"inline"===t.CSS.Values.getDisplayType(a)?"inline-block":"block":"none"),i.begin=function(){j&&j.call(g,g);for(var c in l){n[c]=a.style[c];var d=t.CSS.getPropertyValue(a,c);l[c]="Down"===b?[d,0]:[0,d]}n.overflow=a.style.overflow,a.style.overflow="hidden"},i.complete=function(){for(var b in n)a.style[b]=n[b];k&&k.call(g,g),h&&h.resolver(g)},t(a,l,i)}}),m.each(["In","Out"],function(a,b){t.Redirects["fade"+b]=function(a,c,e,f,g,h){var i=m.extend({},c),j={opacity:"In"===b?1:0},k=i.complete;i.complete=e!==f-1?i.begin=null:function(){k&&k.call(g,g),h&&h.resolver(g)},i.display===d&&(i.display="In"===b?"auto":"none"),t(this,j,i)}}),t}(window.jQuery||window.Zepto||window,window,document)})),!function(a,b,c,d){"use strict";function e(a,b,c){return setTimeout(k(a,c),b)}function f(a,b,c){return Array.isArray(a)?(g(a,c[b],c),!0):!1}function g(a,b,c){var e;if(a)if(a.forEach)a.forEach(b,c);else if(a.length!==d)for(e=0;e<a.length;)b.call(c,a[e],e,a),e++;else for(e in a)a.hasOwnProperty(e)&&b.call(c,a[e],e,a)}function h(a,b,c){for(var e=Object.keys(b),f=0;f<e.length;)(!c||c&&a[e[f]]===d)&&(a[e[f]]=b[e[f]]),f++;return a}function i(a,b){return h(a,b,!0)}function j(a,b,c){var d,e=b.prototype;d=a.prototype=Object.create(e),d.constructor=a,d._super=e,c&&h(d,c)}function k(a,b){return function(){return a.apply(b,arguments)}}function l(a,b){return typeof a==ka?a.apply(b?b[0]||d:d,b):a}function m(a,b){return a===d?b:a}function n(a,b,c){g(r(b),function(b){a.addEventListener(b,c,!1)})}function o(a,b,c){g(r(b),function(b){a.removeEventListener(b,c,!1)})}function p(a,b){for(;a;){if(a==b)return!0;a=a.parentNode}return!1}function q(a,b){return a.indexOf(b)>-1}function r(a){return a.trim().split(/\s+/g)}function s(a,b,c){if(a.indexOf&&!c)return a.indexOf(b);for(var d=0;d<a.length;){if(c&&a[d][c]==b||!c&&a[d]===b)return d;d++}return-1}function t(a){return Array.prototype.slice.call(a,0)}function u(a,b,c){for(var d=[],e=[],f=0;f<a.length;){var g=b?a[f][b]:a[f];s(e,g)<0&&d.push(a[f]),e[f]=g,f++}return c&&(d=b?d.sort(function(a,c){return a[b]>c[b]}):d.sort()),d}function v(a,b){for(var c,e,f=b[0].toUpperCase()+b.slice(1),g=0;g<ia.length;){if(c=ia[g],e=c?c+f:b,e in a)return e;g++}return d}function w(){return oa++}function x(a){var b=a.ownerDocument;return b.defaultView||b.parentWindow}function y(a,b){var c=this;this.manager=a,this.callback=b,this.element=a.element,this.target=a.options.inputTarget,this.domHandler=function(b){l(a.options.enable,[a])&&c.handler(b)},this.init()}function z(a){var b,c=a.options.inputClass;return new(b=c?c:ra?N:sa?Q:qa?S:M)(a,A)}function A(a,b,c){var d=c.pointers.length,e=c.changedPointers.length,f=b&ya&&0===d-e,g=b&(Aa|Ba)&&0===d-e;c.isFirst=!!f,c.isFinal=!!g,f&&(a.session={}),c.eventType=b,B(a,c),a.emit("hammer.input",c),a.recognize(c),a.session.prevInput=c}function B(a,b){var c=a.session,d=b.pointers,e=d.length;c.firstInput||(c.firstInput=E(b)),e>1&&!c.firstMultiple?c.firstMultiple=E(b):1===e&&(c.firstMultiple=!1);var f=c.firstInput,g=c.firstMultiple,h=g?g.center:f.center,i=b.center=F(d);b.timeStamp=na(),b.deltaTime=b.timeStamp-f.timeStamp,b.angle=J(h,i),b.distance=I(h,i),C(c,b),b.offsetDirection=H(b.deltaX,b.deltaY),b.scale=g?L(g.pointers,d):1,b.rotation=g?K(g.pointers,d):0,D(c,b);var j=a.element;p(b.srcEvent.target,j)&&(j=b.srcEvent.target),b.target=j}function C(a,b){var c=b.center,d=a.offsetDelta||{},e=a.prevDelta||{},f=a.prevInput||{};(b.eventType===ya||f.eventType===Aa)&&(e=a.prevDelta={x:f.deltaX||0,y:f.deltaY||0},d=a.offsetDelta={x:c.x,y:c.y}),b.deltaX=e.x+(c.x-d.x),b.deltaY=e.y+(c.y-d.y)}function D(a,b){var c,e,f,g,h=a.lastInterval||b,i=b.timeStamp-h.timeStamp;if(b.eventType!=Ba&&(i>xa||h.velocity===d)){var j=h.deltaX-b.deltaX,k=h.deltaY-b.deltaY,l=G(i,j,k);e=l.x,f=l.y,c=ma(l.x)>ma(l.y)?l.x:l.y,g=H(j,k),a.lastInterval=b}else c=h.velocity,e=h.velocityX,f=h.velocityY,g=h.direction;b.velocity=c,b.velocityX=e,b.velocityY=f,b.direction=g}function E(a){for(var b=[],c=0;c<a.pointers.length;)b[c]={clientX:la(a.pointers[c].clientX),clientY:la(a.pointers[c].clientY)},c++;return{timeStamp:na(),pointers:b,center:F(b),deltaX:a.deltaX,deltaY:a.deltaY}}function F(a){var b=a.length;if(1===b)return{x:la(a[0].clientX),y:la(a[0].clientY)};for(var c=0,d=0,e=0;b>e;)c+=a[e].clientX,d+=a[e].clientY,e++;return{x:la(c/b),y:la(d/b)}}function G(a,b,c){return{x:b/a||0,y:c/a||0}}function H(a,b){return a===b?Ca:ma(a)>=ma(b)?a>0?Da:Ea:b>0?Fa:Ga}function I(a,b,c){c||(c=Ka);var d=b[c[0]]-a[c[0]],e=b[c[1]]-a[c[1]];return Math.sqrt(d*d+e*e)}function J(a,b,c){c||(c=Ka);var d=b[c[0]]-a[c[0]],e=b[c[1]]-a[c[1]];return 180*Math.atan2(e,d)/Math.PI}function K(a,b){return J(b[1],b[0],La)-J(a[1],a[0],La)}function L(a,b){return I(b[0],b[1],La)/I(a[0],a[1],La)}function M(){this.evEl=Na,this.evWin=Oa,this.allow=!0,this.pressed=!1,y.apply(this,arguments)}function N(){this.evEl=Ra,this.evWin=Sa,y.apply(this,arguments),this.store=this.manager.session.pointerEvents=[]}function O(){this.evTarget=Ua,this.evWin=Va,this.started=!1,y.apply(this,arguments)}function P(a,b){var c=t(a.touches),d=t(a.changedTouches);return b&(Aa|Ba)&&(c=u(c.concat(d),"identifier",!0)),[c,d]}function Q(){this.evTarget=Xa,this.targetIds={},y.apply(this,arguments)}function R(a,b){var c=t(a.touches),d=this.targetIds;if(b&(ya|za)&&1===c.length)return d[c[0].identifier]=!0,[c,c];var e,f,g=t(a.changedTouches),h=[],i=this.target;if(f=c.filter(function(a){return p(a.target,i)}),b===ya)for(e=0;e<f.length;)d[f[e].identifier]=!0,e++;for(e=0;e<g.length;)d[g[e].identifier]&&h.push(g[e]),b&(Aa|Ba)&&delete d[g[e].identifier],e++;return h.length?[u(f.concat(h),"identifier",!0),h]:void 0}function S(){y.apply(this,arguments);var a=k(this.handler,this);this.touch=new Q(this.manager,a),this.mouse=new M(this.manager,a)}function T(a,b){this.manager=a,this.set(b)}function U(a){if(q(a,bb))return bb;var b=q(a,cb),c=q(a,db);return b&&c?cb+" "+db:b||c?b?cb:db:q(a,ab)?ab:_a}function V(a){this.id=w(),this.manager=null,this.options=i(a||{},this.defaults),this.options.enable=m(this.options.enable,!0),this.state=eb,this.simultaneous={},this.requireFail=[]}function W(a){return a&jb?"cancel":a&hb?"end":a&gb?"move":a&fb?"start":""}function X(a){return a==Ga?"down":a==Fa?"up":a==Da?"left":a==Ea?"right":""}function Y(a,b){var c=b.manager;return c?c.get(a):a}function Z(){V.apply(this,arguments)}function $(){Z.apply(this,arguments),this.pX=null,this.pY=null}function _(){Z.apply(this,arguments)}function aa(){V.apply(this,arguments),this._timer=null,this._input=null}function ba(){Z.apply(this,arguments)}function ca(){Z.apply(this,arguments)}function da(){V.apply(this,arguments),this.pTime=!1,this.pCenter=!1,this._timer=null,this._input=null,this.count=0}function ea(a,b){return b=b||{},b.recognizers=m(b.recognizers,ea.defaults.preset),new fa(a,b)}function fa(a,b){b=b||{},this.options=i(b,ea.defaults),this.options.inputTarget=this.options.inputTarget||a,this.handlers={},this.session={},this.recognizers=[],this.element=a,this.input=z(this),this.touchAction=new T(this,this.options.touchAction),ga(this,!0),g(b.recognizers,function(a){var b=this.add(new a[0](a[1]));a[2]&&b.recognizeWith(a[2]),a[3]&&b.requireFailure(a[3])},this)}function ga(a,b){var c=a.element;g(a.options.cssProps,function(a,d){c.style[v(c.style,d)]=b?a:""})}function ha(a,c){var d=b.createEvent("Event");d.initEvent(a,!0,!0),d.gesture=c,c.target.dispatchEvent(d)}var ia=["","webkit","moz","MS","ms","o"],ja=b.createElement("div"),ka="function",la=Math.round,ma=Math.abs,na=Date.now,oa=1,pa=/mobile|tablet|ip(ad|hone|od)|android/i,qa="ontouchstart"in a,ra=v(a,"PointerEvent")!==d,sa=qa&&pa.test(navigator.userAgent),ta="touch",ua="pen",va="mouse",wa="kinect",xa=25,ya=1,za=2,Aa=4,Ba=8,Ca=1,Da=2,Ea=4,Fa=8,Ga=16,Ha=Da|Ea,Ia=Fa|Ga,Ja=Ha|Ia,Ka=["x","y"],La=["clientX","clientY"];y.prototype={handler:function(){},init:function(){this.evEl&&n(this.element,this.evEl,this.domHandler),this.evTarget&&n(this.target,this.evTarget,this.domHandler),this.evWin&&n(x(this.element),this.evWin,this.domHandler)},destroy:function(){this.evEl&&o(this.element,this.evEl,this.domHandler),this.evTarget&&o(this.target,this.evTarget,this.domHandler),this.evWin&&o(x(this.element),this.evWin,this.domHandler)}};var Ma={mousedown:ya,mousemove:za,mouseup:Aa},Na="mousedown",Oa="mousemove mouseup";j(M,y,{handler:function(a){var b=Ma[a.type];b&ya&&0===a.button&&(this.pressed=!0),b&za&&1!==a.which&&(b=Aa),this.pressed&&this.allow&&(b&Aa&&(this.pressed=!1),this.callback(this.manager,b,{pointers:[a],changedPointers:[a],pointerType:va,srcEvent:a}))}});var Pa={pointerdown:ya,pointermove:za,pointerup:Aa,pointercancel:Ba,pointerout:Ba},Qa={2:ta,3:ua,4:va,5:wa},Ra="pointerdown",Sa="pointermove pointerup pointercancel";a.MSPointerEvent&&(Ra="MSPointerDown",Sa="MSPointerMove MSPointerUp MSPointerCancel"),j(N,y,{handler:function(a){var b=this.store,c=!1,d=a.type.toLowerCase().replace("ms",""),e=Pa[d],f=Qa[a.pointerType]||a.pointerType,g=f==ta,h=s(b,a.pointerId,"pointerId");e&ya&&(0===a.button||g)?0>h&&(b.push(a),h=b.length-1):e&(Aa|Ba)&&(c=!0),0>h||(b[h]=a,this.callback(this.manager,e,{pointers:b,changedPointers:[a],pointerType:f,srcEvent:a}),c&&b.splice(h,1))}});var Ta={touchstart:ya,touchmove:za,touchend:Aa,touchcancel:Ba},Ua="touchstart",Va="touchstart touchmove touchend touchcancel";j(O,y,{handler:function(a){var b=Ta[a.type];if(b===ya&&(this.started=!0),this.started){var c=P.call(this,a,b);b&(Aa|Ba)&&0===c[0].length-c[1].length&&(this.started=!1),this.callback(this.manager,b,{pointers:c[0],changedPointers:c[1],pointerType:ta,srcEvent:a})}}});var Wa={touchstart:ya,touchmove:za,touchend:Aa,touchcancel:Ba},Xa="touchstart touchmove touchend touchcancel";j(Q,y,{handler:function(a){var b=Wa[a.type],c=R.call(this,a,b);c&&this.callback(this.manager,b,{pointers:c[0],changedPointers:c[1],pointerType:ta,srcEvent:a})}}),j(S,y,{handler:function(a,b,c){var d=c.pointerType==ta,e=c.pointerType==va;if(d)this.mouse.allow=!1;else if(e&&!this.mouse.allow)return;b&(Aa|Ba)&&(this.mouse.allow=!0),this.callback(a,b,c)},destroy:function(){this.touch.destroy(),this.mouse.destroy()}});var Ya=v(ja.style,"touchAction"),Za=Ya!==d,$a="compute",_a="auto",ab="manipulation",bb="none",cb="pan-x",db="pan-y";T.prototype={set:function(a){a==$a&&(a=this.compute()),Za&&(this.manager.element.style[Ya]=a),this.actions=a.toLowerCase().trim()},update:function(){this.set(this.manager.options.touchAction)},compute:function(){var a=[];return g(this.manager.recognizers,function(b){l(b.options.enable,[b])&&(a=a.concat(b.getTouchAction()))}),U(a.join(" "))},preventDefaults:function(a){if(!Za){var b=a.srcEvent,c=a.offsetDirection;if(this.manager.session.prevented)return void b.preventDefault();var d=this.actions,e=q(d,bb),f=q(d,db),g=q(d,cb);return e||f&&c&Ha||g&&c&Ia?this.preventSrc(b):void 0}},preventSrc:function(a){this.manager.session.prevented=!0,a.preventDefault()}};var eb=1,fb=2,gb=4,hb=8,ib=hb,jb=16,kb=32;V.prototype={defaults:{},set:function(a){return h(this.options,a),this.manager&&this.manager.touchAction.update(),this},recognizeWith:function(a){if(f(a,"recognizeWith",this))return this;var b=this.simultaneous;return a=Y(a,this),b[a.id]||(b[a.id]=a,a.recognizeWith(this)),this},dropRecognizeWith:function(a){return f(a,"dropRecognizeWith",this)?this:(a=Y(a,this),delete this.simultaneous[a.id],this)},requireFailure:function(a){if(f(a,"requireFailure",this))return this;var b=this.requireFail;return a=Y(a,this),-1===s(b,a)&&(b.push(a),a.requireFailure(this)),this},dropRequireFailure:function(a){if(f(a,"dropRequireFailure",this))return this;a=Y(a,this);var b=s(this.requireFail,a);return b>-1&&this.requireFail.splice(b,1),this},hasRequireFailures:function(){return this.requireFail.length>0},canRecognizeWith:function(a){return!!this.simultaneous[a.id]},emit:function(a){function b(b){c.manager.emit(c.options.event+(b?W(d):""),a)}var c=this,d=this.state;hb>d&&b(!0),b(),d>=hb&&b(!0)},tryEmit:function(a){return this.canEmit()?this.emit(a):void(this.state=kb)},canEmit:function(){for(var a=0;a<this.requireFail.length;){if(!(this.requireFail[a].state&(kb|eb)))return!1;a++}return!0},recognize:function(a){var b=h({},a);return l(this.options.enable,[this,b])?(this.state&(ib|jb|kb)&&(this.state=eb),this.state=this.process(b),void(this.state&(fb|gb|hb|jb)&&this.tryEmit(b))):(this.reset(),void(this.state=kb))},process:function(){},getTouchAction:function(){},reset:function(){}},j(Z,V,{defaults:{pointers:1},attrTest:function(a){var b=this.options.pointers;return 0===b||a.pointers.length===b},process:function(a){var b=this.state,c=a.eventType,d=b&(fb|gb),e=this.attrTest(a);return d&&(c&Ba||!e)?b|jb:d||e?c&Aa?b|hb:b&fb?b|gb:fb:kb}}),j($,Z,{defaults:{event:"pan",threshold:10,pointers:1,direction:Ja},getTouchAction:function(){var a=this.options.direction,b=[];return a&Ha&&b.push(db),a&Ia&&b.push(cb),b},directionTest:function(a){var b=this.options,c=!0,d=a.distance,e=a.direction,f=a.deltaX,g=a.deltaY;return e&b.direction||(b.direction&Ha?(e=0===f?Ca:0>f?Da:Ea,c=f!=this.pX,d=Math.abs(a.deltaX)):(e=0===g?Ca:0>g?Fa:Ga,c=g!=this.pY,d=Math.abs(a.deltaY))),a.direction=e,c&&d>b.threshold&&e&b.direction},attrTest:function(a){return Z.prototype.attrTest.call(this,a)&&(this.state&fb||!(this.state&fb)&&this.directionTest(a))},emit:function(a){this.pX=a.deltaX,this.pY=a.deltaY;var b=X(a.direction);b&&this.manager.emit(this.options.event+b,a),this._super.emit.call(this,a)}}),j(_,Z,{defaults:{event:"pinch",threshold:0,pointers:2},getTouchAction:function(){return[bb]},attrTest:function(a){return this._super.attrTest.call(this,a)&&(Math.abs(a.scale-1)>this.options.threshold||this.state&fb)},emit:function(a){if(this._super.emit.call(this,a),1!==a.scale){var b=a.scale<1?"in":"out";this.manager.emit(this.options.event+b,a)}}}),j(aa,V,{defaults:{event:"press",pointers:1,time:500,threshold:5},getTouchAction:function(){return[_a]},process:function(a){var b=this.options,c=a.pointers.length===b.pointers,d=a.distance<b.threshold,f=a.deltaTime>b.time;if(this._input=a,!d||!c||a.eventType&(Aa|Ba)&&!f)this.reset();else if(a.eventType&ya)this.reset(),this._timer=e(function(){this.state=ib,this.tryEmit()},b.time,this);else if(a.eventType&Aa)return ib;return kb},reset:function(){clearTimeout(this._timer)},emit:function(a){this.state===ib&&(a&&a.eventType&Aa?this.manager.emit(this.options.event+"up",a):(this._input.timeStamp=na(),this.manager.emit(this.options.event,this._input)))}}),j(ba,Z,{defaults:{event:"rotate",threshold:0,pointers:2},getTouchAction:function(){return[bb]},attrTest:function(a){return this._super.attrTest.call(this,a)&&(Math.abs(a.rotation)>this.options.threshold||this.state&fb)}}),j(ca,Z,{defaults:{event:"swipe",threshold:10,velocity:.65,direction:Ha|Ia,pointers:1},getTouchAction:function(){return $.prototype.getTouchAction.call(this)},attrTest:function(a){var b,c=this.options.direction;return c&(Ha|Ia)?b=a.velocity:c&Ha?b=a.velocityX:c&Ia&&(b=a.velocityY),this._super.attrTest.call(this,a)&&c&a.direction&&a.distance>this.options.threshold&&ma(b)>this.options.velocity&&a.eventType&Aa},emit:function(a){var b=X(a.direction);b&&this.manager.emit(this.options.event+b,a),this.manager.emit(this.options.event,a)}}),j(da,V,{defaults:{event:"tap",pointers:1,taps:1,interval:300,time:250,threshold:2,posThreshold:10},getTouchAction:function(){return[ab]},process:function(a){var b=this.options,c=a.pointers.length===b.pointers,d=a.distance<b.threshold,f=a.deltaTime<b.time;if(this.reset(),a.eventType&ya&&0===this.count)return this.failTimeout();if(d&&f&&c){if(a.eventType!=Aa)return this.failTimeout();var g=this.pTime?a.timeStamp-this.pTime<b.interval:!0,h=!this.pCenter||I(this.pCenter,a.center)<b.posThreshold;this.pTime=a.timeStamp,this.pCenter=a.center,h&&g?this.count+=1:this.count=1,this._input=a;var i=this.count%b.taps;if(0===i)return this.hasRequireFailures()?(this._timer=e(function(){this.state=ib,this.tryEmit()},b.interval,this),fb):ib}return kb},failTimeout:function(){return this._timer=e(function(){this.state=kb},this.options.interval,this),kb},reset:function(){clearTimeout(this._timer)},emit:function(){this.state==ib&&(this._input.tapCount=this.count,this.manager.emit(this.options.event,this._input))}}),ea.VERSION="2.0.4",ea.defaults={domEvents:!1,touchAction:$a,enable:!0,inputTarget:null,inputClass:null,preset:[[ba,{enable:!1}],[_,{enable:!1},["rotate"]],[ca,{direction:Ha}],[$,{direction:Ha},["swipe"]],[da],[da,{event:"doubletap",taps:2},["tap"]],[aa]],cssProps:{userSelect:"default",touchSelect:"none",touchCallout:"none",contentZooming:"none",userDrag:"none",tapHighlightColor:"rgba(0,0,0,0)"}};var lb=1,mb=2;fa.prototype={set:function(a){return h(this.options,a),a.touchAction&&this.touchAction.update(),a.inputTarget&&(this.input.destroy(),this.input.target=a.inputTarget,this.input.init()),this},stop:function(a){this.session.stopped=a?mb:lb},recognize:function(a){var b=this.session;if(!b.stopped){this.touchAction.preventDefaults(a);var c,d=this.recognizers,e=b.curRecognizer;(!e||e&&e.state&ib)&&(e=b.curRecognizer=null);for(var f=0;f<d.length;)c=d[f],b.stopped===mb||e&&c!=e&&!c.canRecognizeWith(e)?c.reset():c.recognize(a),!e&&c.state&(fb|gb|hb)&&(e=b.curRecognizer=c),f++}},get:function(a){if(a instanceof V)return a;for(var b=this.recognizers,c=0;c<b.length;c++)if(b[c].options.event==a)return b[c];return null},add:function(a){if(f(a,"add",this))return this;var b=this.get(a.options.event);return b&&this.remove(b),this.recognizers.push(a),a.manager=this,this.touchAction.update(),a},remove:function(a){if(f(a,"remove",this))return this;var b=this.recognizers;return a=this.get(a),b.splice(s(b,a),1),this.touchAction.update(),this},on:function(a,b){var c=this.handlers;return g(r(a),function(a){c[a]=c[a]||[],c[a].push(b)}),this},off:function(a,b){var c=this.handlers;return g(r(a),function(a){b?c[a].splice(s(c[a],b),1):delete c[a]}),this},emit:function(a,b){this.options.domEvents&&ha(a,b);var c=this.handlers[a]&&this.handlers[a].slice();if(c&&c.length){b.type=a,b.preventDefault=function(){b.srcEvent.preventDefault()};for(var d=0;d<c.length;)c[d](b),d++}},destroy:function(){this.element&&ga(this,!1),this.handlers={},this.session={},this.input.destroy(),this.element=null}},h(ea,{INPUT_START:ya,INPUT_MOVE:za,INPUT_END:Aa,INPUT_CANCEL:Ba,STATE_POSSIBLE:eb,STATE_BEGAN:fb,STATE_CHANGED:gb,STATE_ENDED:hb,STATE_RECOGNIZED:ib,STATE_CANCELLED:jb,STATE_FAILED:kb,DIRECTION_NONE:Ca,DIRECTION_LEFT:Da,DIRECTION_RIGHT:Ea,DIRECTION_UP:Fa,DIRECTION_DOWN:Ga,DIRECTION_HORIZONTAL:Ha,DIRECTION_VERTICAL:Ia,DIRECTION_ALL:Ja,Manager:fa,Input:y,TouchAction:T,TouchInput:Q,MouseInput:M,PointerEventInput:N,TouchMouseInput:S,SingleTouchInput:O,Recognizer:V,AttrRecognizer:Z,Tap:da,Pan:$,Swipe:ca,Pinch:_,Rotate:ba,Press:aa,on:n,off:o,each:g,merge:i,extend:h,inherit:j,bindFn:k,prefixed:v}),typeof define==ka&&define.amd?define(function(){return ea}):"undefined"!=typeof module&&module.exports?module.exports=ea:a[c]=ea}(window,document,"Hammer"),function(a){"function"==typeof define&&define.amd?define(["jquery","hammerjs"],a):"object"==typeof exports?a(require("jquery"),require("hammerjs")):a(jQuery,Hammer)}(function(a,b){function c(c,d){var e=a(c);e.data("hammer")||e.data("hammer",new b(e[0],d))}a.fn.hammer=function(a){return this.each(function(){c(this,a)})},b.Manager.prototype.emit=function(b){return function(c,d){b.call(this,c,d),a(this.element).trigger({type:c,gesture:d})}}(b.Manager.prototype.emit)}),function(a){a.Package?Materialize={}:a.Materialize={}}(window),Materialize.guid=function(){function a(){return Math.floor(65536*(1+Math.random())).toString(16).substring(1)}return function(){return a()+a()+"-"+a()+"-"+a()+"-"+a()+"-"+a()+a()+a()}}(),Materialize.elementOrParentIsFixed=function(a){var b=$(a),c=b.add(b.parents()),d=!1;return c.each(function(){return"fixed"===$(this).css("position")?(d=!0,!1):void 0}),d};var Vel;Vel=$?$.Velocity:jQuery?jQuery.Velocity:Velocity,function(a){a.fn.collapsible=function(b){var c={accordion:void 0};return b=a.extend(c,b),this.each(function(){function c(b){h=g.find("> li > .collapsible-header"),b.hasClass("active")?b.parent().addClass("active"):b.parent().removeClass("active"),b.parent().hasClass("active")?b.siblings(".collapsible-body").stop(!0,!1).slideDown({duration:350,easing:"easeOutQuart",queue:!1,complete:function(){a(this).css("height","")}}):b.siblings(".collapsible-body").stop(!0,!1).slideUp({duration:350,easing:"easeOutQuart",queue:!1,complete:function(){a(this).css("height","")}}),h.not(b).removeClass("active").parent().removeClass("active"),h.not(b).parent().children(".collapsible-body").stop(!0,!1).slideUp({duration:350,easing:"easeOutQuart",queue:!1,complete:function(){a(this).css("height","")}})}function d(b){b.hasClass("active")?b.parent().addClass("active"):b.parent().removeClass("active"),b.parent().hasClass("active")?b.siblings(".collapsible-body").stop(!0,!1).slideDown({duration:350,easing:"easeOutQuart",queue:!1,complete:function(){a(this).css("height","")}}):b.siblings(".collapsible-body").stop(!0,!1).slideUp({duration:350,easing:"easeOutQuart",queue:!1,complete:function(){a(this).css("height","")}})}function e(a){var b=f(a);return b.length>0}function f(a){return a.closest("li > .collapsible-header")}var g=a(this),h=a(this).find("> li > .collapsible-header"),i=g.data("collapsible");g.off("click.collapse","> li > .collapsible-header"),h.off("click.collapse"),g.on("click.collapse","> li > .collapsible-header",function(g){var h=a(this),j=a(g.target);e(j)&&(j=f(j)),j.toggleClass("active"),b.accordion||"accordion"===i||void 0===i?c(j):(d(j),h.hasClass("active")&&d(h))});var h=g.find("> li > .collapsible-header");b.accordion||"accordion"===i||void 0===i?c(h.filter(".active").first()):h.filter(".active").each(function(){d(a(this))})})},a(document).ready(function(){a(".collapsible").collapsible()})}(jQuery),function(a){a.fn.scrollTo=function(b){return a(this).scrollTop(a(this).scrollTop()-a(this).offset().top+a(b).offset().top),this},a.fn.dropdown=function(b){var c={inDuration:300,outDuration:225,constrain_width:!0,hover:!1,gutter:0,belowOrigin:!1,alignment:"left"};this.each(function(){function d(){void 0!==g.data("induration")&&(h.inDuration=g.data("inDuration")),void 0!==g.data("outduration")&&(h.outDuration=g.data("outDuration")),void 0!==g.data("constrainwidth")&&(h.constrain_width=g.data("constrainwidth")),void 0!==g.data("hover")&&(h.hover=g.data("hover")),void 0!==g.data("gutter")&&(h.gutter=g.data("gutter")),void 0!==g.data("beloworigin")&&(h.belowOrigin=g.data("beloworigin")),void 0!==g.data("alignment")&&(h.alignment=g.data("alignment"))}function e(b){"focus"===b&&(i=!0),d(),j.addClass("active"),g.addClass("active"),h.constrain_width===!0?j.css("width",g.outerWidth()):j.css("white-space","nowrap");var c,e=window.innerHeight,f=g.innerHeight(),k=g.offset().left,l=g.offset().top-a(window).scrollTop(),m=h.alignment,n=0;if(h.belowOrigin===!0&&(n=f),k+j.innerWidth()>a(window).width()?m="right":k-j.innerWidth()+g.innerWidth()<0&&(m="left"),l+j.innerHeight()>e)if(l+f-j.innerHeight()<0){var o=e-l-n;j.css("max-height",o)}else n||(n+=f),n-=j.innerHeight();if("left"===m)c=h.gutter,leftPosition=g.position().left+c;else if("right"===m){var p=g.position().left+g.outerWidth()-j.outerWidth();c=-h.gutter,leftPosition=p+c}j.css({position:"absolute",top:g.position().top+n,left:leftPosition}),j.stop(!0,!0).css("opacity",0).slideDown({queue:!1,duration:h.inDuration,easing:"easeOutCubic",complete:function(){a(this).css("height","")}}).animate({opacity:1},{queue:!1,duration:h.inDuration,easing:"easeOutSine"})}function f(){i=!1,j.fadeOut(h.outDuration),j.removeClass("active"),g.removeClass("active"),setTimeout(function(){j.css("max-height","")},h.outDuration)}var g=a(this),h=a.extend({},c,b),i=!1,j=a("#"+g.attr("data-activates"));if(d(),g.after(j),h.hover){var k=!1;g.unbind("click."+g.attr("id")),g.on("mouseenter",function(a){k===!1&&(e(),k=!0)}),g.on("mouseleave",function(b){var c=b.toElement||b.relatedTarget;a(c).closest(".dropdown-content").is(j)||(j.stop(!0,!0),f(),k=!1)}),j.on("mouseleave",function(b){var c=b.toElement||b.relatedTarget;a(c).closest(".dropdown-button").is(g)||(j.stop(!0,!0),f(),k=!1)})}else g.unbind("click."+g.attr("id")),g.bind("click."+g.attr("id"),function(b){i||(g[0]!=b.currentTarget||g.hasClass("active")||0!==a(b.target).closest(".dropdown-content").length?g.hasClass("active")&&(f(),a(document).unbind("click."+j.attr("id")+" touchstart."+j.attr("id"))):(b.preventDefault(),e("click")),j.hasClass("active")&&a(document).bind("click."+j.attr("id")+" touchstart."+j.attr("id"),function(b){j.is(b.target)||g.is(b.target)||g.find(b.target).length||(f(),a(document).unbind("click."+j.attr("id")+" touchstart."+j.attr("id")))}))});g.on("open",function(a,b){e(b)}),g.on("close",f)})},a(document).ready(function(){a(".dropdown-button").dropdown()})}(jQuery),function(a){var b=0,c=0,d=function(){return c++,"materialize-lean-overlay-"+c};a.fn.extend({openModal:function(c){a("body").css("overflow","hidden");var e={opacity:.5,in_duration:350,out_duration:250,ready:void 0,complete:void 0,dismissible:!0,starting_top:"4%"},f=d(),g=a(this),h=a('<div class="lean-overlay"></div>'),i=++b;h.attr("id",f).css("z-index",1e3+2*i),g.data("overlay-id",f).css("z-index",1e3+2*i+1),a("body").append(h),c=a.extend(e,c),c.dismissible&&(h.click(function(){g.closeModal(c)}),a(document).on("keyup.leanModal"+f,function(a){27===a.keyCode&&g.closeModal(c)})),g.find(".modal-close").on("click.close",function(a){g.closeModal(c)}),h.css({display:"block",opacity:0}),g.css({display:"block",opacity:0}),h.velocity({opacity:c.opacity},{duration:c.in_duration,queue:!1,ease:"easeOutCubic"}),g.data("associated-overlay",h[0]),g.hasClass("bottom-sheet")?g.velocity({bottom:"0",opacity:1},{duration:c.in_duration,queue:!1,ease:"easeOutCubic",complete:function(){"function"==typeof c.ready&&c.ready()}}):(a.Velocity.hook(g,"scaleX",.7),g.css({top:c.starting_top}),g.velocity({top:"10%",opacity:1,scaleX:"1"},{duration:c.in_duration,queue:!1,ease:"easeOutCubic",complete:function(){"function"==typeof c.ready&&c.ready()}}))}}),a.fn.extend({closeModal:function(c){var d={out_duration:250,complete:void 0},e=a(this),f=e.data("overlay-id"),g=a("#"+f);c=a.extend(d,c),a("body").css("overflow",""),e.find(".modal-close").off("click.close"),a(document).off("keyup.leanModal"+f),g.velocity({opacity:0},{duration:c.out_duration,queue:!1,ease:"easeOutQuart"}),e.hasClass("bottom-sheet")?e.velocity({bottom:"-100%",opacity:0},{duration:c.out_duration,queue:!1,ease:"easeOutCubic",complete:function(){
+g.css({display:"none"}),"function"==typeof c.complete&&c.complete(),g.remove(),b--}}):e.velocity({top:c.starting_top,opacity:0,scaleX:.7},{duration:c.out_duration,complete:function(){a(this).css("display","none"),"function"==typeof c.complete&&c.complete(),g.remove(),b--}})}}),a.fn.extend({leanModal:function(b){return this.each(function(){var c={starting_top:"4%"},d=a.extend(c,b);a(this).click(function(b){d.starting_top=(a(this).offset().top-a(window).scrollTop())/1.15;var c=a(this).attr("href")||"#"+a(this).data("target");a(c).openModal(d),b.preventDefault()})})}})}(jQuery),function(a){a.fn.materialbox=function(){return this.each(function(){function b(){f=!1;var b=i.parent(".material-placeholder"),d=(window.innerWidth,window.innerHeight,i.data("width")),g=i.data("height");i.velocity("stop",!0),a("#materialbox-overlay").velocity("stop",!0),a(".materialbox-caption").velocity("stop",!0),a("#materialbox-overlay").velocity({opacity:0},{duration:h,queue:!1,easing:"easeOutQuad",complete:function(){e=!1,a(this).remove()}}),i.velocity({width:d,height:g,left:0,top:0},{duration:h,queue:!1,easing:"easeOutQuad"}),a(".materialbox-caption").velocity({opacity:0},{duration:h,queue:!1,easing:"easeOutQuad",complete:function(){b.css({height:"",width:"",position:"",top:"",left:""}),i.css({height:"",top:"",left:"",width:"","max-width":"",position:"","z-index":""}),i.removeClass("active"),f=!0,a(this).remove(),c.css("overflow","")}})}if(!a(this).hasClass("initialized")){a(this).addClass("initialized");var c,d,e=!1,f=!0,g=275,h=200,i=a(this),j=a("<div></div>").addClass("material-placeholder");i.wrap(j),i.on("click",function(){var h=i.parent(".material-placeholder"),j=window.innerWidth,k=window.innerHeight,l=i.width(),m=i.height();if(f===!1)return b(),!1;if(e&&f===!0)return b(),!1;f=!1,i.addClass("active"),e=!0,h.css({width:h[0].getBoundingClientRect().width,height:h[0].getBoundingClientRect().height,position:"relative",top:0,left:0}),c=void 0,d=h[0].parentNode;for(;null!==d&&!a(d).is(document);){var n=a(d);"hidden"===n.css("overflow")&&(n.css("overflow","visible"),c=void 0===c?n:c.add(n)),d=d.parentNode}i.css({position:"absolute","z-index":1e3}).data("width",l).data("height",m);var o=a('<div id="materialbox-overlay"></div>').css({opacity:0}).click(function(){f===!0&&b()});if(a("body").append(o),o.velocity({opacity:1},{duration:g,queue:!1,easing:"easeOutQuad"}),""!==i.data("caption")){var p=a('<div class="materialbox-caption"></div>');p.text(i.data("caption")),a("body").append(p),p.css({display:"inline"}),p.velocity({opacity:1},{duration:g,queue:!1,easing:"easeOutQuad"})}var q=0,r=l/j,s=m/k,t=0,u=0;r>s?(q=m/l,t=.9*j,u=.9*j*q):(q=l/m,t=.9*k*q,u=.9*k),i.hasClass("responsive-img")?i.velocity({"max-width":t,width:l},{duration:0,queue:!1,complete:function(){i.css({left:0,top:0}).velocity({height:u,width:t,left:a(document).scrollLeft()+j/2-i.parent(".material-placeholder").offset().left-t/2,top:a(document).scrollTop()+k/2-i.parent(".material-placeholder").offset().top-u/2},{duration:g,queue:!1,easing:"easeOutQuad",complete:function(){f=!0}})}}):i.css("left",0).css("top",0).velocity({height:u,width:t,left:a(document).scrollLeft()+j/2-i.parent(".material-placeholder").offset().left-t/2,top:a(document).scrollTop()+k/2-i.parent(".material-placeholder").offset().top-u/2},{duration:g,queue:!1,easing:"easeOutQuad",complete:function(){f=!0}})}),a(window).scroll(function(){e&&b()}),a(document).keyup(function(a){27===a.keyCode&&f===!0&&e&&b()})}})},a(document).ready(function(){a(".materialboxed").materialbox()})}(jQuery),function(a){a.fn.parallax=function(){var b=a(window).width();return this.each(function(c){function d(c){var d;d=601>b?e.height()>0?e.height():e.children("img").height():e.height()>0?e.height():500;var f=e.children("img").first(),g=f.height(),h=g-d,i=e.offset().top+d,j=e.offset().top,k=a(window).scrollTop(),l=window.innerHeight,m=k+l,n=(m-j)/(d+l),o=Math.round(h*n);c&&f.css("display","block"),i>k&&k+l>j&&f.css("transform","translate3D(-50%,"+o+"px, 0)")}var e=a(this);e.addClass("parallax"),e.children("img").one("load",function(){d(!0)}).each(function(){this.complete&&a(this).load()}),a(window).scroll(function(){b=a(window).width(),d(!1)}),a(window).resize(function(){b=a(window).width(),d(!1)})})}}(jQuery),function(a){var b={init:function(){return this.each(function(){var b=a(this);a(window).width();b.width("100%");var c,d,e=b.find("li.tab a"),f=b.width(),g=b.find("li").first().outerWidth(),h=0;c=a(e.filter('[href="'+location.hash+'"]')),0===c.length&&(c=a(this).find("li.tab a.active").first()),0===c.length&&(c=a(this).find("li.tab a").first()),c.addClass("active"),h=e.index(c),0>h&&(h=0),d=a(c[0].hash),b.append('<div class="indicator"></div>');var i=b.find(".indicator");b.is(":visible")&&(i.css({right:f-(h+1)*g}),i.css({left:h*g})),a(window).resize(function(){f=b.width(),g=b.find("li").first().outerWidth(),0>h&&(h=0),0!==g&&0!==f&&(i.css({right:f-(h+1)*g}),i.css({left:h*g}))}),e.not(c).each(function(){a(this.hash).hide()}),b.on("click","a",function(j){if(a(this).parent().hasClass("disabled"))return void j.preventDefault();f=b.width(),g=b.find("li").first().outerWidth(),c.removeClass("active"),d.hide(),c=a(this),d=a(this.hash),e=b.find("li.tab a"),c.addClass("active");var k=h;h=e.index(a(this)),0>h&&(h=0),d.show(),h-k>=0?(i.velocity({right:f-(h+1)*g},{duration:300,queue:!1,easing:"easeOutQuad"}),i.velocity({left:h*g},{duration:300,queue:!1,easing:"easeOutQuad",delay:90})):(i.velocity({left:h*g},{duration:300,queue:!1,easing:"easeOutQuad"}),i.velocity({right:f-(h+1)*g},{duration:300,queue:!1,easing:"easeOutQuad",delay:90})),j.preventDefault()})})},select_tab:function(a){this.find('a[href="#'+a+'"]').trigger("click")}};a.fn.tabs=function(c){return b[c]?b[c].apply(this,Array.prototype.slice.call(arguments,1)):"object"!=typeof c&&c?void a.error("Method "+c+" does not exist on jQuery.tooltip"):b.init.apply(this,arguments)},a(document).ready(function(){a("ul.tabs").tabs()})}(jQuery),function(a){a.fn.tooltip=function(c){var d=5,e={delay:350};return"remove"===c?(this.each(function(){a("#"+a(this).attr("data-tooltip-id")).remove(),a(this).off("mouseenter.tooltip mouseleave.tooltip")}),!1):(c=a.extend(e,c),this.each(function(){var e=Materialize.guid(),f=a(this);f.attr("data-tooltip-id",e);var g=a("<span></span>").text(f.attr("data-tooltip")),h=a("<div></div>");h.addClass("material-tooltip").append(g).appendTo(a("body")).attr("id",e);var i=a("<div></div>").addClass("backdrop");i.appendTo(h),i.css({top:0,left:0}),f.off("mouseenter.tooltip mouseleave.tooltip");var j,k=!1;f.on({"mouseenter.tooltip":function(a){var e=f.attr("data-delay");e=void 0===e||""===e?c.delay:e,j=setTimeout(function(){k=!0,h.velocity("stop"),i.velocity("stop"),h.css({display:"block",left:"0px",top:"0px"}),h.children("span").text(f.attr("data-tooltip"));var a,c,e,g=f.outerWidth(),j=f.outerHeight(),l=f.attr("data-position"),m=h.outerHeight(),n=h.outerWidth(),o="0px",p="0px",q=8;"top"===l?(a=f.offset().top-m-d,c=f.offset().left+g/2-n/2,e=b(c,a,n,m),o="-10px",i.css({borderRadius:"14px 14px 0 0",transformOrigin:"50% 90%",marginTop:m,marginLeft:n/2-i.width()/2})):"left"===l?(a=f.offset().top+j/2-m/2,c=f.offset().left-n-d,e=b(c,a,n,m),p="-10px",i.css({width:"14px",height:"14px",borderRadius:"14px 0 0 14px",transformOrigin:"95% 50%",marginTop:m/2,marginLeft:n})):"right"===l?(a=f.offset().top+j/2-m/2,c=f.offset().left+g+d,e=b(c,a,n,m),p="+10px",i.css({width:"14px",height:"14px",borderRadius:"0 14px 14px 0",transformOrigin:"5% 50%",marginTop:m/2,marginLeft:"0px"})):(a=f.offset().top+f.outerHeight()+d,c=f.offset().left+g/2-n/2,e=b(c,a,n,m),o="+10px",i.css({marginLeft:n/2-i.width()/2})),h.css({top:e.y,left:e.x}),q=n/8,8>q&&(q=8),("right"===l||"left"===l)&&(q=n/10,6>q&&(q=6)),h.velocity({marginTop:o,marginLeft:p},{duration:350,queue:!1}).velocity({opacity:1},{duration:300,delay:50,queue:!1}),i.css({display:"block"}).velocity({opacity:1},{duration:55,delay:0,queue:!1}).velocity({scale:q},{duration:300,delay:0,queue:!1,easing:"easeInOutQuad"})},e)},"mouseleave.tooltip":function(){k=!1,clearTimeout(j),setTimeout(function(){1!=k&&(h.velocity({opacity:0,marginTop:0,marginLeft:0},{duration:225,queue:!1}),i.velocity({opacity:0,scale:1},{duration:225,queue:!1,complete:function(){i.css("display","none"),h.css("display","none"),k=!1}}))},225)}})}))};var b=function(b,c,d,e){var f=b,g=c;return 0>f?f=4:f+d>window.innerWidth&&(f-=f+d-window.innerWidth),0>g?g=4:g+e>window.innerHeight+a(window).scrollTop&&(g-=g+e-window.innerHeight),{x:f,y:g}};a(document).ready(function(){a(".tooltipped").tooltip()})}(jQuery),function(a){"use strict";function b(a){return null!==a&&a===a.window}function c(a){return b(a)?a:9===a.nodeType&&a.defaultView}function d(a){var b,d,e={top:0,left:0},f=a&&a.ownerDocument;return b=f.documentElement,"undefined"!=typeof a.getBoundingClientRect&&(e=a.getBoundingClientRect()),d=c(f),{top:e.top+d.pageYOffset-b.clientTop,left:e.left+d.pageXOffset-b.clientLeft}}function e(a){var b="";for(var c in a)a.hasOwnProperty(c)&&(b+=c+":"+a[c]+";");return b}function f(a){if(k.allowEvent(a)===!1)return null;for(var b=null,c=a.target||a.srcElement;null!==c.parentElement;){if(!(c instanceof SVGElement||-1===c.className.indexOf("waves-effect"))){b=c;break}if(c.classList.contains("waves-effect")){b=c;break}c=c.parentElement}return b}function g(b){var c=f(b);null!==c&&(j.show(b,c),"ontouchstart"in a&&(c.addEventListener("touchend",j.hide,!1),c.addEventListener("touchcancel",j.hide,!1)),c.addEventListener("mouseup",j.hide,!1),c.addEventListener("mouseleave",j.hide,!1))}var h=h||{},i=document.querySelectorAll.bind(document),j={duration:750,show:function(a,b){if(2===a.button)return!1;var c=b||this,f=document.createElement("div");f.className="waves-ripple",c.appendChild(f);var g=d(c),h=a.pageY-g.top,i=a.pageX-g.left,k="scale("+c.clientWidth/100*10+")";"touches"in a&&(h=a.touches[0].pageY-g.top,i=a.touches[0].pageX-g.left),f.setAttribute("data-hold",Date.now()),f.setAttribute("data-scale",k),f.setAttribute("data-x",i),f.setAttribute("data-y",h);var l={top:h+"px",left:i+"px"};f.className=f.className+" waves-notransition",f.setAttribute("style",e(l)),f.className=f.className.replace("waves-notransition",""),l["-webkit-transform"]=k,l["-moz-transform"]=k,l["-ms-transform"]=k,l["-o-transform"]=k,l.transform=k,l.opacity="1",l["-webkit-transition-duration"]=j.duration+"ms",l["-moz-transition-duration"]=j.duration+"ms",l["-o-transition-duration"]=j.duration+"ms",l["transition-duration"]=j.duration+"ms",l["-webkit-transition-timing-function"]="cubic-bezier(0.250, 0.460, 0.450, 0.940)",l["-moz-transition-timing-function"]="cubic-bezier(0.250, 0.460, 0.450, 0.940)",l["-o-transition-timing-function"]="cubic-bezier(0.250, 0.460, 0.450, 0.940)",l["transition-timing-function"]="cubic-bezier(0.250, 0.460, 0.450, 0.940)",f.setAttribute("style",e(l))},hide:function(a){k.touchup(a);var b=this,c=(1.4*b.clientWidth,null),d=b.getElementsByClassName("waves-ripple");if(!(d.length>0))return!1;c=d[d.length-1];var f=c.getAttribute("data-x"),g=c.getAttribute("data-y"),h=c.getAttribute("data-scale"),i=Date.now()-Number(c.getAttribute("data-hold")),l=350-i;0>l&&(l=0),setTimeout(function(){var a={top:g+"px",left:f+"px",opacity:"0","-webkit-transition-duration":j.duration+"ms","-moz-transition-duration":j.duration+"ms","-o-transition-duration":j.duration+"ms","transition-duration":j.duration+"ms","-webkit-transform":h,"-moz-transform":h,"-ms-transform":h,"-o-transform":h,transform:h};c.setAttribute("style",e(a)),setTimeout(function(){try{b.removeChild(c)}catch(a){return!1}},j.duration)},l)},wrapInput:function(a){for(var b=0;b<a.length;b++){var c=a[b];if("input"===c.tagName.toLowerCase()){var d=c.parentNode;if("i"===d.tagName.toLowerCase()&&-1!==d.className.indexOf("waves-effect"))continue;var e=document.createElement("i");e.className=c.className+" waves-input-wrapper";var f=c.getAttribute("style");f||(f=""),e.setAttribute("style",f),c.className="waves-button-input",c.removeAttribute("style"),d.replaceChild(e,c),e.appendChild(c)}}}},k={touches:0,allowEvent:function(a){var b=!0;return"touchstart"===a.type?k.touches+=1:"touchend"===a.type||"touchcancel"===a.type?setTimeout(function(){k.touches>0&&(k.touches-=1)},500):"mousedown"===a.type&&k.touches>0&&(b=!1),b},touchup:function(a){k.allowEvent(a)}};h.displayEffect=function(b){b=b||{},"duration"in b&&(j.duration=b.duration),j.wrapInput(i(".waves-effect")),"ontouchstart"in a&&document.body.addEventListener("touchstart",g,!1),document.body.addEventListener("mousedown",g,!1)},h.attach=function(b){"input"===b.tagName.toLowerCase()&&(j.wrapInput([b]),b=b.parentElement),"ontouchstart"in a&&b.addEventListener("touchstart",g,!1),b.addEventListener("mousedown",g,!1)},a.Waves=h,document.addEventListener("DOMContentLoaded",function(){h.displayEffect()},!1)}(window),Materialize.toast=function(a,b,c,d){function e(a){var b=document.createElement("div");if(b.classList.add("toast"),c)for(var e=c.split(" "),f=0,g=e.length;g>f;f++)b.classList.add(e[f]);("object"==typeof HTMLElement?a instanceof HTMLElement:a&&"object"==typeof a&&null!==a&&1===a.nodeType&&"string"==typeof a.nodeName)?b.appendChild(a):a instanceof jQuery?b.appendChild(a[0]):b.innerHTML=a;var h=new Hammer(b,{prevent_default:!1});return h.on("pan",function(a){var c=a.deltaX,d=80;b.classList.contains("panning")||b.classList.add("panning");var e=1-Math.abs(c/d);0>e&&(e=0),Vel(b,{left:c,opacity:e},{duration:50,queue:!1,easing:"easeOutQuad"})}),h.on("panend",function(a){var c=a.deltaX,e=80;Math.abs(c)>e?Vel(b,{marginTop:"-40px"},{duration:375,easing:"easeOutExpo",queue:!1,complete:function(){"function"==typeof d&&d(),b.parentNode.removeChild(b)}}):(b.classList.remove("panning"),Vel(b,{left:0,opacity:1},{duration:300,easing:"easeOutExpo",queue:!1}))}),b}c=c||"";var f=document.getElementById("toast-container");null===f&&(f=document.createElement("div"),f.id="toast-container",document.body.appendChild(f));var g=e(a);a&&f.appendChild(g),g.style.top="35px",g.style.opacity=0,Vel(g,{top:"0px",opacity:1},{duration:300,easing:"easeOutCubic",queue:!1});var h=b,i=setInterval(function(){null===g.parentNode&&window.clearInterval(i),g.classList.contains("panning")||(h-=20),0>=h&&(Vel(g,{opacity:0,marginTop:"-40px"},{duration:375,easing:"easeOutExpo",queue:!1,complete:function(){"function"==typeof d&&d(),this[0].parentNode.removeChild(this[0])}}),window.clearInterval(i))},20)},function(a){var b={init:function(b){var c={menuWidth:240,edge:"left",closeOnClick:!1};b=a.extend(c,b),a(this).each(function(){function c(c){g=!1,h=!1,a("body").css("overflow",""),a("#sidenav-overlay").velocity({opacity:0},{duration:200,queue:!1,easing:"easeOutQuad",complete:function(){a(this).remove()}}),"left"===b.edge?(f.css({width:"",right:"",left:"0"}),e.velocity({left:-1*(b.menuWidth+10)},{duration:200,queue:!1,easing:"easeOutCubic",complete:function(){c===!0&&(e.removeAttr("style"),e.css("width",b.menuWidth))}})):(f.css({width:"",right:"0",left:""}),e.velocity({right:-1*(b.menuWidth+10)},{duration:200,queue:!1,easing:"easeOutCubic",complete:function(){c===!0&&(e.removeAttr("style"),e.css("width",b.menuWidth))}}))}var d=a(this),e=a("#"+d.attr("data-activates"));240!=b.menuWidth&&e.css("width",b.menuWidth);var f=a('<div class="drag-target"></div>');a("body").append(f),"left"==b.edge?(e.css("left",-1*(b.menuWidth+10)),f.css({left:0})):(e.addClass("right-aligned").css("right",-1*(b.menuWidth+10)).css("left",""),f.css({right:0})),e.hasClass("fixed")&&window.innerWidth>992&&e.css("left",0),e.hasClass("fixed")&&a(window).resize(function(){window.innerWidth>992?0!==a("#sidenav-overlay").css("opacity")&&h?c(!0):(e.removeAttr("style"),e.css("width",b.menuWidth)):h===!1&&("left"===b.edge?e.css("left",-1*(b.menuWidth+10)):e.css("right",-1*(b.menuWidth+10)))}),b.closeOnClick===!0&&e.on("click.itemclick","a:not(.collapsible-header)",function(){c()});var g=!1,h=!1;f.on("click",function(){c()}),f.hammer({prevent_default:!1}).bind("pan",function(d){if("touch"==d.gesture.pointerType){var f=(d.gesture.direction,d.gesture.center.x);d.gesture.center.y,d.gesture.velocityX;if(a("body").css("overflow","hidden"),0===a("#sidenav-overlay").length){var g=a('<div id="sidenav-overlay"></div>');g.css("opacity",0).click(function(){c()}),a("body").append(g)}if("left"===b.edge&&(f>b.menuWidth?f=b.menuWidth:0>f&&(f=0)),"left"===b.edge)f<b.menuWidth/2?h=!1:f>=b.menuWidth/2&&(h=!0),e.css("left",f-b.menuWidth);else{f<window.innerWidth-b.menuWidth/2?h=!0:f>=window.innerWidth-b.menuWidth/2&&(h=!1);var i=-1*(f-b.menuWidth/2);i>0&&(i=0),e.css("right",i)}var j;"left"===b.edge?(j=f/b.menuWidth,a("#sidenav-overlay").velocity({opacity:j},{duration:50,queue:!1,easing:"easeOutQuad"})):(j=Math.abs((f-window.innerWidth)/b.menuWidth),a("#sidenav-overlay").velocity({opacity:j},{duration:50,queue:!1,easing:"easeOutQuad"}))}}).bind("panend",function(c){if("touch"==c.gesture.pointerType){var d=c.gesture.velocityX;g=!1,"left"===b.edge?h&&.3>=d||-.5>d?(e.velocity({left:0},{duration:300,queue:!1,easing:"easeOutQuad"}),a("#sidenav-overlay").velocity({opacity:1},{duration:50,queue:!1,easing:"easeOutQuad"}),f.css({width:"50%",right:0,left:""})):(!h||d>.3)&&(a("body").css("overflow",""),e.velocity({left:-1*(b.menuWidth+10)},{duration:200,queue:!1,easing:"easeOutQuad"}),a("#sidenav-overlay").velocity({opacity:0},{duration:200,queue:!1,easing:"easeOutQuad",complete:function(){a(this).remove()}}),f.css({width:"10px",right:"",left:0})):h&&d>=-.3||d>.5?(e.velocity({right:0},{duration:300,queue:!1,easing:"easeOutQuad"}),a("#sidenav-overlay").velocity({opacity:1},{duration:50,queue:!1,easing:"easeOutQuad"}),f.css({width:"50%",right:"",left:0})):(!h||-.3>d)&&(a("body").css("overflow",""),e.velocity({right:-1*(b.menuWidth+10)},{duration:200,queue:!1,easing:"easeOutQuad"}),a("#sidenav-overlay").velocity({opacity:0},{duration:200,queue:!1,easing:"easeOutQuad",complete:function(){a(this).remove()}}),f.css({width:"10px",right:0,left:""}))}}),d.click(function(){if(h===!0)h=!1,g=!1,c();else{a("body").css("overflow","hidden"),a("body").append(f),"left"===b.edge?(f.css({width:"50%",right:0,left:""}),e.velocity({left:0},{duration:300,queue:!1,easing:"easeOutQuad"})):(f.css({width:"50%",right:"",left:0}),e.velocity({right:0},{duration:300,queue:!1,easing:"easeOutQuad"}),e.css("left",""));var d=a('<div id="sidenav-overlay"></div>');d.css("opacity",0).click(function(){h=!1,g=!1,c(),d.velocity({opacity:0},{duration:300,queue:!1,easing:"easeOutQuad",complete:function(){a(this).remove()}})}),a("body").append(d),d.velocity({opacity:1},{duration:300,queue:!1,easing:"easeOutQuad",complete:function(){h=!0,g=!1}})}return!1})})},show:function(){this.trigger("click")},hide:function(){a("#sidenav-overlay").trigger("click")}};a.fn.sideNav=function(c){return b[c]?b[c].apply(this,Array.prototype.slice.call(arguments,1)):"object"!=typeof c&&c?void a.error("Method "+c+" does not exist on jQuery.sideNav"):b.init.apply(this,arguments)}}(jQuery),function(a){function b(b,c,d,e){var f=a();return a.each(g,function(a,g){if(g.height()>0){var h=g.offset().top,i=g.offset().left,j=i+g.width(),k=h+g.height(),l=!(i>c||e>j||h>d||b>k);l&&f.push(g)}}),f}function c(){++j;var c=f.scrollTop(),d=f.scrollLeft(),e=d+f.width(),g=c+f.height(),i=b(c+k.top+200,e+k.right,g+k.bottom,d+k.left);a.each(i,function(a,b){var c=b.data("scrollSpy:ticks");"number"!=typeof c&&b.triggerHandler("scrollSpy:enter"),b.data("scrollSpy:ticks",j)}),a.each(h,function(a,b){var c=b.data("scrollSpy:ticks");"number"==typeof c&&c!==j&&(b.triggerHandler("scrollSpy:exit"),b.data("scrollSpy:ticks",null))}),h=i}function d(){f.trigger("scrollSpy:winSize")}function e(a,b,c){var d,e,f,g=null,h=0;c||(c={});var i=function(){h=c.leading===!1?0:l(),g=null,f=a.apply(d,e),d=e=null};return function(){var j=l();h||c.leading!==!1||(h=j);var k=b-(j-h);return d=this,e=arguments,0>=k?(clearTimeout(g),g=null,h=j,f=a.apply(d,e),d=e=null):g||c.trailing===!1||(g=setTimeout(i,k)),f}}var f=a(window),g=[],h=[],i=!1,j=0,k={top:0,right:0,bottom:0,left:0},l=Date.now||function(){return(new Date).getTime()};a.scrollSpy=function(b,d){var h=[];b=a(b),b.each(function(b,c){g.push(a(c)),a(c).data("scrollSpy:id",b),a("a[href=#"+a(c).attr("id")+"]").click(function(b){b.preventDefault();var c=a(this.hash).offset().top+1;a("html, body").animate({scrollTop:c-200},{duration:400,queue:!1,easing:"easeOutCubic"})})}),d=d||{throttle:100},k.top=d.offsetTop||0,k.right=d.offsetRight||0,k.bottom=d.offsetBottom||0,k.left=d.offsetLeft||0;var j=e(c,d.throttle||100),l=function(){a(document).ready(j)};return i||(f.on("scroll",l),f.on("resize",l),i=!0),setTimeout(l,0),b.on("scrollSpy:enter",function(){h=a.grep(h,function(a){return 0!=a.height()});var b=a(this);h[0]?(a("a[href=#"+h[0].attr("id")+"]").removeClass("active"),b.data("scrollSpy:id")<h[0].data("scrollSpy:id")?h.unshift(a(this)):h.push(a(this))):h.push(a(this)),a("a[href=#"+h[0].attr("id")+"]").addClass("active")}),b.on("scrollSpy:exit",function(){if(h=a.grep(h,function(a){return 0!=a.height()}),h[0]){a("a[href=#"+h[0].attr("id")+"]").removeClass("active");var b=a(this);h=a.grep(h,function(a){return a.attr("id")!=b.attr("id")}),h[0]&&a("a[href=#"+h[0].attr("id")+"]").addClass("active")}}),b},a.winSizeSpy=function(b){return a.winSizeSpy=function(){return f},b=b||{throttle:100},f.on("resize",e(d,b.throttle||100))},a.fn.scrollSpy=function(b){return a.scrollSpy(a(this),b)}}(jQuery),function(a){a(document).ready(function(){function b(b){var c=b.css("font-family"),e=b.css("font-size");e&&d.css("font-size",e),c&&d.css("font-family",c),"off"===b.attr("wrap")&&d.css("overflow-wrap","normal").css("white-space","pre"),d.text(b.val()+"\n");var f=d.html().replace(/\n/g,"<br>");d.html(f),b.is(":visible")?d.css("width",b.width()):d.css("width",a(window).width()/2),b.css("height",d.height())}Materialize.updateTextFields=function(){var b="input[type=text], input[type=password], input[type=email], input[type=url], input[type=tel], input[type=number], input[type=search], textarea";a(b).each(function(b,c){a(c).val().length>0||c.autofocus||void 0!==a(this).attr("placeholder")||a(c)[0].validity.badInput===!0?a(this).siblings("label, i").addClass("active"):a(this).siblings("label, i").removeClass("active")})};var c="input[type=text], input[type=password], input[type=email], input[type=url], input[type=tel], input[type=number], input[type=search], textarea";a(document).on("change",c,function(){(0!==a(this).val().length||void 0!==a(this).attr("placeholder"))&&a(this).siblings("label").addClass("active"),validate_field(a(this))}),a(document).ready(function(){Materialize.updateTextFields()}),a(document).on("reset",function(b){var d=a(b.target);d.is("form")&&(d.find(c).removeClass("valid").removeClass("invalid"),d.find(c).each(function(){""===a(this).attr("value")&&a(this).siblings("label, i").removeClass("active")}),d.find("select.initialized").each(function(){var a=d.find("option[selected]").text();d.siblings("input.select-dropdown").val(a)}))}),a(document).on("focus",c,function(){a(this).siblings("label, i").addClass("active")}),a(document).on("blur",c,function(){var b=a(this);0===b.val().length&&b[0].validity.badInput!==!0&&void 0===b.attr("placeholder")&&b.siblings("label, i").removeClass("active"),0===b.val().length&&b[0].validity.badInput!==!0&&void 0!==b.attr("placeholder")&&b.siblings("i").removeClass("active"),validate_field(b)}),window.validate_field=function(a){var b=void 0!==a.attr("length"),c=parseInt(a.attr("length")),d=a.val().length;0===a.val().length&&a[0].validity.badInput===!1?a.hasClass("validate")&&(a.removeClass("valid"),a.removeClass("invalid")):a.hasClass("validate")&&(a.is(":valid")&&b&&c>=d||a.is(":valid")&&!b?(a.removeClass("invalid"),a.addClass("valid")):(a.removeClass("valid"),a.addClass("invalid")))};var d=a(".hiddendiv").first();d.length||(d=a('<div class="hiddendiv common"></div>'),a("body").append(d));var e=".materialize-textarea";a(e).each(function(){var c=a(this);c.val().length&&b(c)}),a("body").on("keyup keydown autoresize",e,function(){b(a(this))}),a(document).on("change",'.file-field input[type="file"]',function(){for(var b=a(this).closest(".file-field"),c=b.find("input.file-path"),d=a(this)[0].files,e=[],f=0;f<d.length;f++)e.push(d[f].name);c.val(e.join(", ")),c.trigger("change")});var f,g="input[type=range]",h=!1;a(g).each(function(){var b=a('<span class="thumb"><span class="value"></span></span>');a(this).after(b)});var i=".range-field";a(document).on("change",g,function(b){var c=a(this).siblings(".thumb");c.find(".value").html(a(this).val())}),a(document).on("input mousedown touchstart",g,function(b){var c=a(this).siblings(".thumb"),d=a(this).outerWidth();c.length<=0&&(c=a('<span class="thumb"><span class="value"></span></span>'),a(this).after(c)),c.find(".value").html(a(this).val()),h=!0,a(this).addClass("active"),c.hasClass("active")||c.velocity({height:"30px",width:"30px",top:"-20px",marginLeft:"-15px"},{duration:300,easing:"easeOutExpo"}),"input"!==b.type&&(f=void 0===b.pageX||null===b.pageX?b.originalEvent.touches[0].pageX-a(this).offset().left:b.pageX-a(this).offset().left,0>f?f=0:f>d&&(f=d),c.addClass("active").css("left",f)),c.find(".value").html(a(this).val())}),a(document).on("mouseup touchend",i,function(){h=!1,a(this).removeClass("active")}),a(document).on("mousemove touchmove",i,function(b){var c,d=a(this).children(".thumb");if(h){d.hasClass("active")||d.velocity({height:"30px",width:"30px",top:"-20px",marginLeft:"-15px"},{duration:300,easing:"easeOutExpo"}),c=void 0===b.pageX||null===b.pageX?b.originalEvent.touches[0].pageX-a(this).offset().left:b.pageX-a(this).offset().left;var e=a(this).outerWidth();0>c?c=0:c>e&&(c=e),d.addClass("active").css("left",c),d.find(".value").html(d.siblings(g).val())}}),a(document).on("mouseout touchleave",i,function(){if(!h){var b=a(this).children(".thumb");b.hasClass("active")&&b.velocity({height:"0",width:"0",top:"10px",marginLeft:"-6px"},{duration:100}),b.removeClass("active")}})}),a.fn.material_select=function(b){function c(a,b,c){var e=a.indexOf(b),f=-1===e;return f?a.push(b):a.splice(e,1),c.siblings("ul.dropdown-content").find("li").eq(b).toggleClass("active"),c.find("option").eq(b).prop("selected",f),d(a,c),f}function d(a,b){for(var c="",d=0,e=a.length;e>d;d++){var f=b.find("option").eq(a[d]).text();c+=0===d?f:", "+f}""===c&&(c=b.find("option:disabled").eq(0).text()),b.siblings("input.select-dropdown").val(c)}a(this).each(function(){var d=a(this);if(!d.hasClass("browser-default")){var e=d.attr("multiple")?!0:!1,f=d.data("select-id");if(f&&(d.parent().find("span.caret").remove(),d.parent().find("input").remove(),d.unwrap(),a("ul#select-options-"+f).remove()),"destroy"===b)return void d.data("select-id",null).removeClass("initialized");var g=Materialize.guid();d.data("select-id",g);var h=a('<div class="select-wrapper"></div>');h.addClass(d.attr("class"));var i=a('<ul id="select-options-'+g+'" class="dropdown-content select-dropdown '+(e?"multiple-select-dropdown":"")+'"></ul>'),j=d.children("option, optgroup"),k=[],l=!1,m=d.find("option:selected").html()||d.find("option:first").html()||"",n=function(b,c,d){var e=c.is(":disabled")?"disabled ":"",f=c.data("icon"),g=c.attr("class");if(f){var h="";return g&&(h=' class="'+g+'"'),"multiple"===d?i.append(a('<li class="'+e+'"><img src="'+f+'"'+h+'><span><input type="checkbox"'+e+"/><label></label>"+c.html()+"</span></li>")):i.append(a('<li class="'+e+'"><img src="'+f+'"'+h+"><span>"+c.html()+"</span></li>")),!0}"multiple"===d?i.append(a('<li class="'+e+'"><span><input type="checkbox"'+e+"/><label></label>"+c.html()+"</span></li>")):i.append(a('<li class="'+e+'"><span>'+c.html()+"</span></li>"))};j.length&&j.each(function(){if(a(this).is("option"))e?n(d,a(this),"multiple"):n(d,a(this));else if(a(this).is("optgroup")){var b=a(this).children("option");i.append(a('<li class="optgroup"><span>'+a(this).attr("label")+"</span></li>")),b.each(function(){n(d,a(this))})}}),i.find("li:not(.optgroup)").each(function(f){a(this).click(function(g){if(!a(this).hasClass("disabled")&&!a(this).hasClass("optgroup")){var h=!0;e?(a('input[type="checkbox"]',this).prop("checked",function(a,b){return!b}),h=c(k,a(this).index(),d),q.trigger("focus")):(i.find("li").removeClass("active"),a(this).toggleClass("active"),q.val(a(this).text())),activateOption(i,a(this)),d.find("option").eq(f).prop("selected",h),d.trigger("change"),"undefined"!=typeof b&&b()}g.stopPropagation()})}),d.wrap(h);var o=a('<span class="caret">&#9660;</span>');d.is(":disabled")&&o.addClass("disabled");var p=m.replace(/"/g,"&quot;"),q=a('<input type="text" class="select-dropdown" readonly="true" '+(d.is(":disabled")?"disabled":"")+' data-activates="select-options-'+g+'" value="'+p+'"/>');d.before(q),q.before(o),q.after(i),d.is(":disabled")||q.dropdown({hover:!1,closeOnClick:!1}),d.attr("tabindex")&&a(q[0]).attr("tabindex",d.attr("tabindex")),d.addClass("initialized"),q.on({focus:function(){if(a("ul.select-dropdown").not(i[0]).is(":visible")&&a("input.select-dropdown").trigger("close"),!i.is(":visible")){a(this).trigger("open",["focus"]);var b=a(this).val(),c=i.find("li").filter(function(){return a(this).text().toLowerCase()===b.toLowerCase()})[0];activateOption(i,c)}},click:function(a){a.stopPropagation()}}),q.on("blur",function(){e||a(this).trigger("close"),i.find("li.selected").removeClass("selected")}),i.hover(function(){l=!0},function(){l=!1}),a(window).on({click:function(){e&&(l||q.trigger("close"))}}),e&&d.find("option:selected:not(:disabled)").each(function(){var b=a(this).index();c(k,b,d),i.find("li").eq(b).find(":checkbox").prop("checked",!0)}),activateOption=function(b,c){if(c){b.find("li.selected").removeClass("selected");var d=a(c);d.addClass("selected"),i.scrollTo(d)}};var r=[],s=function(b){if(9==b.which)return void q.trigger("close");if(40==b.which&&!i.is(":visible"))return void q.trigger("open");if(13!=b.which||i.is(":visible")){b.preventDefault();var c=String.fromCharCode(b.which).toLowerCase(),d=[9,13,27,38,40];if(c&&-1===d.indexOf(b.which)){r.push(c);var f=r.join(""),g=i.find("li").filter(function(){return 0===a(this).text().toLowerCase().indexOf(f)})[0];g&&activateOption(i,g)}if(13==b.which){var h=i.find("li.selected:not(.disabled)")[0];h&&(a(h).trigger("click"),e||q.trigger("close"))}40==b.which&&(g=i.find("li.selected").length?i.find("li.selected").next("li:not(.disabled)")[0]:i.find("li:not(.disabled)")[0],activateOption(i,g)),27==b.which&&q.trigger("close"),38==b.which&&(g=i.find("li.selected").prev("li:not(.disabled)")[0],g&&activateOption(i,g)),setTimeout(function(){r=[]},1e3)}};q.on("keydown",s)}})}}(jQuery),function(a){var b={init:function(b){var c={indicators:!0,height:400,transition:500,interval:6e3};return b=a.extend(c,b),this.each(function(){function c(a,b){a.hasClass("center-align")?a.velocity({opacity:0,translateY:-100},{duration:b,queue:!1}):a.hasClass("right-align")?a.velocity({opacity:0,translateX:100},{duration:b,queue:!1}):a.hasClass("left-align")&&a.velocity({opacity:0,translateX:-100},{duration:b,queue:!1})}function d(a){a>=j.length?a=0:0>a&&(a=j.length-1),k=i.find(".active").index(),k!=a&&(e=j.eq(k),$caption=e.find(".caption"),e.removeClass("active"),e.velocity({opacity:0},{duration:b.transition,queue:!1,easing:"easeOutQuad",complete:function(){j.not(".active").velocity({opacity:0,translateX:0,translateY:0},{duration:0,queue:!1})}}),c($caption,b.transition),b.indicators&&f.eq(k).removeClass("active"),j.eq(a).velocity({opacity:1},{duration:b.transition,queue:!1,easing:"easeOutQuad"}),j.eq(a).find(".caption").velocity({opacity:1,translateX:0,translateY:0},{duration:b.transition,delay:b.transition,queue:!1,easing:"easeOutQuad"}),j.eq(a).addClass("active"),b.indicators&&f.eq(a).addClass("active"))}var e,f,g,h=a(this),i=h.find("ul.slides").first(),j=i.find("li"),k=i.find(".active").index();-1!=k&&(e=j.eq(k)),h.hasClass("fullscreen")||(b.indicators?h.height(b.height+40):h.height(b.height),i.height(b.height)),j.find(".caption").each(function(){c(a(this),0)}),j.find("img").each(function(){var b="data:image/gif;base64,R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+a(this).attr("src")!==b&&(a(this).css("background-image","url("+a(this).attr("src")+")"),a(this).attr("src",b))}),b.indicators&&(f=a('<ul class="indicators"></ul>'),j.each(function(c){var e=a('<li class="indicator-item"></li>');e.click(function(){var c=i.parent(),e=c.find(a(this)).index();d(e),clearInterval(g),g=setInterval(function(){k=i.find(".active").index(),j.length==k+1?k=0:k+=1,d(k)},b.transition+b.interval)}),f.append(e)}),h.append(f),f=h.find("ul.indicators").find("li.indicator-item")),e?e.show():(j.first().addClass("active").velocity({opacity:1},{duration:b.transition,queue:!1,easing:"easeOutQuad"}),k=0,e=j.eq(k),b.indicators&&f.eq(k).addClass("active")),e.find("img").each(function(){e.find(".caption").velocity({opacity:1,translateX:0,translateY:0},{duration:b.transition,queue:!1,easing:"easeOutQuad"})}),g=setInterval(function(){k=i.find(".active").index(),d(k+1)},b.transition+b.interval);var l=!1,m=!1,n=!1;h.hammer({prevent_default:!1}).bind("pan",function(a){if("touch"===a.gesture.pointerType){clearInterval(g);var b=a.gesture.direction,c=a.gesture.deltaX,d=a.gesture.velocityX;$curr_slide=i.find(".active"),$curr_slide.velocity({translateX:c},{duration:50,queue:!1,easing:"easeOutQuad"}),4===b&&(c>h.innerWidth()/2||-.65>d)?n=!0:2===b&&(c<-1*h.innerWidth()/2||d>.65)&&(m=!0);var e;m&&(e=$curr_slide.next(),0===e.length&&(e=j.first()),e.velocity({opacity:1},{duration:300,queue:!1,easing:"easeOutQuad"})),n&&(e=$curr_slide.prev(),0===e.length&&(e=j.last()),e.velocity({opacity:1},{duration:300,queue:!1,easing:"easeOutQuad"}))}}).bind("panend",function(a){"touch"===a.gesture.pointerType&&($curr_slide=i.find(".active"),l=!1,curr_index=i.find(".active").index(),n||m?m?(d(curr_index+1),$curr_slide.velocity({translateX:-1*h.innerWidth()},{duration:300,queue:!1,easing:"easeOutQuad",complete:function(){$curr_slide.velocity({opacity:0,translateX:0},{duration:0,queue:!1})}})):n&&(d(curr_index-1),$curr_slide.velocity({translateX:h.innerWidth()},{duration:300,queue:!1,easing:"easeOutQuad",complete:function(){$curr_slide.velocity({opacity:0,translateX:0},{duration:0,queue:!1})}})):$curr_slide.velocity({translateX:0},{duration:300,queue:!1,easing:"easeOutQuad"}),m=!1,n=!1,clearInterval(g),g=setInterval(function(){k=i.find(".active").index(),j.length==k+1?k=0:k+=1,d(k)},b.transition+b.interval))}),h.on("sliderPause",function(){clearInterval(g)}),h.on("sliderStart",function(){clearInterval(g),g=setInterval(function(){k=i.find(".active").index(),j.length==k+1?k=0:k+=1,d(k)},b.transition+b.interval)}),h.on("sliderNext",function(){k=i.find(".active").index(),d(k+1)}),h.on("sliderPrev",function(){k=i.find(".active").index(),d(k-1)})})},pause:function(){a(this).trigger("sliderPause")},start:function(){a(this).trigger("sliderStart")},next:function(){a(this).trigger("sliderNext")},prev:function(){a(this).trigger("sliderPrev")}};a.fn.slider=function(c){return b[c]?b[c].apply(this,Array.prototype.slice.call(arguments,1)):"object"!=typeof c&&c?void a.error("Method "+c+" does not exist on jQuery.tooltip"):b.init.apply(this,arguments)}}(jQuery),function(a){a(document).ready(function(){a(document).on("click.card",".card",function(b){a(this).find("> .card-reveal").length&&(a(b.target).is(a(".card-reveal .card-title"))||a(b.target).is(a(".card-reveal .card-title i"))?a(this).find(".card-reveal").velocity({translateY:0},{duration:225,queue:!1,easing:"easeInOutQuad",complete:function(){a(this).css({display:"none"})}}):(a(b.target).is(a(".card .activator"))||a(b.target).is(a(".card .activator i")))&&(a(b.target).closest(".card").css("overflow","hidden"),a(this).find(".card-reveal").css({display:"block"}).velocity("stop",!1).velocity({translateY:"-100%"},{duration:300,queue:!1,easing:"easeInOutQuad"}))),a(".card-reveal").closest(".card").css("overflow","hidden")})})}(jQuery),function(a){a(document).ready(function(){a(document).on("click.chip",".chip .material-icons",function(b){a(this).parent().remove()})})}(jQuery),function(a){a(document).ready(function(){a.fn.pushpin=function(b){var c={top:0,bottom:1/0,offset:0};return b=a.extend(c,b),$index=0,this.each(function(){function c(a){a.removeClass("pin-top"),a.removeClass("pinned"),a.removeClass("pin-bottom")}function d(d,e){d.each(function(){b.top<=e&&b.bottom>=e&&!a(this).hasClass("pinned")&&(c(a(this)),a(this).css("top",b.offset),a(this).addClass("pinned")),e<b.top&&!a(this).hasClass("pin-top")&&(c(a(this)),a(this).css("top",0),a(this).addClass("pin-top")),e>b.bottom&&!a(this).hasClass("pin-bottom")&&(c(a(this)),a(this).addClass("pin-bottom"),a(this).css("top",b.bottom-g))})}var e=Materialize.guid(),f=a(this),g=a(this).offset().top;d(f,a(window).scrollTop()),a(window).on("scroll."+e,function(){var c=a(window).scrollTop()+b.offset;d(f,c)})})}})}(jQuery),function(a){a(document).ready(function(){a.fn.reverse=[].reverse,a(document).on("mouseenter.fixedActionBtn",".fixed-action-btn:not(.click-to-toggle)",function(c){var d=a(this);b(d)}),a(document).on("mouseleave.fixedActionBtn",".fixed-action-btn:not(.click-to-toggle)",function(b){var d=a(this);c(d)}),a(document).on("click.fixedActionBtn",".fixed-action-btn.click-to-toggle > a",function(d){var e=a(this),f=e.parent();f.hasClass("active")?c(f):b(f)})}),a.fn.extend({openFAB:function(){b(a(this))},closeFAB:function(){c(a(this))}});var b=function(b){if($this=b,$this.hasClass("active")===!1){var c,d,e=$this.hasClass("horizontal");e===!0?d=40:c=40,$this.addClass("active"),$this.find("ul .btn-floating").velocity({scaleY:".4",scaleX:".4",translateY:c+"px",translateX:d+"px"},{duration:0});var f=0;$this.find("ul .btn-floating").reverse().each(function(){a(this).velocity({opacity:"1",scaleX:"1",scaleY:"1",translateY:"0",translateX:"0"},{duration:80,delay:f}),f+=40})}},c=function(a){$this=a;var b,c,d=$this.hasClass("horizontal");d===!0?c=40:b=40,$this.removeClass("active");$this.find("ul .btn-floating").velocity("stop",!0),$this.find("ul .btn-floating").velocity({opacity:"0",scaleX:".4",scaleY:".4",translateY:b+"px",translateX:c+"px"},{duration:80})}}(jQuery),function(a){Materialize.fadeInImage=function(b){var c=a(b);c.css({opacity:0}),a(c).velocity({opacity:1},{duration:650,queue:!1,easing:"easeOutSine"}),a(c).velocity({opacity:1},{duration:1300,queue:!1,easing:"swing",step:function(b,c){c.start=100;var d=b/100,e=150-(100-b)/1.75;100>e&&(e=100),b>=0&&a(this).css({"-webkit-filter":"grayscale("+d+")brightness("+e+"%)",filter:"grayscale("+d+")brightness("+e+"%)"})}})},Materialize.showStaggeredList=function(b){var c=0;a(b).find("li").velocity({translateX:"-100px"},{duration:0}),a(b).find("li").each(function(){a(this).velocity({opacity:"1",translateX:"0"},{duration:800,delay:c,easing:[60,10]}),c+=120})},a(document).ready(function(){var b=!1,c=!1;a(".dismissable").each(function(){a(this).hammer({prevent_default:!1}).bind("pan",function(d){if("touch"===d.gesture.pointerType){var e=a(this),f=d.gesture.direction,g=d.gesture.deltaX,h=d.gesture.velocityX;e.velocity({translateX:g},{duration:50,queue:!1,easing:"easeOutQuad"}),4===f&&(g>e.innerWidth()/2||-.75>h)&&(b=!0),2===f&&(g<-1*e.innerWidth()/2||h>.75)&&(c=!0)}}).bind("panend",function(d){if(Math.abs(d.gesture.deltaX)<a(this).innerWidth()/2&&(c=!1,b=!1),"touch"===d.gesture.pointerType){var e=a(this);if(b||c){var f;f=b?e.innerWidth():-1*e.innerWidth(),e.velocity({translateX:f},{duration:100,queue:!1,easing:"easeOutQuad",complete:function(){e.css("border","none"),e.velocity({height:0,padding:0},{duration:200,queue:!1,easing:"easeOutQuad",complete:function(){e.remove()}})}})}else e.velocity({translateX:0},{duration:100,queue:!1,easing:"easeOutQuad"});b=!1,c=!1}})})})}(jQuery),function(a){Materialize.scrollFire=function(a){var b=!1;window.addEventListener("scroll",function(){b=!0}),setInterval(function(){if(b){b=!1;for(var c=window.pageYOffset+window.innerHeight,d=0;d<a.length;d++){var e=a[d],f=e.selector,g=e.offset,h=e.callback,i=document.querySelector(f);if(null!==i){var j=i.getBoundingClientRect().top+window.pageYOffset;if(c>j+g&&e.done!==!0){var k=new Function(h);k(),e.done=!0}}}}},100)}}(jQuery),function(a){"function"==typeof define&&define.amd?define("picker",["jquery"],a):"object"==typeof exports?module.exports=a(require("jquery")):this.Picker=a(jQuery)}(function(a){function b(f,g,i,l){function m(){return b._.node("div",b._.node("div",b._.node("div",b._.node("div",y.component.nodes(t.open),v.box),v.wrap),v.frame),v.holder)}function n(){w.data(g,y).addClass(v.input).attr("tabindex",-1).val(w.data("value")?y.get("select",u.format):f.value),u.editable||w.on("focus."+t.id+" click."+t.id,function(a){a.preventDefault(),y.$root[0].focus()}).on("keydown."+t.id,q),e(f,{haspopup:!0,expanded:!1,readonly:!1,owns:f.id+"_root"})}function o(){y.$root.on({keydown:q,focusin:function(a){y.$root.removeClass(v.focused),a.stopPropagation()},"mousedown click":function(b){var c=b.target;c!=y.$root.children()[0]&&(b.stopPropagation(),"mousedown"!=b.type||a(c).is("input, select, textarea, button, option")||(b.preventDefault(),y.$root[0].focus()))}}).on({focus:function(){w.addClass(v.target)},blur:function(){w.removeClass(v.target)}}).on("focus.toOpen",r).on("click","[data-pick], [data-nav], [data-clear], [data-close]",function(){var b=a(this),c=b.data(),d=b.hasClass(v.navDisabled)||b.hasClass(v.disabled),e=h();e=e&&(e.type||e.href),(d||e&&!a.contains(y.$root[0],e))&&y.$root[0].focus(),!d&&c.nav?y.set("highlight",y.component.item.highlight,{nav:c.nav}):!d&&"pick"in c?y.set("select",c.pick):c.clear?y.clear().close(!0):c.close&&y.close(!0)}),e(y.$root[0],"hidden",!0)}function p(){var b;u.hiddenName===!0?(b=f.name,f.name=""):(b=["string"==typeof u.hiddenPrefix?u.hiddenPrefix:"","string"==typeof u.hiddenSuffix?u.hiddenSuffix:"_submit"],b=b[0]+f.name+b[1]),y._hidden=a('<input type=hidden name="'+b+'"'+(w.data("value")||f.value?' value="'+y.get("select",u.formatSubmit)+'"':"")+">")[0],w.on("change."+t.id,function(){y._hidden.value=f.value?y.get("select",u.formatSubmit):""}),u.container?a(u.container).append(y._hidden):w.after(y._hidden)}function q(a){var b=a.keyCode,c=/^(8|46)$/.test(b);return 27==b?(y.close(),!1):void((32==b||c||!t.open&&y.component.key[b])&&(a.preventDefault(),a.stopPropagation(),c?y.clear().close():y.open()))}function r(a){a.stopPropagation(),"focus"==a.type&&y.$root.addClass(v.focused),y.open()}if(!f)return b;var s=!1,t={id:f.id||"P"+Math.abs(~~(Math.random()*new Date))},u=i?a.extend(!0,{},i.defaults,l):l||{},v=a.extend({},b.klasses(),u.klass),w=a(f),x=function(){return this.start()},y=x.prototype={constructor:x,$node:w,start:function(){return t&&t.start?y:(t.methods={},t.start=!0,t.open=!1,t.type=f.type,f.autofocus=f==h(),f.readOnly=!u.editable,f.id=f.id||t.id,"text"!=f.type&&(f.type="text"),y.component=new i(y,u),y.$root=a(b._.node("div",m(),v.picker,'id="'+f.id+'_root" tabindex="0"')),o(),u.formatSubmit&&p(),n(),u.container?a(u.container).append(y.$root):w.after(y.$root),y.on({start:y.component.onStart,render:y.component.onRender,stop:y.component.onStop,open:y.component.onOpen,close:y.component.onClose,set:y.component.onSet}).on({start:u.onStart,render:u.onRender,stop:u.onStop,open:u.onOpen,close:u.onClose,set:u.onSet}),s=c(y.$root.children()[0]),f.autofocus&&y.open(),y.trigger("start").trigger("render"))},render:function(a){return a?y.$root.html(m()):y.$root.find("."+v.box).html(y.component.nodes(t.open)),y.trigger("render")},stop:function(){return t.start?(y.close(),y._hidden&&y._hidden.parentNode.removeChild(y._hidden),y.$root.remove(),w.removeClass(v.input).removeData(g),setTimeout(function(){w.off("."+t.id)},0),f.type=t.type,f.readOnly=!1,y.trigger("stop"),t.methods={},t.start=!1,y):y},open:function(c){return t.open?y:(w.addClass(v.active),e(f,"expanded",!0),setTimeout(function(){y.$root.addClass(v.opened),e(y.$root[0],"hidden",!1)},0),c!==!1&&(t.open=!0,s&&k.css("overflow","hidden").css("padding-right","+="+d()),y.$root[0].focus(),j.on("click."+t.id+" focusin."+t.id,function(a){var b=a.target;b!=f&&b!=document&&3!=a.which&&y.close(b===y.$root.children()[0])}).on("keydown."+t.id,function(c){var d=c.keyCode,e=y.component.key[d],f=c.target;27==d?y.close(!0):f!=y.$root[0]||!e&&13!=d?a.contains(y.$root[0],f)&&13==d&&(c.preventDefault(),f.click()):(c.preventDefault(),e?b._.trigger(y.component.key.go,y,[b._.trigger(e)]):y.$root.find("."+v.highlighted).hasClass(v.disabled)||y.set("select",y.component.item.highlight).close())})),y.trigger("open"))},close:function(a){return a&&(y.$root.off("focus.toOpen")[0].focus(),setTimeout(function(){y.$root.on("focus.toOpen",r)},0)),w.removeClass(v.active),e(f,"expanded",!1),setTimeout(function(){y.$root.removeClass(v.opened+" "+v.focused),e(y.$root[0],"hidden",!0)},0),t.open?(t.open=!1,s&&k.css("overflow","").css("padding-right","-="+d()),j.off("."+t.id),y.trigger("close")):y},clear:function(a){return y.set("clear",null,a)},set:function(b,c,d){var e,f,g=a.isPlainObject(b),h=g?b:{};if(d=g&&a.isPlainObject(c)?c:d||{},b){g||(h[b]=c);for(e in h)f=h[e],e in y.component.item&&(void 0===f&&(f=null),y.component.set(e,f,d)),("select"==e||"clear"==e)&&w.val("clear"==e?"":y.get(e,u.format)).trigger("change");y.render()}return d.muted?y:y.trigger("set",h)},get:function(a,c){if(a=a||"value",null!=t[a])return t[a];if("valueSubmit"==a){if(y._hidden)return y._hidden.value;a="value"}if("value"==a)return f.value;if(a in y.component.item){if("string"==typeof c){var d=y.component.get(a);return d?b._.trigger(y.component.formats.toString,y.component,[c,d]):""}return y.component.get(a)}},on:function(b,c,d){var e,f,g=a.isPlainObject(b),h=g?b:{};if(b){g||(h[b]=c);for(e in h)f=h[e],d&&(e="_"+e),t.methods[e]=t.methods[e]||[],t.methods[e].push(f)}return y},off:function(){var a,b,c=arguments;for(a=0,namesCount=c.length;a<namesCount;a+=1)b=c[a],b in t.methods&&delete t.methods[b];return y},trigger:function(a,c){var d=function(a){var d=t.methods[a];d&&d.map(function(a){b._.trigger(a,y,[c])})};return d("_"+a),d(a),y}};return new x}function c(a){var b,c="position";return a.currentStyle?b=a.currentStyle[c]:window.getComputedStyle&&(b=getComputedStyle(a)[c]),"fixed"==b}function d(){if(k.height()<=i.height())return 0;var b=a('<div style="visibility:hidden;width:100px" />').appendTo("body"),c=b[0].offsetWidth;b.css("overflow","scroll");var d=a('<div style="width:100%" />').appendTo(b),e=d[0].offsetWidth;return b.remove(),c-e}function e(b,c,d){if(a.isPlainObject(c))for(var e in c)f(b,e,c[e]);else f(b,c,d)}function f(a,b,c){a.setAttribute(("role"==b?"":"aria-")+b,c)}function g(b,c){a.isPlainObject(b)||(b={attribute:c}),c="";for(var d in b){var e=("role"==d?"":"aria-")+d,f=b[d];c+=null==f?"":e+'="'+b[d]+'"'}return c}function h(){try{return document.activeElement}catch(a){}}var i=a(window),j=a(document),k=a(document.documentElement);return b.klasses=function(a){return a=a||"picker",{picker:a,opened:a+"--opened",focused:a+"--focused",input:a+"__input",active:a+"__input--active",target:a+"__input--target",holder:a+"__holder",frame:a+"__frame",wrap:a+"__wrap",box:a+"__box"}},b._={group:function(a){for(var c,d="",e=b._.trigger(a.min,a);e<=b._.trigger(a.max,a,[e]);e+=a.i)c=b._.trigger(a.item,a,[e]),d+=b._.node(a.node,c[0],c[1],c[2]);return d},node:function(b,c,d,e){return c?(c=a.isArray(c)?c.join(""):c,d=d?' class="'+d+'"':"",e=e?" "+e:"","<"+b+d+e+">"+c+"</"+b+">"):""},lead:function(a){return(10>a?"0":"")+a},trigger:function(a,b,c){return"function"==typeof a?a.apply(b,c||[]):a},digits:function(a){return/\d/.test(a[1])?2:1},isDate:function(a){return{}.toString.call(a).indexOf("Date")>-1&&this.isInteger(a.getDate())},isInteger:function(a){return{}.toString.call(a).indexOf("Number")>-1&&a%1===0},ariaAttr:g},b.extend=function(c,d){a.fn[c]=function(e,f){var g=this.data(c);return"picker"==e?g:g&&"string"==typeof e?b._.trigger(g[e],g,[f]):this.each(function(){var f=a(this);f.data(c)||new b(this,c,d,e)})},a.fn[c].defaults=d.defaults},b}),function(a){"function"==typeof define&&define.amd?define(["picker","jquery"],a):"object"==typeof exports?module.exports=a(require("./picker.js"),require("jquery")):a(Picker,jQuery)}(function(a,b){function c(a,b){var c=this,d=a.$node[0],e=d.value,f=a.$node.data("value"),g=f||e,h=f?b.formatSubmit:b.format,i=function(){return d.currentStyle?"rtl"==d.currentStyle.direction:"rtl"==getComputedStyle(a.$root[0]).direction};c.settings=b,c.$node=a.$node,c.queue={min:"measure create",max:"measure create",now:"now create",select:"parse create validate",highlight:"parse navigate create validate",view:"parse create validate viewset",disable:"deactivate",enable:"activate"},c.item={},c.item.clear=null,c.item.disable=(b.disable||[]).slice(0),c.item.enable=-function(a){return a[0]===!0?a.shift():-1}(c.item.disable),c.set("min",b.min).set("max",b.max).set("now"),g?c.set("select",g,{format:h}):c.set("select",null).set("highlight",c.item.now),c.key={40:7,38:-7,39:function(){return i()?-1:1},37:function(){return i()?1:-1},go:function(a){var b=c.item.highlight,d=new Date(b.year,b.month,b.date+a);c.set("highlight",d,{interval:a}),this.render()}},a.on("render",function(){a.$root.find("."+b.klass.selectMonth).on("change",function(){var c=this.value;c&&(a.set("highlight",[a.get("view").year,c,a.get("highlight").date]),a.$root.find("."+b.klass.selectMonth).trigger("focus"))}),a.$root.find("."+b.klass.selectYear).on("change",function(){var c=this.value;c&&(a.set("highlight",[c,a.get("view").month,a.get("highlight").date]),a.$root.find("."+b.klass.selectYear).trigger("focus"))})},1).on("open",function(){var d="";c.disabled(c.get("now"))&&(d=":not(."+b.klass.buttonToday+")"),a.$root.find("button"+d+", select").attr("disabled",!1)},1).on("close",function(){a.$root.find("button, select").attr("disabled",!0)},1)}var d=7,e=6,f=a._;c.prototype.set=function(a,b,c){var d=this,e=d.item;return null===b?("clear"==a&&(a="select"),e[a]=b,d):(e["enable"==a?"disable":"flip"==a?"enable":a]=d.queue[a].split(" ").map(function(e){return b=d[e](a,b,c)}).pop(),"select"==a?d.set("highlight",e.select,c):"highlight"==a?d.set("view",e.highlight,c):a.match(/^(flip|min|max|disable|enable)$/)&&(e.select&&d.disabled(e.select)&&d.set("select",e.select,c),e.highlight&&d.disabled(e.highlight)&&d.set("highlight",e.highlight,c)),d)},c.prototype.get=function(a){return this.item[a]},c.prototype.create=function(a,c,d){var e,g=this;return c=void 0===c?a:c,c==-(1/0)||c==1/0?e=c:b.isPlainObject(c)&&f.isInteger(c.pick)?c=c.obj:b.isArray(c)?(c=new Date(c[0],c[1],c[2]),c=f.isDate(c)?c:g.create().obj):c=f.isInteger(c)||f.isDate(c)?g.normalize(new Date(c),d):g.now(a,c,d),{year:e||c.getFullYear(),month:e||c.getMonth(),date:e||c.getDate(),day:e||c.getDay(),obj:e||c,pick:e||c.getTime()}},c.prototype.createRange=function(a,c){var d=this,e=function(a){return a===!0||b.isArray(a)||f.isDate(a)?d.create(a):a};return f.isInteger(a)||(a=e(a)),f.isInteger(c)||(c=e(c)),f.isInteger(a)&&b.isPlainObject(c)?a=[c.year,c.month,c.date+a]:f.isInteger(c)&&b.isPlainObject(a)&&(c=[a.year,a.month,a.date+c]),{from:e(a),to:e(c)}},c.prototype.withinRange=function(a,b){return a=this.createRange(a.from,a.to),b.pick>=a.from.pick&&b.pick<=a.to.pick},c.prototype.overlapRanges=function(a,b){var c=this;return a=c.createRange(a.from,a.to),b=c.createRange(b.from,b.to),c.withinRange(a,b.from)||c.withinRange(a,b.to)||c.withinRange(b,a.from)||c.withinRange(b,a.to)},c.prototype.now=function(a,b,c){return b=new Date,c&&c.rel&&b.setDate(b.getDate()+c.rel),this.normalize(b,c)},c.prototype.navigate=function(a,c,d){var e,f,g,h,i=b.isArray(c),j=b.isPlainObject(c),k=this.item.view;if(i||j){for(j?(f=c.year,g=c.month,h=c.date):(f=+c[0],g=+c[1],h=+c[2]),d&&d.nav&&k&&k.month!==g&&(f=k.year,g=k.month),e=new Date(f,g+(d&&d.nav?d.nav:0),1),f=e.getFullYear(),g=e.getMonth();new Date(f,g,h).getMonth()!==g;)h-=1;c=[f,g,h]}return c},c.prototype.normalize=function(a){return a.setHours(0,0,0,0),a},c.prototype.measure=function(a,b){var c=this;return b?"string"==typeof b?b=c.parse(a,b):f.isInteger(b)&&(b=c.now(a,b,{rel:b})):b="min"==a?-(1/0):1/0,b},c.prototype.viewset=function(a,b){return this.create([b.year,b.month,1])},c.prototype.validate=function(a,c,d){var e,g,h,i,j=this,k=c,l=d&&d.interval?d.interval:1,m=-1===j.item.enable,n=j.item.min,o=j.item.max,p=m&&j.item.disable.filter(function(a){if(b.isArray(a)){var d=j.create(a).pick;d<c.pick?e=!0:d>c.pick&&(g=!0)}return f.isInteger(a)}).length;if((!d||!d.nav)&&(!m&&j.disabled(c)||m&&j.disabled(c)&&(p||e||g)||!m&&(c.pick<=n.pick||c.pick>=o.pick)))for(m&&!p&&(!g&&l>0||!e&&0>l)&&(l*=-1);j.disabled(c)&&(Math.abs(l)>1&&(c.month<k.month||c.month>k.month)&&(c=k,l=l>0?1:-1),c.pick<=n.pick?(h=!0,l=1,c=j.create([n.year,n.month,n.date+(c.pick===n.pick?0:-1)])):c.pick>=o.pick&&(i=!0,l=-1,c=j.create([o.year,o.month,o.date+(c.pick===o.pick?0:1)])),!h||!i);)c=j.create([c.year,c.month,c.date+l]);return c},c.prototype.disabled=function(a){var c=this,d=c.item.disable.filter(function(d){return f.isInteger(d)?a.day===(c.settings.firstDay?d:d-1)%7:b.isArray(d)||f.isDate(d)?a.pick===c.create(d).pick:b.isPlainObject(d)?c.withinRange(d,a):void 0});return d=d.length&&!d.filter(function(a){return b.isArray(a)&&"inverted"==a[3]||b.isPlainObject(a)&&a.inverted}).length,-1===c.item.enable?!d:d||a.pick<c.item.min.pick||a.pick>c.item.max.pick},c.prototype.parse=function(a,b,c){var d=this,e={};return b&&"string"==typeof b?(c&&c.format||(c=c||{},c.format=d.settings.format),d.formats.toArray(c.format).map(function(a){var c=d.formats[a],g=c?f.trigger(c,d,[b,e]):a.replace(/^!/,"").length;c&&(e[a]=b.substr(0,g)),b=b.substr(g)}),[e.yyyy||e.yy,+(e.mm||e.m)-1,e.dd||e.d]):b},c.prototype.formats=function(){function a(a,b,c){var d=a.match(/\w+/)[0];return c.mm||c.m||(c.m=b.indexOf(d)+1),d.length}function b(a){return a.match(/\w+/)[0].length}return{d:function(a,b){return a?f.digits(a):b.date},dd:function(a,b){return a?2:f.lead(b.date)},ddd:function(a,c){return a?b(a):this.settings.weekdaysShort[c.day]},dddd:function(a,c){return a?b(a):this.settings.weekdaysFull[c.day]},m:function(a,b){return a?f.digits(a):b.month+1},mm:function(a,b){return a?2:f.lead(b.month+1)},mmm:function(b,c){var d=this.settings.monthsShort;return b?a(b,d,c):d[c.month]},mmmm:function(b,c){var d=this.settings.monthsFull;return b?a(b,d,c):d[c.month]},yy:function(a,b){return a?2:(""+b.year).slice(2)},yyyy:function(a,b){return a?4:b.year},toArray:function(a){return a.split(/(d{1,4}|m{1,4}|y{4}|yy|!.)/g)},toString:function(a,b){var c=this;return c.formats.toArray(a).map(function(a){return f.trigger(c.formats[a],c,[0,b])||a.replace(/^!/,"")}).join("")}}}(),c.prototype.isDateExact=function(a,c){var d=this;return f.isInteger(a)&&f.isInteger(c)||"boolean"==typeof a&&"boolean"==typeof c?a===c:(f.isDate(a)||b.isArray(a))&&(f.isDate(c)||b.isArray(c))?d.create(a).pick===d.create(c).pick:b.isPlainObject(a)&&b.isPlainObject(c)?d.isDateExact(a.from,c.from)&&d.isDateExact(a.to,c.to):!1},c.prototype.isDateOverlap=function(a,c){var d=this,e=d.settings.firstDay?1:0;return f.isInteger(a)&&(f.isDate(c)||b.isArray(c))?(a=a%7+e,a===d.create(c).day+1):f.isInteger(c)&&(f.isDate(a)||b.isArray(a))?(c=c%7+e,c===d.create(a).day+1):b.isPlainObject(a)&&b.isPlainObject(c)?d.overlapRanges(a,c):!1},c.prototype.flipEnable=function(a){var b=this.item;b.enable=a||(-1==b.enable?1:-1)},c.prototype.deactivate=function(a,c){var d=this,e=d.item.disable.slice(0);return"flip"==c?d.flipEnable():c===!1?(d.flipEnable(1),e=[]):c===!0?(d.flipEnable(-1),e=[]):c.map(function(a){for(var c,g=0;g<e.length;g+=1)if(d.isDateExact(a,e[g])){c=!0;break}c||(f.isInteger(a)||f.isDate(a)||b.isArray(a)||b.isPlainObject(a)&&a.from&&a.to)&&e.push(a)}),e},c.prototype.activate=function(a,c){var d=this,e=d.item.disable,g=e.length;return"flip"==c?d.flipEnable():c===!0?(d.flipEnable(1),e=[]):c===!1?(d.flipEnable(-1),e=[]):c.map(function(a){var c,h,i,j;for(i=0;g>i;i+=1){if(h=e[i],d.isDateExact(h,a)){c=e[i]=null,j=!0;break}if(d.isDateOverlap(h,a)){b.isPlainObject(a)?(a.inverted=!0,c=a):b.isArray(a)?(c=a,c[3]||c.push("inverted")):f.isDate(a)&&(c=[a.getFullYear(),a.getMonth(),a.getDate(),"inverted"]);break}}if(c)for(i=0;g>i;i+=1)if(d.isDateExact(e[i],a)){e[i]=null;break}if(j)for(i=0;g>i;i+=1)if(d.isDateOverlap(e[i],a)){e[i]=null;break}c&&e.push(c)}),e.filter(function(a){return null!=a})},c.prototype.nodes=function(a){var b=this,c=b.settings,g=b.item,h=g.now,i=g.select,j=g.highlight,k=g.view,l=g.disable,m=g.min,n=g.max,o=function(a,b){return c.firstDay&&(a.push(a.shift()),b.push(b.shift())),f.node("thead",f.node("tr",f.group({min:0,max:d-1,i:1,node:"th",item:function(d){return[a[d],c.klass.weekdays,'scope=col title="'+b[d]+'"']}})))}((c.showWeekdaysFull?c.weekdaysFull:c.weekdaysLetter).slice(0),c.weekdaysFull.slice(0)),p=function(a){return f.node("div"," ",c.klass["nav"+(a?"Next":"Prev")]+(a&&k.year>=n.year&&k.month>=n.month||!a&&k.year<=m.year&&k.month<=m.month?" "+c.klass.navDisabled:""),"data-nav="+(a||-1)+" "+f.ariaAttr({role:"button",controls:b.$node[0].id+"_table"})+' title="'+(a?c.labelMonthNext:c.labelMonthPrev)+'"')},q=function(d){var e=c.showMonthsShort?c.monthsShort:c.monthsFull;return"short_months"==d&&(e=c.monthsShort),c.selectMonths&&void 0==d?f.node("select",f.group({min:0,max:11,i:1,node:"option",item:function(a){return[e[a],0,"value="+a+(k.month==a?" selected":"")+(k.year==m.year&&a<m.month||k.year==n.year&&a>n.month?" disabled":"")]}}),c.klass.selectMonth+" browser-default",(a?"":"disabled")+" "+f.ariaAttr({controls:b.$node[0].id+"_table"})+' title="'+c.labelMonthSelect+'"'):"short_months"==d?null!=i?f.node("div",e[i.month]):f.node("div",e[k.month]):f.node("div",e[k.month],c.klass.month)},r=function(d){var e=k.year,g=c.selectYears===!0?5:~~(c.selectYears/2);if(g){var h=m.year,i=n.year,j=e-g,l=e+g;if(h>j&&(l+=h-j,j=h),l>i){var o=j-h,p=l-i;j-=o>p?p:o,l=i}if(c.selectYears&&void 0==d)return f.node("select",f.group({min:j,max:l,i:1,node:"option",item:function(a){return[a,0,"value="+a+(e==a?" selected":"")]}}),c.klass.selectYear+" browser-default",(a?"":"disabled")+" "+f.ariaAttr({controls:b.$node[0].id+"_table"})+' title="'+c.labelYearSelect+'"')}return"raw"==d?f.node("div",e):f.node("div",e,c.klass.year)};return createDayLabel=function(){return null!=i?f.node("div",i.date):f.node("div",h.date)},createWeekdayLabel=function(){var a;a=null!=i?i.day:h.day;var b=c.weekdaysFull[a];return b},f.node("div",f.node("div",createWeekdayLabel(),"picker__weekday-display")+f.node("div",q("short_months"),c.klass.month_display)+f.node("div",createDayLabel(),c.klass.day_display)+f.node("div",r("raw"),c.klass.year_display),c.klass.date_display)+f.node("div",f.node("div",(c.selectYears?q()+r():q()+r())+p()+p(1),c.klass.header)+f.node("table",o+f.node("tbody",f.group({min:0,max:e-1,i:1,node:"tr",item:function(a){var e=c.firstDay&&0===b.create([k.year,k.month,1]).day?-7:0;return[f.group({min:d*a-k.day+e+1,max:function(){return this.min+d-1},i:1,node:"td",item:function(a){a=b.create([k.year,k.month,a+(c.firstDay?1:0)]);var d=i&&i.pick==a.pick,e=j&&j.pick==a.pick,g=l&&b.disabled(a)||a.pick<m.pick||a.pick>n.pick,o=f.trigger(b.formats.toString,b,[c.format,a]);return[f.node("div",a.date,function(b){return b.push(k.month==a.month?c.klass.infocus:c.klass.outfocus),h.pick==a.pick&&b.push(c.klass.now),d&&b.push(c.klass.selected),e&&b.push(c.klass.highlighted),g&&b.push(c.klass.disabled),b.join(" ")}([c.klass.day]),"data-pick="+a.pick+" "+f.ariaAttr({role:"gridcell",label:o,selected:d&&b.$node.val()===o?!0:null,activedescendant:e?!0:null,disabled:g?!0:null})),"",f.ariaAttr({role:"presentation"})]}})]}})),c.klass.table,'id="'+b.$node[0].id+'_table" '+f.ariaAttr({role:"grid",controls:b.$node[0].id,readonly:!0})),c.klass.calendar_container)+f.node("div",f.node("button",c.today,"btn-flat picker__today","type=button data-pick="+h.pick+(a&&!b.disabled(h)?"":" disabled")+" "+f.ariaAttr({controls:b.$node[0].id}))+f.node("button",c.clear,"btn-flat picker__clear","type=button data-clear=1"+(a?"":" disabled")+" "+f.ariaAttr({controls:b.$node[0].id}))+f.node("button",c.close,"btn-flat picker__close","type=button data-close=true "+(a?"":" disabled")+" "+f.ariaAttr({controls:b.$node[0].id})),c.klass.footer)},c.defaults=function(a){return{labelMonthNext:"Next month",labelMonthPrev:"Previous month",labelMonthSelect:"Select a month",labelYearSelect:"Select a year",monthsFull:["January","February","March","April","May","June","July","August","September","October","November","December"],monthsShort:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],weekdaysFull:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],weekdaysShort:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],weekdaysLetter:["S","M","T","W","T","F","S"],today:"Today",clear:"Clear",close:"Close",format:"d mmmm, yyyy",klass:{table:a+"table",header:a+"header",date_display:a+"date-display",day_display:a+"day-display",month_display:a+"month-display",year_display:a+"year-display",calendar_container:a+"calendar-container",navPrev:a+"nav--prev",navNext:a+"nav--next",navDisabled:a+"nav--disabled",month:a+"month",year:a+"year",selectMonth:a+"select--month",selectYear:a+"select--year",weekdays:a+"weekday",day:a+"day",disabled:a+"day--disabled",selected:a+"day--selected",highlighted:a+"day--highlighted",now:a+"day--today",infocus:a+"day--infocus",outfocus:a+"day--outfocus",footer:a+"footer",buttonClear:a+"button--clear",buttonToday:a+"button--today",buttonClose:a+"button--close"}}}(a.klasses().picker+"__"),a.extend("pickadate",c)}),function(a){function b(){var b=+a(this).attr("length"),c=+a(this).val().length,d=b>=c;a(this).parent().find('span[class="character-counter"]').html(c+"/"+b),e(d,a(this))}function c(b){var c=a("<span/>").addClass("character-counter").css("float","right").css("font-size","12px").css("height",1);b.parent().append(c)}function d(){a(this).parent().find('span[class="character-counter"]').html("")}function e(a,b){var c=b.hasClass("invalid");a&&c?b.removeClass("invalid"):a||c||(b.removeClass("valid"),b.addClass("invalid"))}a.fn.characterCounter=function(){return this.each(function(){var e=void 0!==a(this).attr("length");e&&(a(this).on("input",b),a(this).on("focus",b),a(this).on("blur",d),c(a(this)))})},a(document).ready(function(){a("input, textarea").characterCounter()})}(jQuery),function(a){var b={init:function(b){var c={time_constant:200,dist:-100,shift:0,padding:0,full_width:!1};return b=a.extend(c,b),this.each(function(){function c(){"undefined"!=typeof window.ontouchstart&&(F[0].addEventListener("touchstart",k),F[0].addEventListener("touchmove",l),F[0].addEventListener("touchend",m)),F[0].addEventListener("mousedown",k),F[0].addEventListener("mousemove",l),F[0].addEventListener("mouseup",m),F[0].addEventListener("click",j)}function d(a){return a.targetTouches&&a.targetTouches.length>=1?a.targetTouches[0].clientX:a.clientX}function e(a){return a.targetTouches&&a.targetTouches.length>=1?a.targetTouches[0].clientY:a.clientY}function f(a){return a>=s?a%s:0>a?f(s+a%s):a}function g(a){var c,d,e,g,h,i,j;for(o="number"==typeof a?a:o,p=Math.floor((o+r/2)/r),e=o-p*r,g=0>e?1:-1,h=-g*e*2/r,b.full_width?j="translateX(0)":(j="translateX("+(F[0].clientWidth-item_width)/2+"px) ",j+="translateY("+(F[0].clientHeight-item_width)/2+"px)"),i=n[f(p)],i.style[z]=j+" translateX("+-e/2+"px) translateX("+g*b.shift*h*c+"px) translateZ("+b.dist*h+"px)",i.style.zIndex=0,b.full_width?tweenedOpacity=1:tweenedOpacity=1-.2*h,i.style.opacity=tweenedOpacity,d=s>>1,c=1;d>=c;++c)b.full_width?(zTranslation=b.dist,tweenedOpacity=c===d&&0>e?1-h:1):(zTranslation=b.dist*(2*c+h*g),tweenedOpacity=1-.2*(2*c+h*g)),i=n[f(p+c)],i.style[z]=j+" translateX("+(b.shift+(r*c-e)/2)+"px) translateZ("+zTranslation+"px)",i.style.zIndex=-c,i.style.opacity=tweenedOpacity,b.full_width?(zTranslation=b.dist,tweenedOpacity=c===d&&e>0?1-h:1):(zTranslation=b.dist*(2*c-h*g),tweenedOpacity=1-.2*(2*c-h*g)),i=n[f(p-c)],i.style[z]=j+" translateX("+(-b.shift+(-r*c-e)/2)+"px) translateZ("+zTranslation+"px)",i.style.zIndex=-c,i.style.opacity=tweenedOpacity;i=n[f(p)],i.style[z]=j+" translateX("+-e/2+"px) translateX("+g*b.shift*h+"px) translateZ("+b.dist*h+"px)",i.style.zIndex=0,b.full_width?tweenedOpacity=1:tweenedOpacity=1-.2*h,
+i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c=o-A,A=o,d=1e3*c/(1+b),x=.8*d+.2*x}function i(){var a,c;v&&(a=Date.now()-B,c=v*Math.exp(-a/b.time_constant),c>2||-2>c?(g(w-c),requestAnimationFrame(i)):g(w))}function j(c){if(D)return c.preventDefault(),c.stopPropagation(),!1;if(!b.full_width){var d=a(c.target).closest(".carousel-item").index(),e=p%s-d;0>e?Math.abs(e+s)<Math.abs(e)&&(e+=s):e>0&&Math.abs(e-s)<e&&(e-=s),0>e?a(this).trigger("carouselNext",[Math.abs(e)]):e>0&&a(this).trigger("carouselPrev",[e])}}function k(a){q=!0,D=!1,E=!1,t=d(a),u=e(a),x=v=0,A=o,B=Date.now(),clearInterval(C),C=setInterval(h,100)}function l(a){var b,c,f;if(q)if(b=d(a),y=e(a),c=t-b,f=Math.abs(u-y),30>f&&!E)(c>2||-2>c)&&(D=!0,t=b,g(o+c));else{if(D)return a.preventDefault(),a.stopPropagation(),!1;E=!0}return D?(a.preventDefault(),a.stopPropagation(),!1):void 0}function m(a){return q=!1,clearInterval(C),w=o,(x>10||-10>x)&&(v=.9*x,w=o+v),w=Math.round(w/r)*r,v=w-o,B=Date.now(),requestAnimationFrame(i),a.preventDefault(),a.stopPropagation(),!1}var n,o,p,q,r,s,t,u,v,w,x,z,A,B,C,D,E,F=a(this);return F.hasClass("initialized")?!0:(b.full_width&&(b.dist=0,imageHeight=F.find(".carousel-item img").first().load(function(){F.css("height",a(this).height())})),F.addClass("initialized"),q=!1,o=w=0,n=[],item_width=F.find(".carousel-item").first().innerWidth(),r=2*item_width+b.padding,F.find(".carousel-item").each(function(){n.push(a(this)[0])}),s=n.length,z="transform",["webkit","Moz","O","ms"].every(function(a){var b=a+"Transform";return"undefined"!=typeof document.body.style[b]?(z=b,!1):!0}),window.onresize=g,c(),g(o),a(this).on("carouselNext",function(a,b){void 0===b&&(b=1),w=o+r*b,o!==w&&(v=w-o,B=Date.now(),requestAnimationFrame(i))}),void a(this).on("carouselPrev",function(a,b){void 0===b&&(b=1),w=o-r*b,o!==w&&(v=w-o,B=Date.now(),requestAnimationFrame(i))}))})},next:function(b){a(this).trigger("carouselNext",[b])},prev:function(b){a(this).trigger("carouselPrev",[b])}};a.fn.carousel=function(c){return b[c]?b[c].apply(this,Array.prototype.slice.call(arguments,1)):"object"!=typeof c&&c?void a.error("Method "+c+" does not exist on jQuery.carousel"):b.init.apply(this,arguments)}}(jQuery);
 (function(){
 	// externs;
 	
-	tag$.defineTag('app', function(tag){
+	window.onload = function() {
+		return (q$$('#app')).append(tag$.$app().end());
+	};
+	
+	return tag$.defineTag('app', function(tag){
+		
+		tag.prototype.fbContract = function(v){ return this._fbContract; }
+		tag.prototype.setFbContract = function(v){ this._fbContract = v; return this; };
+		tag.prototype.fbId = function(v){ return this._fbId; }
+		tag.prototype.setFbId = function(v){ this._fbId = v; return this; };
 		
 		tag.prototype.build = function (){
-			console.log(dapple.objects);
+			this._fbContract = dapple.objects.feedbase;
+			this._fbId = 0;
 			return this.schedule();
 		};
 		
+		tag.prototype.fbFeed = function (){
+			var thisFeed = this._fbContract.feeds.call(this._fbId);
+			thisFeed.id = this._fbId;
+			return thisFeed;
+		};
+		
 		tag.prototype.render = function (){
+			var t0, t1, t2, t3;
 			return this.setChildren(
-				(this.$a = this.$a || tag$.$img().setSrc('https://makerdao.com/splash/images/logo.svg')).flag('alt','Maker').end()
+				(t0 = this.$a=this.$a || tag$.$div().flag('wrapper')).setContent(
+					(t1 = t0.$$a=t0.$$a || tag$.$div().flag('row')).setContent(
+						(t2 = t1.$$a=t1.$$a || tag$.$div().flag('col').flag('s12').flag('m10').flag('offset-m1').flag('l8').flag('offset-l2')).setContent(
+							(t3 = t2.$$a=t2.$$a || tag$.$div().flag('card-panel')).setContent([
+								(t3.$$a = t3.$$a || tag$.$titleHeader()).end(),
+								(t3.$$b = t3.$$b || tag$.$connectionInfo()).end(),
+								this.fbId() > 0 ? (
+									(t3.$$c = t3.$$c || tag$.$feedDetails()).setFeed(this.fbFeed()).setContract(this.fbContract()).end()
+								) : (
+									(t3.$$d = t3.$$d || tag$.$feedbaseNav()).setContract(this.fbContract()).end()
+								)
+							],1).end()
+						,2).end()
+					,2).end()
+				,2).end()
 			,2).synced();
 		};
 	});
-	
-	return window.onload = function() {
-		return (q$$('#app')).append(tag$.$app().end());
-	};
 
 })();
 (function(){
 	// externs;
 	// externs;
 	
-	var web3 = window.web3 = new Web3();
+	tag$.defineTag('connectionInfo', 'table', function(tag){
+		tag.prototype.render = function (){
+			var t0, self = this, t1;
+			var ethStats = [
+				{text: 'Latest Block',
+				value: ("#" + (web3.eth.blockNumber) + " :\n" + (new Date(web3.eth.getBlock(web3.eth.blockNumber).timestamp*1000).toLocaleString()))},{text: 'Hashrate',
+				value: web3.eth.hashrate},{text: 'Balance',
+				value: ("" + web3.fromWei(web3.eth.getBalance(web3.eth.accounts[0]),'ether'))},{text: 'Account ',
+				value: web3.eth.accounts[0]},{text: 'Contract ',
+				value: dapple.objects.feedbase.address}
+			];
+			
+			return this.flag('connection-info').setChildren(
+				(t0 = self.$a=self.$a || tag$.$tbody()).setContent(
+					(t1 = t0.$$a=t0.$$a || tag$.$tr()).setContent(
+						(function(t1) {
+							for (var i = 0, len = ethStats.length, res = []; i < len; i++) {
+								res.push((t1['$$a' + i] = t1['$$a' + i] || tag$.$statCell()).setObject(ethStats[i]).end());
+							};
+							return res;
+						})(t1)
+					,3).end()
+				,2).end()
+			,2).synced();
+		};
+	});
 	
-	// TODO mist integration
-	var providerUrl = 'http://localhost:8545';
+	return tag$.defineTag('statCell', 'td', function(tag){
+		tag.prototype.render = function (){
+			var t0;
+			return this.setChildren([
+				(t0 = this.$a=this.$a || tag$.$b()).setContent(this.object().text + " ",3).end(),
+				(this.$b = this.$b || tag$.$br()).end(),
+				this.object().value
+			],1).synced();
+		};
+	});
+
+})();
+(function(){
+	// externs;
+	// externs;
 	
-	// connect to local node
-	web3.setProvider(new (web3.providers.HttpProvider)(providerUrl));
 	
-	// initialize dapple contracts
-	dapple.class(web3);
+	return tag$.defineTag('feedDetails', function(tag){
+		
+		tag.prototype.feed = function(v){ return this._feed; }
+		tag.prototype.setFeed = function(v){ this._feed = v; return this; };
+		tag.prototype.contract = function(v){ return this._contract; }
+		tag.prototype.setContract = function(v){ this._contract = v; return this; };
+		
+		tag.prototype.onsubmit = function (e){
+			e.cancel().halt();
+			
+			var formItems = [];
+			jQuery('input',e.target().dom()).each(function() { return formItems.push(jQuery(this).val()); });
+			
+			var callParams = [this.feed().id].concat(formItems).concat({'gas': 3000000});
+			
+			return this.contract()[e.target().dom().name].apply(null,callParams);
+		};
+		
+		tag.prototype.goBack = function (){
+			var v_;
+			return (this.up(q$('._app',this)).setFbId(v_ = 0),v_);
+		};
+		
+		tag.prototype.getValue = function (){
+			return this.contract().get(this.feed().id);
+		};
+		
+		tag.prototype.render = function (){
+			var t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19;
+			return this.setChildren([
+				(this.$a = this.$a || tag$.$div().flag('btn').setHandler('click','goBack',this)).setText('Back').end(),
+				(web3.toAscii(this.feed()[5])) ? (
+					(t0 = this.$b=this.$b || tag$.$h4()).setContent(web3.toAscii(this.feed()[5]),3).end()
+				) : void(0),
+				
+				(!this.feed()[4] && this.feed()[3].toNumber()) ? (
+					(t1 = this.$c=this.$c || tag$.$div().flag('btn').setHandler('click','getValue',this)).setContent(("Get Value - " + (this.feed()[3]) + " DAI"),3).end()
+				) : void(0),
+				
+				(t2 = this.$d=this.$d || tag$.$table()).setContent([
+					(t3 = t2.$$a=t2.$$a || tag$.$tr()).setContent([
+						(t3.$$a = t3.$$a || tag$.$td()).setText('id').end(),
+						(t4 = t3.$$b=t3.$$b || tag$.$td()).setContent(this.feed().id,3).end()
+					],2).end(),
+					(t5 = t2.$$b=t2.$$b || tag$.$tr()).setContent([
+						(t5.$$a = t5.$$a || tag$.$td()).setText('Value').end(),
+						(t6 = t5.$$b=t5.$$b || tag$.$td()).setContent(web3.toAscii(this.contract().get.call(this.feed().id)),3).end()
+					],2).end(),
+					(t7 = t2.$$c=t2.$$c || tag$.$tr()).setContent([
+						(t7.$$a = t7.$$a || tag$.$td()).setText('Onwer').end(),
+						(t8 = t7.$$b=t7.$$b || tag$.$td()).setContent(this.feed()[0],3).end()
+					],2).end(),
+					(t9 = t2.$$d=t2.$$d || tag$.$tr()).setContent([
+						(t9.$$a = t9.$$a || tag$.$td()).setText('Updated').end(),
+						(t10 = t9.$$b=t9.$$b || tag$.$td()).setContent([this.feed()[1].toNumber() ? (new Date(this.feed()[1] * 1000).toLocaleString()) : ('-')],1).end()
+					],2).end(),
+					(t11 = t2.$$e=t2.$$e || tag$.$tr()).setContent([
+						(t11.$$a = t11.$$a || tag$.$td()).setText('Expires').end(),
+						(t12 = t11.$$b=t11.$$b || tag$.$td()).setContent([this.feed()[2].toNumber() ? (new Date(this.feed()[2] * 1000).toLocaleString()) : ('-')],1).end()
+					],2).end(),
+					(t13 = t2.$$f=t2.$$f || tag$.$tr()).setContent([
+						(t13.$$a = t13.$$a || tag$.$td()).setText('Cost').end(),
+						(t14 = t13.$$b=t13.$$b || tag$.$td()).setContent([this.feed()[3].toNumber() ? (this.feed()[3].toNumber()) : ('-')],1).end()
+					],2).end(),
+					(t15 = t2.$$g=t2.$$g || tag$.$tr()).setContent([
+						(t15.$$a = t15.$$a || tag$.$td()).setText('Paid').end(),
+						(t16 = t15.$$b=t15.$$b || tag$.$td()).setContent([this.feed()[4] ? ('Yes') : ('No')],1).end()
+					],2).end()
+				],2).end(),
+				(this.$e = this.$e || tag$.$br()).end(),
+				(t17 = this.$f=this.$f || tag$.$form().setName('setFeed')).setContent([
+					(t17.$$a = t17.$$a || tag$.$input().setPlaceholder('Value')).end(),
+					(t17.$$b = t17.$$b || tag$.$input().setPlaceholder('Date').setType('number')).end(),
+					(t17.$$c = t17.$$c || tag$.$input().setPlaceholder('Name (Public)')).end(),
+					(t17.$$d = t17.$$d || tag$.$button().flag('btn').setType('submit')).setText('Set Feed').end()
+				],2).end(),
+				(this.$g = this.$g || tag$.$br()).end(),
+				(t18 = this.$h=this.$h || tag$.$form().setName('setFeedCost')).setContent([
+					(t18.$$a = t18.$$a || tag$.$input().setPlaceholder('Feed Cost').setType('number')).end(),
+					(t18.$$b = t18.$$b || tag$.$button().flag('btn').setType('submit')).setText('Set Feed Cost').end()
+				],2).end(),
+				(this.$i = this.$i || tag$.$br()).end(),
+				(t19 = this.$j=this.$j || tag$.$form().setName('transfer')).setContent([
+					(t19.$$a = t19.$$a || tag$.$input().setPlaceholder('Address')).end(),
+					(t19.$$b = t19.$$b || tag$.$button().flag('btn').setType('submit')).setText('Transfer Ownership').end()
+				],2).end()
+			],1).synced();
+		};
+	});
+
+})();
+(function(){
+	// externs;
 	
-	// set default account
-	return web3.eth.defaultAccount = web3.eth.accounts[0];
+	return tag$.defineTag('feedbaseNav', function(tag){
+		
+		tag.prototype.contract = function(v){ return this._contract; }
+		tag.prototype.setContract = function(v){ this._contract = v; return this; };
+		
+		tag.prototype.claimNew = function (){
+			var tx;
+			return tx = this.contract().claim();
+			// TODO listen for updates
+		};
+		
+		tag.prototype.setFeedId = function (e){
+			var v_;
+			return (this.up(q$('._app',this)).setFbId(v_ = e.target().value()),v_);
+		};
+		
+		tag.prototype.render = function (){
+			var self = this, t0;
+			return this.setChildren([
+				(t0 = self.$a=self.$a || tag$.$select().flag('browser-default').setHandler('change','setFeedId',self)).setContent([
+					(t0.$$a = t0.$$a || tag$.$option()).setText('Select existing feed').end(),
+					(function(t0) {
+						var t1;
+						for (var len = self.contract().claim.call().toNumber() - 1, i = 1, res = []; i <= len; i++) {
+							res.push((t1 = t0['$$b' + i]=t0['$$b' + i] || tag$.$option()).setValue(i).setContent(("[" + i + "] " + (web3.toAscii(self.contract().feeds.call(i)[5]) || "Untitled")),3).end());
+						};
+						return res;
+					})(t0)
+				],1).end(),
+				(self.$b = self.$b || tag$.$br()).end(),
+				(self.$c = self.$c || tag$.$div().flag('btn').setHandler('click','claimNew',self)).setText('Claim new feed').end()
+			],2).synced();
+		};
+	});
+	
+	
+
+})();
+(function(){
+	return tag$.defineTag('titleHeader', function(tag){
+		tag.prototype.render = function (){
+			var t0;
+			return this.setChildren([
+				(t0 = this.$a=this.$a || tag$.$h1().flag('title-header')).setContent([
+					(t0.$$a = t0.$$a || tag$.$img().setSrc('https://makerdao.com/splash/images/logo.svg')).flag('alt','Maker').end(),
+					'Feedbase'
+				],2).end(),
+				(this.$b = this.$b || tag$.$p()).setText('This is a simple data feed contract which lets you publish small pieces of data that can be updated at any time. Each time a feed is updated with a new value you may set an expiration date for that value. You are also able to put a price on your feed which must be paid by the first person who wants to read its value (for each update).').end()
+			],2).synced();
+		};
+	});
 
 })();
