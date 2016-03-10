@@ -1,6 +1,11 @@
 extern jQuery
+extern web3
+
 
 tag feedDetails
+
+	prop feed
+	prop contract
 
 	def onsubmit e
 		e.cancel.halt
@@ -8,45 +13,51 @@ tag feedDetails
 		var formItems = []
 		jQuery('input', e.target.dom).each do formItems.push jQuery(this).val
 
-		var callParams = [object:id].concat(formItems)
+		var callParams = [feed:id].concat(formItems)
 
-		up(%app).fbContract[e.target.dom:name].apply null, callParams
+		contract[e.target.dom:name].apply null, callParams
 
 	def goBack
 		up(%app).fbId = 0
 
+	def getValue
+		contract.get feed:id
+
+	def formatEther str
+		console.log web3
+		return '0202'
+
 	def render
 		<self>
 			<.btn :click='goBack'> 'Back'
-			<h3> 'Feed ' + object:id
+			<h3> 'Feed ' + feed:id
 
-
-			<.btn :click='get'> 'Get Value'
+			if !feed[4] and feed[3].toNumber
+				<.btn :click='getValue'> "Get Value - {feed[3]} DAI"
 
 			<table>
 				<tr>
 					<td> 'Value'
-					<td> up(%app)?.fbContract:get.call(object:id)
+					<td> web3.toAscii(contract:get.call(feed:id))
 				<tr>
 					<td> 'Onwer'
-					<td> object[0]
+					<td> feed[0]
 				<tr>
 					<td> 'Updated'
-					<td> object[1].toNumber ? Date.new(object[1]*1000).toLocaleString : '-'
+					<td> feed[1].toNumber ? Date.new(feed[1]*1000).toLocaleString : '-'
 				<tr>
 					<td> 'Expires'
-					<td> object[2].toNumber ? Date.new(object[2]*1000).toLocaleString : '-'
+					<td> feed[2].toNumber ? Date.new(feed[2]*1000).toLocaleString : '-'
 				<tr>
 					<td> 'Cost'
-					<td> object[3].toNumber ? object[3].toNumber : '-'
+					<td> feed[3].toNumber ? feed[3].toNumber : '-'
 				<tr>
 					<td> 'Paid'
-					<td> object[4] ? 'Yes' : 'No'
+					<td> feed[4] ? 'Yes' : 'No'
 			<br>
 			<form name='setFeed'>
 				<input placeholder='Value'>
 				<input placeholder='Date' type='number'>
-				# <input placeholder='Expiration Date' type='date'>
 				<button.btn type='submit'> 'Set Feed'
 			<br>
 			<form name='setFeedCost'>

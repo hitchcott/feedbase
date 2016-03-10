@@ -13,7 +13,7 @@ tag app
 		@fbId = 0
 		schedule
 
-	def feed
+	def fbFeed
 		var thisFeed = @fbContract:feeds.call(@fbId)
 		thisFeed:id = @fbId
 		return thisFeed
@@ -27,6 +27,6 @@ tag app
 							<titleHeader>
 							<connectionInfo>
 							if fbId > 0
-								<feedDetails[feed]>
+								<feedDetails feed=fbFeed contract=fbContract>
 							else
-								<feedbaseNav[fbContract]>
+								<feedbaseNav contract=fbContract>

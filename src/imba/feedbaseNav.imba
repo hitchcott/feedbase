@@ -1,7 +1,9 @@
 tag feedbaseNav
 
+	prop contract
+
 	def claimNew
-		object.claim do |err,tx|
+		contract.claim do |err,tx|
 			console.log 'done', err, tx
 
 	def setFeedId e
@@ -11,8 +13,8 @@ tag feedbaseNav
 		<self>
 			<select.browser-default :change='setFeedId'>
 				<option> 'Select existing feed'
-				for i in [1..object:claim.call.toNumber - 1]
-					<option value=i> i + ' - ' + object:feeds.call(i)[0].toString
+				for i in [1..contract:claim.call.toNumber - 1]
+					<option value=i> i + ' - ' + contract:feeds.call(i)[0].toString
 			<br>
 			<.btn :click='claimNew'> 'Claim new feed'
 
