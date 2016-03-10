@@ -14,6 +14,7 @@ contract FeedBase is MakerUser
         uint expiration;
         uint cost;
         bool paid;
+        bytes32 title;
     }
 
     event FeedUpdate( uint64 indexed id );
@@ -28,7 +29,7 @@ contract FeedBase is MakerUser
         }
         _
     }
-    function setFeed(uint64 id, bytes32 value, uint expiration)
+    function setFeed(uint64 id, bytes32 value, uint expiration, bytes32 title)
              feed_owner( id )
     {
         _values[id] = value;
@@ -36,6 +37,7 @@ contract FeedBase is MakerUser
         entry.timestamp = block.timestamp;
         entry.expiration = expiration;
         entry.paid = false;
+        entry.title = title;
         FeedUpdate( id );
     }
     function setFeedCost(uint64 id, uint cost)

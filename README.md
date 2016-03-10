@@ -67,6 +67,8 @@ npm run watch
 
 This will autoamtically rebuild (but not deploy) contracts and run tests (in EVm) against them if they are changed. It will automatically rebuild all frontend files when they are changed, and uses liveReload to refresh the browser.
 
+You can use `npm run deploy` whilst the watcher is running.
+
 For standalone EVM testing use:
 
 ```bash
@@ -78,11 +80,17 @@ npm run test
 ## TODOs
 
 ```
-- Expose / Setter for:
-  - Name
-  - Currency
+- Handle UI Events
+- Expose Name Setter
 - Nicer UI
 - URL Routing
+- Estimate gas properly
+```
+
+## vNext
+```
+- Configurable Currency
 - Mist integration
 - IPFS Deploy
+- Frontend testing
 ```
