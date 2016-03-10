@@ -12,12 +12,21 @@ tag feedDetails
 
 		up(%app).fbContract[e.target.dom:name].apply null, callParams
 
+	def goBack
+		up(%app).fbId = 0
+
 	def render
 		<self>
+			<.btn :click='goBack'> 'Back'
 			<h3> 'Feed ' + object:id
+
+
 			<.btn :click='get'> 'Get Value'
 
 			<table>
+				<tr>
+					<td> 'Value'
+					<td> up(%app)?.fbContract:get.call(object:id)
 				<tr>
 					<td> 'Onwer'
 					<td> object[0]
@@ -29,7 +38,7 @@ tag feedDetails
 					<td> object[2].toNumber ? Date.new(object[2]*1000).toLocaleString : '-'
 				<tr>
 					<td> 'Cost'
-					<td> object[3].toNumber ? "{object[3]}" : '-'
+					<td> object[3].toNumber ? object[3].toNumber : '-'
 				<tr>
 					<td> 'Paid'
 					<td> object[4] ? 'Yes' : 'No'
@@ -44,6 +53,6 @@ tag feedDetails
 				<input placeholder='Feed Cost' type='number'>
 				<button.btn type='submit'> 'Set Feed Cost'
 			<br>
-			<form name='setFeedCost'>
+			<form name='transfer'>
 				<input placeholder='Address'>
 				<button.btn type='submit'> 'Transfer Ownership'
