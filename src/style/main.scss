@@ -30,10 +30,12 @@ body{
 table.connection-info{
   display:table;
   width:100%;
+  margin-top:10px;
   table-layout:fixed;
   td{
     display:table-cell;
     width:5px;
+    padding:5px;
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -56,14 +58,18 @@ table.connection-info{
   .input-field{
     padding-top:7px;
   }
+  &.first-panel{
+    margin-top:20px;
+  }
   &.last-panel{
     margin-bottom:-40px;
   }
+
   input, textarea{
     background:rgba(255,255,255,.5);
     margin:-10px;
     margin-top:10px;
-    margin-bottom:0;
+    margin-bottom:30px;
     font-size:1.8em;
     height:2em;
     padding:0 10px;
@@ -81,9 +87,6 @@ table.connection-info{
   label{
     color:$off-black;
     font-size:1em;
-  }
-  .btn{
-    margin-top:30px;
   }
   .bg-icon{
     pointer-events:none;

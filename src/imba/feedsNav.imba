@@ -15,15 +15,24 @@ tag feedsNav
 
 	def render
 		<self>
-			<.btn :click='claimNew'> 'Claim new feed'
-			<br>
-			<br>
-			if feedItems:length
-				<ul.collection.feed-items>
-					for item in feedItems
-						<feedItem[item]>
-			else
-				<p> 'No Feeds'
+			<.row>
+				if feedItems:length
+					<.row.wide-section.grey.lighten-4>
+						<.col.s12>
+							<.btn.right :click='claimNew'> 'Claim new feed'
+							<h3> 'Feed List'
+							<p> 'If you are an owner of any of the feeds below you can click it to update it\'s details.'
+							<br>
+						<.col.s12>
+							<ul.collection.feed-items>
+								for item in feedItems
+									<feedItem[item]>
+
+					<.row.wide-section.grey.lighten-3.last-panel>
+						<.col.s12>
+							<p> 'Todo navigation'
+				else
+					<p> 'No Feeds'
 
 
 tag feedItem < li

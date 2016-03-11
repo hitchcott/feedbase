@@ -59,13 +59,10 @@ tag feedDetails
 
 	def render
 		<self>
-			<.btn :click='goBack'> 'Back'
-			<br>
-			<br>
-			<br>
 			<.row>
 				<.row.wide-section.grey.lighten-4>
 					<.col.s12>
+						<.btn.right :click='goBack'> 'Back to feeds list'
 						if object.editable
 							<h3> "Edit Feed #{object.id}"
 							<p> 'You are the owner of this feed and can modifying it using the forms below.'
@@ -81,7 +78,7 @@ tag feedDetails
 					<.col.s12>
 						<label> 'Feed Name'
 						<smartInput@title[object.title] type="text" disabled=!object.editable>
-					<.col.s12>
+					<.col.s12.hide>
 						<label> 'Description'
 						<ipfsTextarea@description[object.ipfsHash].materialize-textarea disabled=!object.editable>
 					if object.editable
@@ -97,7 +94,7 @@ tag feedDetails
 						<smartInput@value[object.value] type="text" disabled=!object.editable>
 						if object.timestamp
 							<p> "Last set: {object.formattedDate('timestamp')}"
-					<.col.m6.s12.input-field>
+					<.col.m6.s12>
 						<label> 'Expiry Date'
 						<smartInput@expiration[htmlDate(object.expiration)] type="date" disabled=!object.editable>
 					<.col.s12>

@@ -82,12 +82,12 @@ npm run test
 ```
 - Handle UI Events for transaction pending
 - URL Routing
-- Estimate gas properly
-- IPFS Hash Get
 ```
 
 ## vNext
 ```
+- Estimate gas properly
+- IPFS Hash Get
 - Configurable Currency
 - Mist integration
 - IPFS Deploy
