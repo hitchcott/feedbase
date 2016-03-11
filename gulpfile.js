@@ -60,7 +60,7 @@ gulp.task('bower', function() {
 gulp.task('font', function() {
     return gulp.src(paths.src.bower + '/materialize/font/**/*', { "base" : paths.src.bower + '/materialize/font' })
     .pipe(gulp.dest(paths.dest.root + '/font'));
-});
+})
 
 gulp.task('build-sass', function () {
   return sass(paths.src.sassRoot, {
@@ -74,7 +74,7 @@ gulp.task('build-sass', function () {
   .pipe(concat('app.css'))
   .pipe(gulp.dest(paths.dest.css))
   .pipe(livereload())
-});
+})
 
 gulp.task('clean-js', function () {
   return del([paths.build.js])

@@ -5,7 +5,7 @@ body{
   background:#e2e2e2;
 }
 .wrapper{
-  margin-top:3em;
+  margin-top:2em;
   @media #{$medium-and-down} {
     margin-top:1em;
   }
@@ -36,5 +36,84 @@ table.connection-info{
     width:5px;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+}
+
+.main-panel{
+  max-width: 720px;
+  margin: auto;
+}
+
+.wide-section{
+  margin: 10px -20px;
+  padding: 30px;
+  padding-bottom: 50px;
+  margin-top:-10px;
+  position:relative;
+  p:last-child{
+    margin-bottom:20px;
+  }
+  .input-field{
+    padding-top:7px;
+  }
+  &.last-panel{
+    margin-bottom:-40px;
+  }
+  input{
+    background:rgba(255,255,255,.5);
+    margin:-10px;
+    margin-top:10px;
+    margin-bottom:0;
+    font-size:1.8em;
+    height:2em;
+    padding:0 10px;
+    border-bottom:3px solid rgba(255,255,255,.05)!important;
+    &:focus{
+      box-shadow:none!important;
+      border-bottom:3px solid white!important;
+    }
+  }
+  label{
+    color:$off-black;
+    font-size:1em;
+  }
+  .btn{
+    margin-top:30px;
+  }
+  .bg-icon{
+    pointer-events:none;
+    position:absolute;
+    top:30px;
+    right:30px;
+    margin:0;
+    z-index:0;
+    font-size:6em;
+    line-height:1em;
+    opacity:0.2;
+    color:black;
+  }
+}
+
+.collection-item{
+  cursor:pointer;
+  &:hover{
+    background:rgba(0,0,0,.03);
+  }
+}
+
+.feed-info-table{
+  margin:20px 0px;
+  td, th{
+    padding:5px 0px;
+    &:first-child{
+      text-align: right;
+      padding-right:10px;
+    }
+  }
+  th{
+    color:$secondary-color;
+    font-size:2em;
+    font-weight:100;
+    padding-bottom:30px;
   }
 }

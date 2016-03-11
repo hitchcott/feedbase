@@ -7,7 +7,7 @@ $secondary-color: #68BA9C;
 // $secondary-color: color("teal", "lighten-1");
 // $success-color: color("green", "base");
 // $error-color: color("red", "base");
-// $link-color: color("light-blue", "darken-1");
+$link-color: $secondary-color;
 
 // /*** Badges ***/
 // $badge-bg-color: $secondary-color;
@@ -133,7 +133,7 @@ $secondary-color: #68BA9C;
 // $toast-text-color: #fff;
 
 // /*** Typography ***/
-// $off-black: rgba(0, 0, 0, 0.87);
+$off-black: #5B6778;
 // // Header Styles
 $h1-fontsize: 3rem;
 // $h2-fontsize: 3.56rem;

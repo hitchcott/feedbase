@@ -80,11 +80,10 @@ npm run test
 ## TODOs
 
 ```
-- Handle UI Events
-- Expose Name Setter
-- Nicer UI
+- Handle UI Events for transaction pending
 - URL Routing
 - Estimate gas properly
+- IPFS Hash Get
 ```
 
 ## vNext

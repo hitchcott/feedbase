@@ -1,70 +1,116 @@
 extern jQuery
 extern web3
 
+tag smartInput < input
+
+	def build
+		value = object
+
+	def render
+		<self>
+
 
 tag feedDetails
-
-	prop feed
-	prop contract
 
 	def onsubmit e
 		e.cancel.halt
 
-		var formItems = []
-		jQuery('input', e.target.dom).each do formItems.push jQuery(this).val
+		if e.target.name is 'setFeedInfo'
+			var callParams = [@title.value, @ipfsHash.value]
+		else if e.target.name is 'setFeed'
+			if var parsedDate = Math.round(Date.new(@expiration.value).getTime()/1000)
+				var callParams = [@value.value, parsedDate]
+		else if e.target.name is 'setFeedCost'
+			var callParams = [@cost.value]
+		else if e.target.name is 'transfer'
+			var callParams = [@owner.value]
 
-		var callParams = [feed:id].concat(formItems).concat({'gas': 3000000})
-
-		contract[e.target.dom:name].apply null, callParams
+		if callParams
+			var params = [object.data:id].concat(callParams).concat({'gas': 3000000})
+			object.contract[e.target.name].apply null, params
+			console.log e.target.name, params
 
 	def goBack
-		up(%app).fbId = 0
+		up(%app).setFeedId 0
 
-	def getValue
-		contract.get feed:id
+	def canEdit
+		object.data:owner is web3:eth:accounts[0]
+
+	def htmlDate date
+		if date
+			return date.toISOString.slice(0,10)
+
+	def humanDate date
+		if date
+			date.toLocaleString
 
 	def render
 		<self>
 			<.btn :click='goBack'> 'Back'
-			if web3.toAscii(feed[5])
-				<h4> web3.toAscii(feed[5])
+			<br>
+			<br>
+			<br>
+			<.row>
+				<.row.wide-section.grey.lighten-4>
+					<.col.s12>
+						if canEdit
+							<h3> "Edit Feed #{object.data:id}"
+							<p> 'You are the owner of this feed and can modifying it using the forms below.'
+						else
+							<h3> "Feed #{object.data:id} Details"
+							<p> 'You do not own this feed and cannot modify it.'
 
-			if !feed[4] and feed[3].toNumber
-				<.btn :click='getValue'> "Get Value - {feed[3]} DAI"
+				<form.row.wide-section.green.lighten-5 name='setFeedInfo'>
+					<.col.s12>
+						<i.mdi-action-info-outline.bg-icon.green-text.disabled>
+						<h5> 'Feed Info'
+						<p> 'Publicly visible metadata'
+					<.col.s12.m6>
+						<label> 'Feed Name'
+						<smartInput@title[object.data:title] type="text" disabled=!canEdit >
+					<.col.s12.m6>
+						<label> 'Description IPFS Hash'
+						<smartInput@ipfsHash[object.data:ipfsHash] type="text" disabled=!canEdit >
+					if canEdit
+						<button.btn.green.darken-3 type='submit'> 'Update Feed Info'
 
-			<table>
-				<tr>
-					<td> 'id'
-					<td> feed:id
-				<tr>
-					<td> 'Value'
-					<td> web3.toAscii(contract:get.call(feed:id))
-				<tr>
-					<td> 'Onwer'
-					<td> feed[0]
-				<tr>
-					<td> 'Updated'
-					<td> feed[1].toNumber ? Date.new(feed[1]*1000).toLocaleString : '-'
-				<tr>
-					<td> 'Expires'
-					<td> feed[2].toNumber ? Date.new(feed[2]*1000).toLocaleString : '-'
-				<tr>
-					<td> 'Cost'
-					<td> feed[3].toNumber ? feed[3].toNumber : '-'
-				<tr>
-					<td> 'Paid'
-					<td> feed[4] ? 'Yes' : 'No'
-			<br>
-			<form name='setFeed'>
-				<input placeholder='Value'>
-				<input placeholder='Date' type='number'>
-				<input placeholder='Name (Public)'>
-				<button.btn type='submit'> 'Set Feed'
-			<br>
-			<form name='setFeedCost'>
-				<input placeholder='Feed Cost' type='number'>
-				<button.btn type='submit'> 'Set Feed Cost'
-			<br>
-			<form name='transfer'>
-				<input placeholder='Address'>
-				<button.btn type='submit'> 'Transfer Ownership'
+				<form.row.wide-section.orange.lighten-5 name='setFeed'>
+					<.col.s12>
+						<i.mdi-communication-message.bg-icon.orange-text>
+						<h5> 'Feed Data'
+						<p> 'Data made available for a specified duration'
+					<.col.m6.s12>
+						<label> 'Feed Value'
+						<smartInput@value[object.data:value] type="text" disabled=!canEdit >
+						if object.data:timestamp
+							<p> "Last set: {object.formattedDate('timestamp')}"
+					<.col.m6.s12>
+						<label> 'Expiry Date'
+						<smartInput@expiration[htmlDate(object.data:expiration)] type="date" disabled=!canEdit >
+					<.col.s12>
+						if canEdit
+							<button.btn.orange.darken-3 type='submit'> 'Update Feed Data'
+
+				<form.row.wide-section.light-blue.lighten-5 name='setFeedCost'>
+					<.col.s12>
+						<i.mdi-editor-attach-money.bg-icon.light-blue-text>
+						<h5> 'Fee for First Request'
+						<p> 'When another contract gets the data from this feed, a fee must be paid'
+					<.col.s12>
+						<label> 'Usage Fee in Dai'
+						<smartInput@cost[object.data:cost] type="number" disabled=!canEdit >
+					<.col.s12>
+						if canEdit
+							<button.btn.light-blue.darken-3 type='submit'> 'Set Price'
+
+				<form.row.wide-section.purple.lighten-5.last-panel name='transfer'>
+					<.col.s12>
+						<i.mdi-social-person-add.bg-icon.lighten-5.purple-text>
+						<h5> 'Ownership'
+						<p> 'Feed data can only be modifid by it\'s owner\'s address'
+					<.col.s12>
+						<label> 'Owner Address'
+						<smartInput@owner[object.data:owner] type="text" disabled=(!canEdit)>
+					<.col.s12>
+						if canEdit
+							<button.btn.purple.darken-3 type='submit'> 'Transfer Owner Address'
