@@ -7,43 +7,72 @@ window:onload = do
 
 class Feed
 
-	prop feed
-	prop data
 	prop contract
+	prop feed
+	prop id
+	prop value
+	prop owner
+	prop timestamp
+	prop expiration
+	prop cost
+	prop paid
+	prop title
+	prop ipfsHash
+	prop transacting
+
+	def initialize contract, id
+		@transacting = {}
+		@contract = contract
+		@id = id
+		getData
+		console.log 'initialized'
+
+	def getData
+		@feed = contract:feeds.call(id)
+		@value = formattedString(contract:get.call(id))
+		@owner = feed[0]
+		@timestamp = feed[1].toNumber ? Date.new(feed[1].toNumber*1000) : ''
+		@expiration = feed[2].toNumber ? Date.new(feed[2].toNumber*1000) : ''
+		@cost = feed[3].toNumber
+		@paid = feed[4] ? "Yes" : "No"
+		@title = formattedString(feed[5])
+		@ipfsHash = formattedString(feed[6])
+
+	def editable
+		owner is web3:eth:accounts[0]
 
 	def formattedCost
-		@data:cost ? "⬙ {@data:cost}" : "Free"
+		cost ? "⬙ {cost}" : "Free"
 
 	def formattedDate kind
-		@data[kind] ? @data[kind].toLocaleString : ""
+		this[kind]().toLocaleString
 
 	def formattedString str
 		web3.toAscii(str).replace(/\0[\s\S]*$/g,'').trim
 
-	def initialize contract, id
-		@contract = contract
-		@feed = contract:feeds.call(id)
-		@data = {
-			id: id
-			value: formattedString(contract:get.call(id))
-			owner: feed[0]
-			timestamp: feed[1].toNumber ? Date.new(feed[1].toNumber*1000) : 0
-			expiration: feed[2].toNumber ? Date.new(feed[2].toNumber*1000) : 0
-			cost: feed[3].toNumber
-			paid: feed[4] ? "Yes" : "No"
-			title: formattedString(feed[5])
-			ipfsHash: formattedString(feed[6])
-		}
+	def call kind, args
+		var params = [@id].concat(args).concat({'gas': 3000000})
+		@contract[kind].apply null, params
+		@transacting[kind] = true
+		console.log kind, params
+		# TODO keep track of transaction
+
 
 class FeedBase
 
 	prop contract
+	prop feeds
 
 	def initialize web3Contract
+		@feeds = {}
 		@contract = web3Contract
 
 	def feed id
-		Feed.new(contract, id)
+		# only spawn once
+		if !feeds[id]
+			feeds[id] = Feed.new(contract, id)
+
+		return feeds[id]
 
 tag app
 
@@ -71,7 +100,9 @@ tag app
 				<.row>
 					<.col.s12.m10.offset-m1.l8.offset-l2>
 						<.card-panel.main-panel>
-							<titleHeader>
+							<h1.title-header>
+								<img src='https://makerdao.com/splash/images/logo.svg'>
+								'Feedbase'
 							if currentFeed
 								<connectionInfo>
 								<feedDetails[currentFeed]@{feedId}>

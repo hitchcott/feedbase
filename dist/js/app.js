@@ -40953,50 +40953,92 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 	
 	
 	function Feed(contract,id){
+		this._transacting = {};
 		this._contract = contract;
-		this._feed = contract.feeds.call(id);
-		this._data = {
-			id: id,
-			value: this.formattedString(contract.get.call(id)),
-			owner: this.feed()[0],
-			timestamp: this.feed()[1].toNumber() ? (new Date(this.feed()[1].toNumber() * 1000)) : (0),
-			expiration: this.feed()[2].toNumber() ? (new Date(this.feed()[2].toNumber() * 1000)) : (0),
-			cost: this.feed()[3].toNumber(),
-			paid: this.feed()[4] ? ("Yes") : ("No"),
-			title: this.formattedString(this.feed()[5]),
-			ipfsHash: this.formattedString(this.feed()[6])
-		};
+		this._id = id;
+		this.getData();
+		console.log('initialized');
 	};
-	Feed.prototype.feed = function(v){ return this._feed; }
-	Feed.prototype.setFeed = function(v){ this._feed = v; return this; };
-	Feed.prototype.data = function(v){ return this._data; }
-	Feed.prototype.setData = function(v){ this._data = v; return this; };
+	
 	Feed.prototype.contract = function(v){ return this._contract; }
 	Feed.prototype.setContract = function(v){ this._contract = v; return this; };
+	Feed.prototype.feed = function(v){ return this._feed; }
+	Feed.prototype.setFeed = function(v){ this._feed = v; return this; };
+	Feed.prototype.id = function(v){ return this._id; }
+	Feed.prototype.setId = function(v){ this._id = v; return this; };
+	Feed.prototype.value = function(v){ return this._value; }
+	Feed.prototype.setValue = function(v){ this._value = v; return this; };
+	Feed.prototype.owner = function(v){ return this._owner; }
+	Feed.prototype.setOwner = function(v){ this._owner = v; return this; };
+	Feed.prototype.timestamp = function(v){ return this._timestamp; }
+	Feed.prototype.setTimestamp = function(v){ this._timestamp = v; return this; };
+	Feed.prototype.expiration = function(v){ return this._expiration; }
+	Feed.prototype.setExpiration = function(v){ this._expiration = v; return this; };
+	Feed.prototype.cost = function(v){ return this._cost; }
+	Feed.prototype.setCost = function(v){ this._cost = v; return this; };
+	Feed.prototype.paid = function(v){ return this._paid; }
+	Feed.prototype.setPaid = function(v){ this._paid = v; return this; };
+	Feed.prototype.title = function(v){ return this._title; }
+	Feed.prototype.setTitle = function(v){ this._title = v; return this; };
+	Feed.prototype.ipfsHash = function(v){ return this._ipfsHash; }
+	Feed.prototype.setIpfsHash = function(v){ this._ipfsHash = v; return this; };
+	Feed.prototype.transacting = function(v){ return this._transacting; }
+	Feed.prototype.setTransacting = function(v){ this._transacting = v; return this; };
+	
+	Feed.prototype.getData = function (){
+		this._feed = this.contract().feeds.call(this.id());
+		this._value = this.formattedString(this.contract().get.call(this.id()));
+		this._owner = this.feed()[0];
+		this._timestamp = this.feed()[1].toNumber() ? (new Date(this.feed()[1].toNumber() * 1000)) : ('');
+		this._expiration = this.feed()[2].toNumber() ? (new Date(this.feed()[2].toNumber() * 1000)) : ('');
+		this._cost = this.feed()[3].toNumber();
+		this._paid = this.feed()[4] ? ("Yes") : ("No");
+		this._title = this.formattedString(this.feed()[5]);
+		return this._ipfsHash = this.formattedString(this.feed()[6]);
+	};
+	
+	Feed.prototype.editable = function (){
+		return this.owner() == web3.eth.accounts[0];
+	};
 	
 	Feed.prototype.formattedCost = function (){
-		return this._data.cost ? (("⬙ " + (this._data.cost))) : ("Free");
+		return this.cost() ? (("⬙ " + this.cost())) : ("Free");
 	};
 	
 	Feed.prototype.formattedDate = function (kind){
-		return this._data[kind] ? (this._data[kind].toLocaleString()) : ("");
+		return this[kind]().toLocaleString();
 	};
 	
 	Feed.prototype.formattedString = function (str){
 		return web3.toAscii(str).replace(/\0[\s\S]*$/g,'').trim();
 	};
 	
+	Feed.prototype.call = function (kind,args){
+		var params = [this._id].concat(args).concat({'gas': 3000000});
+		this._contract[kind].apply(null,params);
+		this._transacting[kind] = true;
+		return console.log(kind,params);
+		// TODO keep track of transaction
+	};
 	
 	
 	function FeedBase(web3Contract){
+		this._feeds = {};
 		this._contract = web3Contract;
 	};
 	
 	FeedBase.prototype.contract = function(v){ return this._contract; }
 	FeedBase.prototype.setContract = function(v){ this._contract = v; return this; };
+	FeedBase.prototype.feeds = function(v){ return this._feeds; }
+	FeedBase.prototype.setFeeds = function(v){ this._feeds = v; return this; };
 	
 	FeedBase.prototype.feed = function (id){
-		return new Feed(this.contract(),id);
+		// only spawn once
+		if (!this.feeds()[id]) {
+			this.feeds()[id] = new Feed(this.contract(),id);
+		};
+		
+		return this.feeds()[id];
 	};
 	
 	return tag$.defineTag('app', function(tag){
@@ -41026,13 +41068,16 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 		};
 		
 		tag.prototype.render = function (){
-			var t0, t1, t2, t3;
+			var t0, t1, t2, t3, t4;
 			return this.setChildren(
 				(t0 = this.$a=this.$a || tag$.$div().flag('wrapper')).setContent(
 					(t1 = t0.$$a=t0.$$a || tag$.$div().flag('row')).setContent(
 						(t2 = t1.$$a=t1.$$a || tag$.$div().flag('col').flag('s12').flag('m10').flag('offset-m1').flag('l8').flag('offset-l2')).setContent(
 							(t3 = t2.$$a=t2.$$a || tag$.$div().flag('card-panel').flag('main-panel')).setContent([
-								(t3.$$a = t3.$$a || tag$.$titleHeader()).end(),
+								(t4 = t3.$$a=t3.$$a || tag$.$h1().flag('title-header')).setContent([
+									(t4.$$a = t4.$$a || tag$.$img().setSrc('https://makerdao.com/splash/images/logo.svg')).end(),
+									'Feedbase'
+								],2).end(),
 								this.currentFeed() ? (Imba.static([
 									(t3.$$b = t3.$$b || tag$.$connectionInfo()).end(),
 									(t3['_' + this.feedId()] = t3['_' + this.feedId()] || tag$.$feedDetails()).setObject(this.currentFeed()).end()
@@ -41133,37 +41178,51 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 	});
 	
 	
+	tag$.defineTag('ipfsTextarea', 'textarea', function(tag){
+		
+		tag.prototype.originalText = function(v){ return this._originalText; }
+		tag.prototype.setOriginalText = function(v){ this._originalText = v; return this; };
+		
+		tag.prototype.build = function (){
+			// get IPFS
+			var $1, v_;
+			return (this.setValue($1 = (this.setOriginalText(v_ = 'Some data from IPFS'),v_)),$1);
+		};
+		
+		tag.prototype.render = function (){
+			return this.setChildren(this.value(),3).synced();
+		};
+	});
+	
+	
 	return tag$.defineTag('feedDetails', function(tag){
 		
 		tag.prototype.onsubmit = function (e){
-			var parsedDate;
+			var v_, parsedDate;
 			e.cancel().halt();
 			
 			if (e.target().name() == 'setFeedInfo') {
-				var callParams = [this._title.value(),this._ipfsHash.value()];
+				// get IPFS hash if the content is different
+				if (this._description.value() != this._description.originalText()) {
+					console.log('changed text');
+					return (this._description.setOriginalText(v_ = this._description.value()),v_);
+				} else {
+					return this.object().call('setFeedInfo',[this._title.value(),this.object().ipfsHash()]);
+				};
 			} else if (e.target().name() == 'setFeed') {
 				if (parsedDate = Math.round(new Date(this._expiration.value()).getTime() / 1000)) {
-					callParams = [this._value.value(),parsedDate];
+					return this.object().call('setFeed',[this._value.value(),parsedDate]);
 				};
 			} else if (e.target().name() == 'setFeedCost') {
-				callParams = [this._cost.value()];
+				return this.object().call('setFeedCost',[this._cost.value()]);
 			} else if (e.target().name() == 'transfer') {
-				callParams = [this._owner.value()];
-			};
-			
-			if (callParams) {
-				var params = [this.object().data().id].concat(callParams).concat({'gas': 3000000});
-				this.object().contract()[e.target().name()].apply(null,params);
-				return console.log(e.target().name(),params);
+				return this.object().call('transfer',[this._owner.value()]);
 			};
 		};
+		
 		
 		tag.prototype.goBack = function (){
 			return this.up(q$('._app',this)).setFeedId(0);
-		};
-		
-		tag.prototype.canEdit = function (){
-			return this.object().data().owner == web3.eth.accounts[0];
 		};
 		
 		tag.prototype.htmlDate = function (date){
@@ -41188,11 +41247,11 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 				(t0 = this.$e=this.$e || tag$.$div().flag('row')).setContent([
 					(t1 = t0.$$a=t0.$$a || tag$.$div().flag('row').flag('wide-section').flag('grey').flag('lighten-4')).setContent(
 						(t2 = t1.$$a=t1.$$a || tag$.$div().flag('col').flag('s12')).setContent([
-							this.canEdit() ? (Imba.static([
-								(t3 = t2.$$a=t2.$$a || tag$.$h3()).setContent(("Edit Feed #" + (this.object().data().id)),3).end(),
+							this.object().editable() ? (Imba.static([
+								(t3 = t2.$$a=t2.$$a || tag$.$h3()).setContent(("Edit Feed #" + (this.object().id())),3).end(),
 								(t2.$$b = t2.$$b || tag$.$p()).setText('You are the owner of this feed and can modifying it using the forms below.').end()
 							],2)) : (Imba.static([
-								(t4 = t2.$$c=t2.$$c || tag$.$h3()).setContent(("Feed #" + (this.object().data().id) + " Details"),3).end(),
+								(t4 = t2.$$c=t2.$$c || tag$.$h3()).setContent(("Feed #" + (this.object().id()) + " Details"),3).end(),
 								(t2.$$d = t2.$$d || tag$.$p()).setText('You do not own this feed and cannot modify it.').end()
 							],3))
 						],1).end()
@@ -41200,19 +41259,19 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 					
 					(t5 = t0.$$b=t0.$$b || tag$.$form().flag('row').flag('wide-section').flag('green').flag('lighten-5').setName('setFeedInfo')).setContent([
 						(t6 = t5.$$a=t5.$$a || tag$.$div().flag('col').flag('s12')).setContent([
-							(t6.$$a = t6.$$a || tag$.$i().flag('mdi-action-info-outline').flag('bg-icon').flag('green-text').flag('disabled')).end(),
+							(t6.$$a = t6.$$a || tag$.$i().flag('mdi-action-info-outline').flag('bg-icon').flag('green-text')).end(),
 							(t6.$$b = t6.$$b || tag$.$h5()).setText('Feed Info').end(),
-							(t6.$$c = t6.$$c || tag$.$p()).setText('Publicly visible metadata').end()
+							(t6.$$c = t6.$$c || tag$.$p()).setText('Publicly visible meta data').end()
 						],2).end(),
-						(t7 = t5.$$b=t5.$$b || tag$.$div().flag('col').flag('s12').flag('m6')).setContent([
+						(t7 = t5.$$b=t5.$$b || tag$.$div().flag('col').flag('s12')).setContent([
 							(t7.$$a = t7.$$a || tag$.$label()).setText('Feed Name').end(),
-							(this._title = this._title || tag$.$smartInput().setRef('title',this).setType("text")).setDisabled(!(this.canEdit())).setObject(this.object().data().title).end()
+							(this._title = this._title || tag$.$smartInput().setRef('title',this).setType("text")).setDisabled(!this.object().editable()).setObject(this.object().title()).end()
 						],2).end(),
-						(t8 = t5.$$c=t5.$$c || tag$.$div().flag('col').flag('s12').flag('m6')).setContent([
-							(t8.$$a = t8.$$a || tag$.$label()).setText('Description IPFS Hash').end(),
-							(this._ipfsHash = this._ipfsHash || tag$.$smartInput().setRef('ipfsHash',this).setType("text")).setDisabled(!(this.canEdit())).setObject(this.object().data().ipfsHash).end()
+						(t8 = t5.$$c=t5.$$c || tag$.$div().flag('col').flag('s12')).setContent([
+							(t8.$$a = t8.$$a || tag$.$label()).setText('Description').end(),
+							(this._description = this._description || tag$.$ipfsTextarea().setRef('description',this).flag('materialize-textarea')).setDisabled(!this.object().editable()).setObject(this.object().ipfsHash()).end()
 						],2).end(),
-						(this.canEdit()) ? (
+						(this.object().editable()) ? (
 							(t5.$$d = t5.$$d || tag$.$button().flag('btn').flag('green').flag('darken-3').setType('submit')).setText('Update Feed Info').end()
 						) : void(0)
 					],1).end(),
@@ -41225,17 +41284,17 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 						],2).end(),
 						(t11 = t9.$$b=t9.$$b || tag$.$div().flag('col').flag('m6').flag('s12')).setContent([
 							(t11.$$a = t11.$$a || tag$.$label()).setText('Feed Value').end(),
-							(this._value = this._value || tag$.$smartInput().setRef('value',this).setType("text")).setDisabled(!(this.canEdit())).setObject(this.object().data().value).end(),
-							(this.object().data().timestamp) ? (
+							(this._value = this._value || tag$.$smartInput().setRef('value',this).setType("text")).setDisabled(!this.object().editable()).setObject(this.object().value()).end(),
+							(this.object().timestamp()) ? (
 								(t12 = t11.$$c=t11.$$c || tag$.$p()).setContent(("Last set: " + this.object().formattedDate('timestamp')),3).end()
 							) : void(0)
 						],1).end(),
-						(t13 = t9.$$c=t9.$$c || tag$.$div().flag('col').flag('m6').flag('s12')).setContent([
+						(t13 = t9.$$c=t9.$$c || tag$.$div().flag('col').flag('m6').flag('s12').flag('input-field')).setContent([
 							(t13.$$a = t13.$$a || tag$.$label()).setText('Expiry Date').end(),
-							(this._expiration = this._expiration || tag$.$smartInput().setRef('expiration',this).setType("date")).setDisabled(!(this.canEdit())).setObject(this.htmlDate(this.object().data().expiration)).end()
+							(this._expiration = this._expiration || tag$.$smartInput().setRef('expiration',this).setType("date")).setDisabled(!this.object().editable()).setObject(this.htmlDate(this.object().expiration())).end()
 						],2).end(),
 						(t14 = t9.$$d=t9.$$d || tag$.$div().flag('col').flag('s12')).setContent([
-							(this.canEdit()) ? (
+							(this.object().editable()) ? (
 								(t14.$$a = t14.$$a || tag$.$button().flag('btn').flag('orange').flag('darken-3').setType('submit')).setText('Update Feed Data').end()
 							) : void(0)
 						],1).end()
@@ -41245,15 +41304,19 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 						(t16 = t15.$$a=t15.$$a || tag$.$div().flag('col').flag('s12')).setContent([
 							(t16.$$a = t16.$$a || tag$.$i().flag('mdi-editor-attach-money').flag('bg-icon').flag('light-blue-text')).end(),
 							(t16.$$b = t16.$$b || tag$.$h5()).setText('Fee for First Request').end(),
-							(t16.$$c = t16.$$c || tag$.$p()).setText('When another contract gets the data from this feed, a fee must be paid').end()
+							(t16.$$c = t16.$$c || tag$.$p()).setText('When another contract gets data from this feed, a fee must be paid').end()
 						],2).end(),
 						(t17 = t15.$$b=t15.$$b || tag$.$div().flag('col').flag('s12')).setContent([
 							(t17.$$a = t17.$$a || tag$.$label()).setText('Usage Fee in Dai').end(),
-							(this._cost = this._cost || tag$.$smartInput().setRef('cost',this).setType("number")).setDisabled(!(this.canEdit())).setObject(this.object().data().cost).end()
+							(this._cost = this._cost || tag$.$smartInput().setRef('cost',this).setType("number")).setDisabled(!this.object().editable()).setObject(this.object().cost()).end()
 						],2).end(),
 						(t18 = t15.$$c=t15.$$c || tag$.$div().flag('col').flag('s12')).setContent([
-							(this.canEdit()) ? (
-								(t18.$$a = t18.$$a || tag$.$button().flag('btn').flag('light-blue').flag('darken-3').setType('submit')).setText('Set Price').end()
+							(this.object().editable()) ? (
+								this.object().transacting().setFeedCost ? (
+									(t18.$$a = t18.$$a || tag$.$p()).setText('TX Pending...').end()
+								) : (
+									(t18.$$b = t18.$$b || tag$.$button().flag('btn').flag('light-blue').flag('darken-3').setType('submit')).setText('Set Price').end()
+								)
 							) : void(0)
 						],1).end()
 					],2).end(),
@@ -41262,14 +41325,14 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 						(t20 = t19.$$a=t19.$$a || tag$.$div().flag('col').flag('s12')).setContent([
 							(t20.$$a = t20.$$a || tag$.$i().flag('mdi-social-person-add').flag('bg-icon').flag('lighten-5').flag('purple-text')).end(),
 							(t20.$$b = t20.$$b || tag$.$h5()).setText('Ownership').end(),
-							(t20.$$c = t20.$$c || tag$.$p()).setText('Feed data can only be modifid by it\'s owner\'s address').end()
+							(t20.$$c = t20.$$c || tag$.$p()).setText('Feed can only be modifid by it\'s owner\'s address').end()
 						],2).end(),
 						(t21 = t19.$$b=t19.$$b || tag$.$div().flag('col').flag('s12')).setContent([
 							(t21.$$a = t21.$$a || tag$.$label()).setText('Owner Address').end(),
-							(this._owner = this._owner || tag$.$smartInput().setRef('owner',this).setType("text")).setDisabled((!(this.canEdit()))).setObject(this.object().data().owner).end()
+							(this._owner = this._owner || tag$.$smartInput().setRef('owner',this).setType("text")).setDisabled(!this.object().editable()).setObject(this.object().owner()).end()
 						],2).end(),
 						(t22 = t19.$$c=t19.$$c || tag$.$div().flag('col').flag('s12')).setContent([
-							(this.canEdit()) ? (
+							(this.object().editable()) ? (
 								(t22.$$a = t22.$$a || tag$.$button().flag('btn').flag('purple').flag('darken-3').setType('submit')).setText('Transfer Owner Address').end()
 							) : void(0)
 						],1).end()
@@ -41293,7 +41356,8 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 		
 		tag.prototype.feedItems = function (){
 			var items = [];
-			for (var len = this.object().contract().claim.call().toNumber(), i = 1; i < len; i++) {
+			var totalItems = this.object().contract().claim.call().toNumber();
+			for (var len = totalItems, i = totalItems - 5; i < len; i++) {
 				items.unshift(this.object().feed(i));
 			};
 			return items;
@@ -41325,25 +41389,31 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 	return tag$.defineTag('feedItem', 'li', function(tag){
 		
 		tag.prototype.setFeedId = function (){
-			return this.up(q$('._app',this)).setFeedId(this.object().data().id);
+			if (this.object().editable()) {
+				return this.up(q$('._app',this)).setFeedId(this.object().id());
+			};
 		};
 		
 		tag.prototype.render = function (){
 			var t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15;
-			var data = this.object().data();
-			return this.flag('collection-item').setHandler('click','setFeedId',this).setChildren(
+			return this.flag('collection-item').setHandler('click','setFeedId',this).flag('editable',this.object().editable()).setChildren(
 				(t0 = this.$a=this.$a || tag$.$table().flag('feed-info-table').flag('highlight')).setContent([
 					(t1 = t0.$$a=t0.$$a || tag$.$tr()).setContent([
-						(t2 = t1.$$a=t1.$$a || tag$.$th()).setContent(("#" + (data.id)),3).end(),
-						(t3 = t1.$$b=t1.$$b || tag$.$th()).setContent(data.title,3).end()
+						(t2 = t1.$$a=t1.$$a || tag$.$th()).setContent(("#" + (this.object().id())),3).end(),
+						(t3 = t1.$$b=t1.$$b || tag$.$th()).setContent(this.object().title(),3).end()
 					],2).end(),
 					(t4 = t0.$$b=t0.$$b || tag$.$tr()).setContent([
 						(t4.$$a = t4.$$a || tag$.$td()).setText('Owner').end(),
-						(t5 = t4.$$b=t4.$$b || tag$.$td()).setContent(data.owner,3).end()
+						(t5 = t4.$$b=t4.$$b || tag$.$td().flag('hilight-editable')).setContent([
+							this.object().owner(),
+							(this.object().editable()) ? (
+								' (You)'
+							) : void(0)
+						],1).end()
 					],2).end(),
 					(t6 = t0.$$c=t0.$$c || tag$.$tr()).setContent([
 						(t6.$$a = t6.$$a || tag$.$td()).setText('Value').end(),
-						(t7 = t6.$$b=t6.$$b || tag$.$td()).setContent(data.value,3).end()
+						(t7 = t6.$$b=t6.$$b || tag$.$td()).setContent(this.object().value(),3).end()
 					],2).end(),
 					(t8 = t0.$$d=t0.$$d || tag$.$tr()).setContent([
 						(t8.$$a = t8.$$a || tag$.$td()).setText('Updated').end(),
@@ -41359,7 +41429,7 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 					],2).end(),
 					(t14 = t0.$$g=t0.$$g || tag$.$tr()).setContent([
 						(t14.$$a = t14.$$a || tag$.$td()).setText('Paid').end(),
-						(t15 = t14.$$b=t14.$$b || tag$.$td()).setContent(data.paid,3).end()
+						(t15 = t14.$$b=t14.$$b || tag$.$td()).setContent(this.object().paid(),3).end()
 					],2).end()
 				],2).end()
 			,2).synced();
@@ -41371,13 +41441,7 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 (function(){
 	return tag$.defineTag('titleHeader', function(tag){
 		tag.prototype.render = function (){
-			var t0;
-			return this.setChildren(
-				(t0 = this.$a=this.$a || tag$.$h1().flag('title-header')).setContent([
-					(t0.$$a = t0.$$a || tag$.$img().setSrc('https://makerdao.com/splash/images/logo.svg')).flag('alt','Maker').end(),
-					'Feedbase'
-				],2).end()
-			,2).synced();
+			return this.synced();
 		};
 	});
 

@@ -8,7 +8,8 @@ tag feedsNav
 
 	def feedItems
 		var items = []
-		for i in [1...object.contract:claim.call().toNumber()]
+		var totalItems = object.contract:claim.call().toNumber()
+		for i in [totalItems - 5 ... totalItems]
 			items.unshift(object.feed(i))
 		return items
 
@@ -28,21 +29,24 @@ tag feedsNav
 tag feedItem < li
 
 	def setFeedId
-		up(%app).setFeedId object.data:id
+		if object.editable
+			up(%app).setFeedId object.id
 
 	def render
-		var data = object.data
-		<self.collection-item :click='setFeedId'>
+		<self.collection-item :click='setFeedId' .editable=object.editable>
 			<table.feed-info-table.highlight>
 				<tr>
-					<th> "#{data:id}"
-					<th> data:title
+					<th> "#{object.id}"
+					<th> object.title
 				<tr>
 					<td> 'Owner'
-					<td> data:owner
+					<td.hilight-editable>
+						object.owner
+						if object.editable
+							' (You)'
 				<tr>
 					<td> 'Value'
-					<td> data:value
+					<td> object.value
 				<tr>
 					<td> 'Updated'
 					<td> object.formattedDate('timestamp')
@@ -54,5 +58,5 @@ tag feedItem < li
 					<td> object.formattedCost
 				<tr>
 					<td> 'Paid'
-					<td> data:paid
+					<td> object.paid
 

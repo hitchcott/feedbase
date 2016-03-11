@@ -59,7 +59,7 @@ table.connection-info{
   &.last-panel{
     margin-bottom:-40px;
   }
-  input{
+  input, textarea{
     background:rgba(255,255,255,.5);
     margin:-10px;
     margin-top:10px;
@@ -72,6 +72,11 @@ table.connection-info{
       box-shadow:none!important;
       border-bottom:3px solid white!important;
     }
+  }
+  textarea{
+    padding-top:0.5em;
+    height:10em;
+    font-size:1.4em;
   }
   label{
     color:$off-black;
@@ -97,7 +102,13 @@ table.connection-info{
 .collection-item{
   cursor:pointer;
   &:hover{
-    background:rgba(0,0,0,.03);
+    background:rgba($secondary-color, 0.1);
+  }
+  &.editable{
+    .hilight-editable{
+      color:$secondary-color;
+      font-weight:bold;
+    }
   }
 }
 
