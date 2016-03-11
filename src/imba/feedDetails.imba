@@ -21,7 +21,6 @@ tag ipfsTextarea < textarea
 	def render
 		<self> value
 
-
 tag feedDetails
 
 	def onsubmit e
@@ -36,6 +35,7 @@ tag feedDetails
 				object.call 'setFeedInfo', [@title.value, object.ipfsHash]
 
 		else if e.target.name is 'setFeed'
+			# format the date correctly
 			if var parsedDate = Math.round(Date.new(@expiration.value).getTime()/1000)
 				object.call 'setFeed', [@value.value, parsedDate]
 
@@ -60,7 +60,7 @@ tag feedDetails
 	def render
 		<self>
 			<.row>
-				<.row.wide-section.grey.lighten-4>
+				<.row.wide-section>
 					<.col.s12>
 						<.btn.right :click='goBack'> 'Back to feeds list'
 						if object.editable
@@ -69,7 +69,7 @@ tag feedDetails
 						else
 							<h3> "Feed #{object.id} Details"
 							<p> 'You do not own this feed and cannot modify it.'
-
+				# TODO convert these into reusable components
 				<form.row.wide-section.green.lighten-5 name='setFeedInfo'>
 					<.col.s12>
 						<i.mdi-action-info-outline.bg-icon.green-text>
@@ -81,8 +81,12 @@ tag feedDetails
 					<.col.s12.hide>
 						<label> 'Description'
 						<ipfsTextarea@description[object.ipfsHash].materialize-textarea disabled=!object.editable>
-					if object.editable
-						<button.btn.green.darken-3 type='submit'> 'Update Feed Info'
+					<.col.s12>
+						if object.editable
+							if object.transacting:setFeedInfo
+								<txPending>
+							else
+								<button.btn.green.darken-3 type='submit'> 'Update Feed Info'
 
 				<form.row.wide-section.orange.lighten-5 name='setFeed'>
 					<.col.s12>
@@ -99,7 +103,10 @@ tag feedDetails
 						<smartInput@expiration[htmlDate(object.expiration)] type="date" disabled=!object.editable>
 					<.col.s12>
 						if object.editable
-							<button.btn.orange.darken-3 type='submit'> 'Update Feed Data'
+							if object.transacting:setFeed
+								<txPending>
+							else
+								<button.btn.orange.darken-3 type='submit'> 'Update Feed Data'
 
 				<form.row.wide-section.light-blue.lighten-5 name='setFeedCost'>
 					<.col.s12>
@@ -112,7 +119,7 @@ tag feedDetails
 					<.col.s12>
 						if object.editable
 							if object.transacting:setFeedCost
-								<p> 'TX Pending...'
+								<txPending>
 							else
 								<button.btn.light-blue.darken-3 type='submit'> 'Set Price'
 
@@ -126,4 +133,7 @@ tag feedDetails
 						<smartInput@owner[object.owner] type="text" disabled=!object.editable>
 					<.col.s12>
 						if object.editable
-							<button.btn.purple.darken-3 type='submit'> 'Transfer Owner Address'
+							if object.transacting:transfer
+								<txPending>
+							else
+								<button.btn.purple.darken-3 type='submit'> 'Transfer Owner Address'

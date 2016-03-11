@@ -40947,8 +40947,11 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 	// externs;
 	// externs;
 	
+	window.app = undefined;
+	
 	window.onload = function() {
-		return (q$$('#app')).append(tag$.$app().end());
+		window.app = tag$.$app().end();
+		return (q$$('#app')).append(window.app);
 	};
 	
 	
@@ -41014,17 +41017,22 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 	};
 	
 	Feed.prototype.call = function (kind,args){
-		var params = [this._id].concat(args).concat({'gas': 3000000});
-		this._contract[kind].apply(null,params);
-		this._transacting[kind] = true;
-		return console.log(kind,params);
-		// TODO keep track of transaction
-		// getData when transaction is complete
+		var self = this, interval;
+		var params = [self._id].concat(args).concat({'gas': 3000000});
+		self.transacting()[kind] = true;
+		var newTx = self._contract[kind].apply(null,params);
+		return interval = setInterval(function() {
+			if (web3.eth.getTransactionReceipt(newTx)) {
+				clearInterval(interval);
+				self.transacting()[kind] = false;
+				return self.getData();
+			};
+		},500);
 	};
-	
 	
 	function FeedBase(web3Contract){
 		this._feeds = {};
+		this._transacting = {};
 		this._contract = web3Contract;
 	};
 	
@@ -41032,6 +41040,8 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 	FeedBase.prototype.setContract = function(v){ this._contract = v; return this; };
 	FeedBase.prototype.feeds = function(v){ return this._feeds; }
 	FeedBase.prototype.setFeeds = function(v){ this._feeds = v; return this; };
+	FeedBase.prototype.transacting = function(v){ return this._transacting; }
+	FeedBase.prototype.setTransacting = function(v){ this._transacting = v; return this; };
 	
 	FeedBase.prototype.feed = function (id){
 		// only spawn once
@@ -41040,6 +41050,24 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 		};
 		
 		return this.feeds()[id];
+	};
+	
+	FeedBase.prototype.feedCount = function (){
+		return this.contract().claim.call().toNumber();
+	};
+	
+	FeedBase.prototype.newFeed = function (){
+		var self = this, interval;
+		var newTx = self.contract().claim();
+		self.transacting().newFeed = true;
+		return interval = setInterval(function() {
+			if (web3.eth.getTransactionReceipt(newTx)) {
+				clearInterval(interval);
+				self.transacting().newFeed = false;
+				// go to the newewst item
+				return window.app.setFeedId(self.feedCount() - 1);
+			};
+		},500);
 	};
 	
 	return tag$.defineTag('app', function(tag){
@@ -41075,19 +41103,20 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 					(t1 = t0.$$a=t0.$$a || tag$.$div().flag('row')).setContent(
 						(t2 = t1.$$a=t1.$$a || tag$.$div().flag('col').flag('s12').flag('m10').flag('offset-m1').flag('l8').flag('offset-l2')).setContent(
 							(t3 = t2.$$a=t2.$$a || tag$.$div().flag('card-panel').flag('main-panel')).setContent([
-								(t4 = t3.$$a=t3.$$a || tag$.$div().flag('row').flag('wide-section')).setContent([
-									(t5 = t4.$$a=t4.$$a || tag$.$h1().flag('title-header')).setContent([
-										(t5.$$a = t5.$$a || tag$.$img().setSrc('https://makerdao.com/splash/images/logo.svg')).end(),
-										'Feedbase'
-									],2).end(),
-									(t4.$$b = t4.$$b || tag$.$p()).setText('This is a simple data feed contract which lets you publish small pieces of data that can be updated at any time. Each time a feed is updated with a new value you may set an expiration date for that value. You are also able to put a price on your feed which must be paid by the first person who wants to read its value (for each update).').end(),
-									(t4.$$c = t4.$$c || tag$.$connectionInfo()).end()
-								],2).end(),
 								this.currentFeed() ? (
 									(t3['_' + this.feedId()] = t3['_' + this.feedId()] || tag$.$feedDetails()).setObject(this.currentFeed()).end()
-								) : (
+								) : (Imba.static([
+									(t4 = t3.$$b=t3.$$b || tag$.$div().flag('row').flag('wide-section')).setContent([
+										(t5 = t4.$$a=t4.$$a || tag$.$h1().flag('title-header')).setContent([
+											(t5.$$a = t5.$$a || tag$.$img().setSrc('https://makerdao.com/splash/images/logo.svg')).end(),
+											'Feedbase'
+										],2).end(),
+										(t4.$$b = t4.$$b || tag$.$p()).setText('This is a simple data feed contract which lets you publish small pieces of data that can be updated at any time. Each time a feed is updated with a new value you may set an expiration date for that value. You are also able to put a price on your feed which must be paid by the first person who wants to read its value (for each update).').end(),
+										(t4.$$c = t4.$$c || tag$.$connectionInfo()).end()
+									],2).end(),
+									
 									(t3.$$c = t3.$$c || tag$.$feedsNav()).setObject(this.feedBase()).end()
-								)
+								],2))
 							],1).end()
 						,2).end()
 					,2).end()
@@ -41196,7 +41225,6 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 		};
 	});
 	
-	
 	return tag$.defineTag('feedDetails', function(tag){
 		
 		tag.prototype.onsubmit = function (e){
@@ -41212,6 +41240,7 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 					return this.object().call('setFeedInfo',[this._title.value(),this.object().ipfsHash()]);
 				};
 			} else if (e.target().name() == 'setFeed') {
+				// format the date correctly
 				if (parsedDate = Math.round(new Date(this._expiration.value()).getTime() / 1000)) {
 					return this.object().call('setFeed',[this._value.value(),parsedDate]);
 				};
@@ -41240,10 +41269,10 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 		};
 		
 		tag.prototype.render = function (){
-			var t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22;
+			var t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23;
 			return this.setChildren(
 				(t0 = this.$a=this.$a || tag$.$div().flag('row')).setContent([
-					(t1 = t0.$$a=t0.$$a || tag$.$div().flag('row').flag('wide-section').flag('grey').flag('lighten-4')).setContent(
+					(t1 = t0.$$a=t0.$$a || tag$.$div().flag('row').flag('wide-section')).setContent(
 						(t2 = t1.$$a=t1.$$a || tag$.$div().flag('col').flag('s12')).setContent([
 							(t2.$$a = t2.$$a || tag$.$div().flag('btn').flag('right').setHandler('click','goBack',this)).setText('Back to feeds list').end(),
 							this.object().editable() ? (Imba.static([
@@ -41255,7 +41284,7 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 							],3))
 						],1).end()
 					,2).end(),
-					
+					// TODO convert these into reusable components
 					(t5 = t0.$$b=t0.$$b || tag$.$form().flag('row').flag('wide-section').flag('green').flag('lighten-5').setName('setFeedInfo')).setContent([
 						(t6 = t5.$$a=t5.$$a || tag$.$div().flag('col').flag('s12')).setContent([
 							(t6.$$a = t6.$$a || tag$.$i().flag('mdi-action-info-outline').flag('bg-icon').flag('green-text')).end(),
@@ -41270,69 +41299,83 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 							(t8.$$a = t8.$$a || tag$.$label()).setText('Description').end(),
 							(this._description = this._description || tag$.$ipfsTextarea().setRef('description',this).flag('materialize-textarea')).setDisabled(!this.object().editable()).setObject(this.object().ipfsHash()).end()
 						],2).end(),
-						(this.object().editable()) ? (
-							(t5.$$d = t5.$$d || tag$.$button().flag('btn').flag('green').flag('darken-3').setType('submit')).setText('Update Feed Info').end()
-						) : void(0)
-					],1).end(),
-					
-					(t9 = t0.$$c=t0.$$c || tag$.$form().flag('row').flag('wide-section').flag('orange').flag('lighten-5').setName('setFeed')).setContent([
-						(t10 = t9.$$a=t9.$$a || tag$.$div().flag('col').flag('s12')).setContent([
-							(t10.$$a = t10.$$a || tag$.$i().flag('mdi-communication-message').flag('bg-icon').flag('orange-text')).end(),
-							(t10.$$b = t10.$$b || tag$.$h5()).setText('Feed Data').end(),
-							(t10.$$c = t10.$$c || tag$.$p()).setText('Data made available for a specified duration').end()
-						],2).end(),
-						(t11 = t9.$$b=t9.$$b || tag$.$div().flag('col').flag('m6').flag('s12')).setContent([
-							(t11.$$a = t11.$$a || tag$.$label()).setText('Feed Value').end(),
-							(this._value = this._value || tag$.$smartInput().setRef('value',this).setType("text")).setDisabled(!this.object().editable()).setObject(this.object().value()).end(),
-							(this.object().timestamp()) ? (
-								(t12 = t11.$$c=t11.$$c || tag$.$p()).setContent(("Last set: " + this.object().formattedDate('timestamp')),3).end()
-							) : void(0)
-						],1).end(),
-						(t13 = t9.$$c=t9.$$c || tag$.$div().flag('col').flag('m6').flag('s12')).setContent([
-							(t13.$$a = t13.$$a || tag$.$label()).setText('Expiry Date').end(),
-							(this._expiration = this._expiration || tag$.$smartInput().setRef('expiration',this).setType("date")).setDisabled(!this.object().editable()).setObject(this.htmlDate(this.object().expiration())).end()
-						],2).end(),
-						(t14 = t9.$$d=t9.$$d || tag$.$div().flag('col').flag('s12')).setContent([
+						(t9 = t5.$$d=t5.$$d || tag$.$div().flag('col').flag('s12')).setContent([
 							(this.object().editable()) ? (
-								(t14.$$a = t14.$$a || tag$.$button().flag('btn').flag('orange').flag('darken-3').setType('submit')).setText('Update Feed Data').end()
-							) : void(0)
-						],1).end()
-					],2).end(),
-					
-					(t15 = t0.$$d=t0.$$d || tag$.$form().flag('row').flag('wide-section').flag('light-blue').flag('lighten-5').setName('setFeedCost')).setContent([
-						(t16 = t15.$$a=t15.$$a || tag$.$div().flag('col').flag('s12')).setContent([
-							(t16.$$a = t16.$$a || tag$.$i().flag('mdi-editor-attach-money').flag('bg-icon').flag('light-blue-text')).end(),
-							(t16.$$b = t16.$$b || tag$.$h5()).setText('Fee for First Request').end(),
-							(t16.$$c = t16.$$c || tag$.$p()).setText('When another contract gets data from this feed, a fee must be paid').end()
-						],2).end(),
-						(t17 = t15.$$b=t15.$$b || tag$.$div().flag('col').flag('s12')).setContent([
-							(t17.$$a = t17.$$a || tag$.$label()).setText('Usage Fee in Dai').end(),
-							(this._cost = this._cost || tag$.$smartInput().setRef('cost',this).setType("number")).setDisabled(!this.object().editable()).setObject(this.object().cost()).end()
-						],2).end(),
-						(t18 = t15.$$c=t15.$$c || tag$.$div().flag('col').flag('s12')).setContent([
-							(this.object().editable()) ? (
-								this.object().transacting().setFeedCost ? (
-									(t18.$$a = t18.$$a || tag$.$p()).setText('TX Pending...').end()
+								this.object().transacting().setFeedInfo ? (
+									(t9.$$a = t9.$$a || tag$.$txPending()).end()
 								) : (
-									(t18.$$b = t18.$$b || tag$.$button().flag('btn').flag('light-blue').flag('darken-3').setType('submit')).setText('Set Price').end()
+									(t9.$$b = t9.$$b || tag$.$button().flag('btn').flag('green').flag('darken-3').setType('submit')).setText('Update Feed Info').end()
 								)
 							) : void(0)
 						],1).end()
 					],2).end(),
 					
-					(t19 = t0.$$e=t0.$$e || tag$.$form().flag('row').flag('wide-section').flag('purple').flag('lighten-5').flag('last-panel').setName('transfer')).setContent([
-						(t20 = t19.$$a=t19.$$a || tag$.$div().flag('col').flag('s12')).setContent([
-							(t20.$$a = t20.$$a || tag$.$i().flag('mdi-social-person-add').flag('bg-icon').flag('lighten-5').flag('purple-text')).end(),
-							(t20.$$b = t20.$$b || tag$.$h5()).setText('Ownership').end(),
-							(t20.$$c = t20.$$c || tag$.$p()).setText('Feed can only be modifid by it\'s owner\'s address').end()
+					(t10 = t0.$$c=t0.$$c || tag$.$form().flag('row').flag('wide-section').flag('orange').flag('lighten-5').setName('setFeed')).setContent([
+						(t11 = t10.$$a=t10.$$a || tag$.$div().flag('col').flag('s12')).setContent([
+							(t11.$$a = t11.$$a || tag$.$i().flag('mdi-communication-message').flag('bg-icon').flag('orange-text')).end(),
+							(t11.$$b = t11.$$b || tag$.$h5()).setText('Feed Data').end(),
+							(t11.$$c = t11.$$c || tag$.$p()).setText('Data made available for a specified duration').end()
 						],2).end(),
-						(t21 = t19.$$b=t19.$$b || tag$.$div().flag('col').flag('s12')).setContent([
-							(t21.$$a = t21.$$a || tag$.$label()).setText('Owner Address').end(),
+						(t12 = t10.$$b=t10.$$b || tag$.$div().flag('col').flag('m6').flag('s12')).setContent([
+							(t12.$$a = t12.$$a || tag$.$label()).setText('Feed Value').end(),
+							(this._value = this._value || tag$.$smartInput().setRef('value',this).setType("text")).setDisabled(!this.object().editable()).setObject(this.object().value()).end(),
+							(this.object().timestamp()) ? (
+								(t13 = t12.$$c=t12.$$c || tag$.$p()).setContent(("Last set: " + this.object().formattedDate('timestamp')),3).end()
+							) : void(0)
+						],1).end(),
+						(t14 = t10.$$c=t10.$$c || tag$.$div().flag('col').flag('m6').flag('s12')).setContent([
+							(t14.$$a = t14.$$a || tag$.$label()).setText('Expiry Date').end(),
+							(this._expiration = this._expiration || tag$.$smartInput().setRef('expiration',this).setType("date")).setDisabled(!this.object().editable()).setObject(this.htmlDate(this.object().expiration())).end()
+						],2).end(),
+						(t15 = t10.$$d=t10.$$d || tag$.$div().flag('col').flag('s12')).setContent([
+							(this.object().editable()) ? (
+								this.object().transacting().setFeed ? (
+									(t15.$$a = t15.$$a || tag$.$txPending()).end()
+								) : (
+									(t15.$$b = t15.$$b || tag$.$button().flag('btn').flag('orange').flag('darken-3').setType('submit')).setText('Update Feed Data').end()
+								)
+							) : void(0)
+						],1).end()
+					],2).end(),
+					
+					(t16 = t0.$$d=t0.$$d || tag$.$form().flag('row').flag('wide-section').flag('light-blue').flag('lighten-5').setName('setFeedCost')).setContent([
+						(t17 = t16.$$a=t16.$$a || tag$.$div().flag('col').flag('s12')).setContent([
+							(t17.$$a = t17.$$a || tag$.$i().flag('mdi-editor-attach-money').flag('bg-icon').flag('light-blue-text')).end(),
+							(t17.$$b = t17.$$b || tag$.$h5()).setText('Fee for First Request').end(),
+							(t17.$$c = t17.$$c || tag$.$p()).setText('When another contract gets data from this feed, a fee must be paid').end()
+						],2).end(),
+						(t18 = t16.$$b=t16.$$b || tag$.$div().flag('col').flag('s12')).setContent([
+							(t18.$$a = t18.$$a || tag$.$label()).setText('Usage Fee in Dai').end(),
+							(this._cost = this._cost || tag$.$smartInput().setRef('cost',this).setType("number")).setDisabled(!this.object().editable()).setObject(this.object().cost()).end()
+						],2).end(),
+						(t19 = t16.$$c=t16.$$c || tag$.$div().flag('col').flag('s12')).setContent([
+							(this.object().editable()) ? (
+								this.object().transacting().setFeedCost ? (
+									(t19.$$a = t19.$$a || tag$.$txPending()).end()
+								) : (
+									(t19.$$b = t19.$$b || tag$.$button().flag('btn').flag('light-blue').flag('darken-3').setType('submit')).setText('Set Price').end()
+								)
+							) : void(0)
+						],1).end()
+					],2).end(),
+					
+					(t20 = t0.$$e=t0.$$e || tag$.$form().flag('row').flag('wide-section').flag('purple').flag('lighten-5').flag('last-panel').setName('transfer')).setContent([
+						(t21 = t20.$$a=t20.$$a || tag$.$div().flag('col').flag('s12')).setContent([
+							(t21.$$a = t21.$$a || tag$.$i().flag('mdi-social-person-add').flag('bg-icon').flag('lighten-5').flag('purple-text')).end(),
+							(t21.$$b = t21.$$b || tag$.$h5()).setText('Ownership').end(),
+							(t21.$$c = t21.$$c || tag$.$p()).setText('Feed can only be modifid by it\'s owner\'s address').end()
+						],2).end(),
+						(t22 = t20.$$b=t20.$$b || tag$.$div().flag('col').flag('s12')).setContent([
+							(t22.$$a = t22.$$a || tag$.$label()).setText('Owner Address').end(),
 							(this._owner = this._owner || tag$.$smartInput().setRef('owner',this).setType("text")).setDisabled(!this.object().editable()).setObject(this.object().owner()).end()
 						],2).end(),
-						(t22 = t19.$$c=t19.$$c || tag$.$div().flag('col').flag('s12')).setContent([
+						(t23 = t20.$$c=t20.$$c || tag$.$div().flag('col').flag('s12')).setContent([
 							(this.object().editable()) ? (
-								(t22.$$a = t22.$$a || tag$.$button().flag('btn').flag('purple').flag('darken-3').setType('submit')).setText('Transfer Owner Address').end()
+								this.object().transacting().transfer ? (
+									(t23.$$a = t23.$$a || tag$.$txPending()).end()
+								) : (
+									(t23.$$b = t23.$$b || tag$.$button().flag('btn').flag('purple').flag('darken-3').setType('submit')).setText('Transfer Owner Address').end()
+								)
 							) : void(0)
 						],1).end()
 					],2).end()
@@ -41349,13 +41392,12 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 	tag$.defineTag('feedsNav', function(tag){
 		
 		tag.prototype.claimNew = function (){
-			return this.object().contract().claim();
-			// TODO listen for updates
+			return this.object().newFeed();
 		};
 		
 		tag.prototype.feedItems = function (){
 			var items = [];
-			var totalItems = this.object().contract().claim.call().toNumber();
+			var totalItems = this.object().feedCount();
 			for (var len = totalItems, i = totalItems - 5; i < len; i++) {
 				items.unshift(this.object().feed(i));
 			};
@@ -41369,11 +41411,16 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 					this.feedItems().length ? (Imba.static([
 						(t1 = t0.$$a=t0.$$a || tag$.$div().flag('row').flag('wide-section').flag('grey').flag('lighten-4')).setContent([
 							(t2 = t1.$$a=t1.$$a || tag$.$div().flag('col').flag('s12')).setContent([
-								(t2.$$a = t2.$$a || tag$.$div().flag('btn').flag('right').setHandler('click','claimNew',this)).setText('Claim new feed').end(),
-								(t2.$$b = t2.$$b || tag$.$h3()).setText('Feed List').end(),
-								(t2.$$c = t2.$$c || tag$.$p()).setText('If you are an owner of any of the feeds below you can click it to update it\'s details.').end(),
-								(t2.$$d = t2.$$d || tag$.$br()).end()
-							],2).end(),
+								!this.object().transacting().newFeed ? (
+									(t2.$$a = t2.$$a || tag$.$div().flag('btn').flag('right').setHandler('click','claimNew',this)).setText('Claim new feed').end()
+								) : (
+									(t2.$$b = t2.$$b || tag$.$txPendingSpinner().flag('right')).end()
+								),
+								
+								(t2.$$c = t2.$$c || tag$.$h3()).setText('Feed List').end(),
+								(t2.$$d = t2.$$d || tag$.$p()).setText('If you are an owner of any of the feeds below you can click it to update it\'s details.').end(),
+								(t2.$$e = t2.$$e || tag$.$br()).end()
+							],1).end(),
 							(t3 = t1.$$b=t1.$$b || tag$.$div().flag('col').flag('s12')).setContent(
 								(t4 = t3.$$a=t3.$$a || tag$.$ul().flag('collection').flag('feed-items')).setContent(
 									(function(t4) {
@@ -41453,10 +41500,40 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 
 })();
 (function(){
-	return tag$.defineTag('titleHeader', function(tag){
+	tag$.defineTag('txPending', function(tag){
 		tag.prototype.render = function (){
-			return this.synced();
+			var t0;
+			return this.setChildren(
+				(t0 = this.$a=this.$a || tag$.$div().flag('progress')).setContent(
+					(t0.$$a = t0.$$a || tag$.$div().flag('indeterminate')).end()
+				,2).end()
+			,2).synced();
 		};
 	});
+	
+	return tag$.defineTag('txPendingSpinner', function(tag){
+		tag.prototype.render = function (){
+			var t0, t1, t2, t3, t4;
+			return this.setChildren(
+				(t0 = this.$a=this.$a || tag$.$div().flag('preloader-wrapper').flag('small').flag('active')).setContent(
+					(t1 = t0.$$a=t0.$$a || tag$.$div().flag('spinner-layer')).setContent([
+						(t2 = t1.$$a=t1.$$a || tag$.$div().flag('circle-clipper').flag('left')).setContent(
+							(t2.$$a = t2.$$a || tag$.$div().flag('circle')).end()
+						,2).end(),
+						(t3 = t1.$$b=t1.$$b || tag$.$div().flag('gap-patch')).setContent(
+							(t3.$$a = t3.$$a || tag$.$div().flag('circle')).end()
+						,2).end(),
+						(t4 = t1.$$c=t1.$$c || tag$.$div().flag('circle-clipper').flag('right')).setContent(
+							(t4.$$a = t4.$$a || tag$.$div().flag('circle')).end()
+						,2).end()
+					],2).end()
+				,2).end()
+			,2).synced();
+		};
+	});
+	
+	
+	
+	
 
 })();

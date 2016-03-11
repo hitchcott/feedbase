@@ -1,8 +1,11 @@
 extern dapple
 extern web3
 
+window:app = undefined
+
 window:onload = do
-	($$(#app)).append <app>
+	window:app = <app>
+	($$(#app)).append window:app
 
 
 class Feed
@@ -52,20 +55,24 @@ class Feed
 
 	def call kind, args
 		var params = [@id].concat(args).concat({'gas': 3000000})
-		@contract[kind].apply null, params
-		@transacting[kind] = true
-		console.log kind, params
-		# TODO keep track of transaction
-		# getData when transaction is complete
-
+		transacting[kind] = true
+		var newTx = @contract[kind].apply null, params
+		var interval = setInterval do
+			if web3:eth.getTransactionReceipt(newTx)
+				clearInterval interval
+				transacting[kind] = false
+				getData
+		, 500
 
 class FeedBase
 
 	prop contract
 	prop feeds
+	prop transacting
 
 	def initialize web3Contract
 		@feeds = {}
+		@transacting = {}
 		@contract = web3Contract
 
 	def feed id
@@ -74,6 +81,20 @@ class FeedBase
 			feeds[id] = Feed.new(contract, id)
 
 		return feeds[id]
+
+	def feedCount
+		contract:claim.call.toNumber()
+
+	def newFeed
+		var newTx = contract.claim
+		transacting:newFeed = true
+		var interval = setInterval do
+			if web3:eth.getTransactionReceipt(newTx)
+				clearInterval interval
+				transacting:newFeed = false
+				# go to the newewst item
+				window:app.setFeedId feedCount - 1
+		, 500
 
 tag app
 
@@ -101,13 +122,14 @@ tag app
 				<.row>
 					<.col.s12.m10.offset-m1.l8.offset-l2>
 						<.card-panel.main-panel>
-							<.row.wide-section>
-								<h1.title-header>
-									<img src='https://makerdao.com/splash/images/logo.svg'>
-									'Feedbase'
-								<p> 'This is a simple data feed contract which lets you publish small pieces of data that can be updated at any time. Each time a feed is updated with a new value you may set an expiration date for that value. You are also able to put a price on your feed which must be paid by the first person who wants to read its value (for each update).'
-								<connectionInfo>
 							if currentFeed
 								<feedDetails[currentFeed]@{feedId}>
 							else
+								<.row.wide-section>
+									<h1.title-header>
+										<img src='https://makerdao.com/splash/images/logo.svg'>
+										'Feedbase'
+									<p> 'This is a simple data feed contract which lets you publish small pieces of data that can be updated at any time. Each time a feed is updated with a new value you may set an expiration date for that value. You are also able to put a price on your feed which must be paid by the first person who wants to read its value (for each update).'
+									<connectionInfo>
+
 								<feedsNav[feedBase]>

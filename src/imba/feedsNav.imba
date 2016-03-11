@@ -3,12 +3,11 @@ extern web3
 tag feedsNav
 
 	def claimNew
-		object.contract.claim
-		# TODO listen for updates
+		object.newFeed
 
 	def feedItems
 		var items = []
-		var totalItems = object.contract:claim.call().toNumber()
+		var totalItems = object.feedCount
 		for i in [totalItems - 5 ... totalItems]
 			items.unshift(object.feed(i))
 		return items
@@ -19,7 +18,11 @@ tag feedsNav
 				if feedItems:length
 					<.row.wide-section.grey.lighten-4>
 						<.col.s12>
-							<.btn.right :click='claimNew'> 'Claim new feed'
+							if !object.transacting:newFeed
+								<.btn.right :click='claimNew'> 'Claim new feed'
+							else
+								<txPendingSpinner.right>
+
 							<h3> 'Feed List'
 							<p> 'If you are an owner of any of the feeds below you can click it to update it\'s details.'
 							<br>

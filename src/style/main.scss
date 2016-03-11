@@ -103,11 +103,11 @@ table.connection-info{
 }
 
 .collection-item{
-  cursor:pointer;
-  &:hover{
-    background:rgba($secondary-color, 0.1);
-  }
   &.editable{
+    &:hover{
+      background:rgba(0,0,0,0.001);
+    }
+    cursor:pointer;
     .hilight-editable{
       color:$secondary-color;
       font-weight:bold;
@@ -129,5 +129,12 @@ table.connection-info{
     font-size:2em;
     font-weight:100;
     padding-bottom:30px;
+  }
+}
+
+.progress {
+  opacity:0.2;
+  .indeterminate{
+    background-color:$off-black;
   }
 }
