@@ -28,7 +28,6 @@ class Feed
 		@contract = contract
 		@id = id
 		getData
-		console.log 'initialized'
 
 	def getData
 		@feed = contract:feeds.call(id)

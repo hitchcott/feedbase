@@ -17,7 +17,7 @@ dapple['feedbase'] = (function builder () {
         'objects': {
           'feedbase': {
             'class': 'FeedBase',
-            'address': '0x18b782422c6020e6832df62418c4f0101cb63e21'
+            'address': '0x81b9269706ff2c24e77f09190f607b40405a1bf0'
           }
         }
       }
@@ -55,7 +55,7 @@ dapple['feedbase'] = (function builder () {
       'objects': {
         'feedbase': {
           'class': 'FeedBase',
-          'address': '0x18b782422c6020e6832df62418c4f0101cb63e21'
+          'address': '0x81b9269706ff2c24e77f09190f607b40405a1bf0'
         }
       }
     };
@@ -40960,7 +40960,6 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 		this._contract = contract;
 		this._id = id;
 		this.getData();
-		console.log('initialized');
 	};
 	
 	Feed.prototype.contract = function(v){ return this._contract; }
@@ -41398,48 +41397,54 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 		tag.prototype.feedItems = function (){
 			var items = [];
 			var totalItems = this.object().feedCount();
-			for (var len = totalItems, i = totalItems - 5; i < len; i++) {
+			var minimum = (totalItems - 5 < 1) ? (
+				1
+			) : (
+				(totalItems - 5)
+			);
+			for (var len = totalItems, i = minimum; i < len; i++) {
 				items.unshift(this.object().feed(i));
 			};
 			return items;
 		};
 		
 		tag.prototype.render = function (){
-			var t0, t1, t2, t3, self = this, t4, t5, t6;
+			var t0, t1, t2, t3, t4, self = this, t5, t6;
 			return this.setChildren(
 				(t0 = self.$a=self.$a || tag$.$div().flag('row')).setContent([
-					this.feedItems().length ? (Imba.static([
-						(t1 = t0.$$a=t0.$$a || tag$.$div().flag('row').flag('wide-section').flag('grey').flag('lighten-4')).setContent([
-							(t2 = t1.$$a=t1.$$a || tag$.$div().flag('col').flag('s12')).setContent([
-								!this.object().transacting().newFeed ? (
-									(t2.$$a = t2.$$a || tag$.$div().flag('btn').flag('right').setHandler('click','claimNew',this)).setText('Claim new feed').end()
-								) : (
-									(t2.$$b = t2.$$b || tag$.$txPendingSpinner().flag('right')).end()
-								),
-								
-								(t2.$$c = t2.$$c || tag$.$h3()).setText('Feed List').end(),
-								(t2.$$d = t2.$$d || tag$.$p()).setText('If you are an owner of any of the feeds below you can click it to update it\'s details.').end(),
-								(t2.$$e = t2.$$e || tag$.$br()).end()
-							],1).end(),
-							(t3 = t1.$$b=t1.$$b || tag$.$div().flag('col').flag('s12')).setContent(
-								(t4 = t3.$$a=t3.$$a || tag$.$ul().flag('collection').flag('feed-items')).setContent(
-									(function(t4) {
+					(t1 = t0.$$a=t0.$$a || tag$.$div().flag('row').flag('wide-section').flag('grey').flag('lighten-4')).setContent(
+						(t2 = t1.$$a=t1.$$a || tag$.$div().flag('col').flag('s12')).setContent([
+							!this.object().transacting().newFeed ? (
+								(t2.$$a = t2.$$a || tag$.$div().flag('btn').flag('right').setHandler('click','claimNew',this)).setText('Claim new feed').end()
+							) : (
+								(t2.$$b = t2.$$b || tag$.$txPendingSpinner().flag('right')).end()
+							),
+							
+							(t2.$$c = t2.$$c || tag$.$h3()).setText('Feed List').end(),
+							(t2.$$d = t2.$$d || tag$.$p()).setText('If you are an owner of any of the feeds below you can click it to update it\'s details.').end()
+						],1).end()
+					,2).end(),
+					this.feedItems().length ? (
+						(t3 = t0.$$b=t0.$$b || tag$.$div().flag('row').flag('wide-section').flag('grey').flag('lighten-4').flag('last-panel')).setContent(
+							(t4 = t3.$$a=t3.$$a || tag$.$div().flag('col').flag('s12')).setContent(
+								(t5 = t4.$$a=t4.$$a || tag$.$ul().flag('collection').flag('feed-items')).setContent(
+									(function(t5) {
 										for (var i = 0, ary = iter$(self.feedItems()), len = ary.length, res = []; i < len; i++) {
-											res.push((t4['$$a' + i] = t4['$$a' + i] || tag$.$feedItem()).setObject(ary[i]).end());
+											res.push((t5['$$a' + i] = t5['$$a' + i] || tag$.$feedItem()).setObject(ary[i]).end());
 										};
 										return res;
-									})(t4)
+									})(t5)
 								,3).end()
 							,2).end()
-						],2).end(),
-						
-						(t5 = t0.$$b=t0.$$b || tag$.$div().flag('row').flag('wide-section').flag('grey').flag('lighten-3').flag('last-panel')).setContent(
-							(t6 = t5.$$a=t5.$$a || tag$.$div().flag('col').flag('s12')).setContent(
-								(t6.$$a = t6.$$a || tag$.$p()).setText('Todo navigation').end()
-							,2).end()
 						,2).end()
-					],2)) : (
-						(t0.$$c = t0.$$c || tag$.$p()).setText('No Feeds').end()
+						
+						// <.row.wide-section.grey.lighten-3.last-panel>
+						// 	<.col.s12>
+						// 		<p> 'Todo navigation'
+					) : (
+						(t6 = t0.$$c=t0.$$c || tag$.$div().flag('row').flag('wide-section').flag('grey').flag('lighten-3').flag('last-panel').flag('center-align')).setContent(
+							(t6.$$a = t6.$$a || tag$.$p()).setText('No Feeds Registered').end()
+						,2).end()
 					)
 				],1).end()
 			,2).synced();

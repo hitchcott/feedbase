@@ -8,34 +8,36 @@ tag feedsNav
 	def feedItems
 		var items = []
 		var totalItems = object.feedCount
-		for i in [totalItems - 5 ... totalItems]
+		var minimum = if (totalItems - 5 < 1) then 1 else (totalItems - 5)
+		for i in [minimum ... totalItems]
 			items.unshift(object.feed(i))
 		return items
 
 	def render
 		<self>
 			<.row>
-				if feedItems:length
-					<.row.wide-section.grey.lighten-4>
-						<.col.s12>
-							if !object.transacting:newFeed
-								<.btn.right :click='claimNew'> 'Claim new feed'
-							else
-								<txPendingSpinner.right>
+				<.row.wide-section.grey.lighten-4>
+					<.col.s12>
+						if !object.transacting:newFeed
+							<.btn.right :click='claimNew'> 'Claim new feed'
+						else
+							<txPendingSpinner.right>
 
-							<h3> 'Feed List'
-							<p> 'If you are an owner of any of the feeds below you can click it to update it\'s details.'
-							<br>
+						<h3> 'Feed List'
+						<p> 'If you are an owner of any of the feeds below you can click it to update it\'s details.'
+				if feedItems:length
+					<.row.wide-section.grey.lighten-4.last-panel>
 						<.col.s12>
 							<ul.collection.feed-items>
 								for item in feedItems
 									<feedItem[item]>
 
-					<.row.wide-section.grey.lighten-3.last-panel>
-						<.col.s12>
-							<p> 'Todo navigation'
+					# <.row.wide-section.grey.lighten-3.last-panel>
+					# 	<.col.s12>
+					# 		<p> 'Todo navigation'
 				else
-					<p> 'No Feeds'
+					<.row.wide-section.grey.lighten-3.last-panel.center-align>
+						<p> 'No Feeds Registered'
 
 
 tag feedItem < li
