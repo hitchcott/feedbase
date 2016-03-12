@@ -16,7 +16,7 @@ tag feedsNav
 	def render
 		<self>
 			<.row>
-				<.row.wide-section.grey.lighten-4>
+				<.row.wide-section.grey.lighten-4.last-panel>
 					<.col.s12>
 						if !object.transacting:newFeed
 							<.btn.right :click='claimNew'> 'Claim new feed'
@@ -25,19 +25,18 @@ tag feedsNav
 
 						<h3> 'Feed List'
 						<p> 'If you are an owner of any of the feeds below you can click it to update it\'s details.'
-				if feedItems:length
-					<.row.wide-section.grey.lighten-4.last-panel>
-						<.col.s12>
+						if feedItems:length
+							<br>
 							<ul.collection.feed-items>
 								for item in feedItems
 									<feedItem[item]>
 
-					# <.row.wide-section.grey.lighten-3.last-panel>
-					# 	<.col.s12>
-					# 		<p> 'Todo navigation'
-				else
-					<.row.wide-section.grey.lighten-3.last-panel.center-align>
-						<p> 'No Feeds Registered'
+							# <.row.wide-section.grey.lighten-3.last-panel>
+							# 	<.col.s12>
+							# 		<p> 'Todo navigation'
+						else
+							<.row.wide-section.grey.lighten-3.last-panel.center-align>
+								<p> 'No Feeds Registered'
 
 
 tag feedItem < li

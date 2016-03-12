@@ -60,7 +60,7 @@ tag feedDetails
 	def render
 		<self>
 			<.row>
-				<.row.wide-section>
+				<.row.wide-section.grey.lighten-4>
 					<.col.s12>
 						<.btn.right :click='goBack'> 'Back to feeds list'
 						if object.editable

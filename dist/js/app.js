@@ -41102,20 +41102,22 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 					(t1 = t0.$$a=t0.$$a || tag$.$div().flag('row')).setContent(
 						(t2 = t1.$$a=t1.$$a || tag$.$div().flag('col').flag('s12').flag('m10').flag('offset-m1').flag('l8').flag('offset-l2')).setContent(
 							(t3 = t2.$$a=t2.$$a || tag$.$div().flag('card-panel').flag('main-panel')).setContent([
+								(t4 = t3.$$a=t3.$$a || tag$.$div().flag('row').flag('wide-section')).setContent([
+									(t5 = t4.$$a=t4.$$a || tag$.$h1().flag('title-header')).setContent([
+										(t5.$$a = t5.$$a || tag$.$img().setSrc('https://makerdao.com/splash/images/logo.svg')).end(),
+										'Feedbase'
+									],2).end(),
+									(!(this.currentFeed())) ? (Imba.static([
+										(t4.$$b = t4.$$b || tag$.$br()).end(),
+										(t4.$$c = t4.$$c || tag$.$p()).setText('This is a simple data feed contract which lets you publish small pieces of data that can be updated at any time. Each time a feed is updated with a new value you may set an expiration date for that value. You are also able to put a price on your feed which must be paid by the first person who wants to read its value (for each update).').end(),
+										(t4.$$d = t4.$$d || tag$.$connectionInfo()).end()
+									],2)) : void(0)
+								],1).end(),
 								this.currentFeed() ? (
 									(t3['_' + this.feedId()] = t3['_' + this.feedId()] || tag$.$feedDetails()).setObject(this.currentFeed()).end()
-								) : (Imba.static([
-									(t4 = t3.$$b=t3.$$b || tag$.$div().flag('row').flag('wide-section')).setContent([
-										(t5 = t4.$$a=t4.$$a || tag$.$h1().flag('title-header')).setContent([
-											(t5.$$a = t5.$$a || tag$.$img().setSrc('https://makerdao.com/splash/images/logo.svg')).end(),
-											'Feedbase'
-										],2).end(),
-										(t4.$$b = t4.$$b || tag$.$p()).setText('This is a simple data feed contract which lets you publish small pieces of data that can be updated at any time. Each time a feed is updated with a new value you may set an expiration date for that value. You are also able to put a price on your feed which must be paid by the first person who wants to read its value (for each update).').end(),
-										(t4.$$c = t4.$$c || tag$.$connectionInfo()).end()
-									],2).end(),
-									
+								) : (
 									(t3.$$c = t3.$$c || tag$.$feedsNav()).setObject(this.feedBase()).end()
-								],2))
+								)
 							],1).end()
 						,2).end()
 					,2).end()
@@ -41271,7 +41273,7 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 			var t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23;
 			return this.setChildren(
 				(t0 = this.$a=this.$a || tag$.$div().flag('row')).setContent([
-					(t1 = t0.$$a=t0.$$a || tag$.$div().flag('row').flag('wide-section')).setContent(
+					(t1 = t0.$$a=t0.$$a || tag$.$div().flag('row').flag('wide-section').flag('grey').flag('lighten-4')).setContent(
 						(t2 = t1.$$a=t1.$$a || tag$.$div().flag('col').flag('s12')).setContent([
 							(t2.$$a = t2.$$a || tag$.$div().flag('btn').flag('right').setHandler('click','goBack',this)).setText('Back to feeds list').end(),
 							this.object().editable() ? (Imba.static([
@@ -41409,10 +41411,10 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 		};
 		
 		tag.prototype.render = function (){
-			var t0, t1, t2, t3, t4, self = this, t5, t6;
+			var t0, t1, t2, self = this, t3, t4;
 			return this.setChildren(
-				(t0 = self.$a=self.$a || tag$.$div().flag('row')).setContent([
-					(t1 = t0.$$a=t0.$$a || tag$.$div().flag('row').flag('wide-section').flag('grey').flag('lighten-4')).setContent(
+				(t0 = self.$a=self.$a || tag$.$div().flag('row')).setContent(
+					(t1 = t0.$$a=t0.$$a || tag$.$div().flag('row').flag('wide-section').flag('grey').flag('lighten-4').flag('last-panel')).setContent(
 						(t2 = t1.$$a=t1.$$a || tag$.$div().flag('col').flag('s12')).setContent([
 							!this.object().transacting().newFeed ? (
 								(t2.$$a = t2.$$a || tag$.$div().flag('btn').flag('right').setHandler('click','claimNew',this)).setText('Claim new feed').end()
@@ -41421,32 +41423,29 @@ i.style.opacity=tweenedOpacity}function h(){var a,b,c,d;a=Date.now(),b=a-B,B=a,c
 							),
 							
 							(t2.$$c = t2.$$c || tag$.$h3()).setText('Feed List').end(),
-							(t2.$$d = t2.$$d || tag$.$p()).setText('If you are an owner of any of the feeds below you can click it to update it\'s details.').end()
-						],1).end()
-					,2).end(),
-					this.feedItems().length ? (
-						(t3 = t0.$$b=t0.$$b || tag$.$div().flag('row').flag('wide-section').flag('grey').flag('lighten-4').flag('last-panel')).setContent(
-							(t4 = t3.$$a=t3.$$a || tag$.$div().flag('col').flag('s12')).setContent(
-								(t5 = t4.$$a=t4.$$a || tag$.$ul().flag('collection').flag('feed-items')).setContent(
-									(function(t5) {
+							(t2.$$d = t2.$$d || tag$.$p()).setText('If you are an owner of any of the feeds below you can click it to update it\'s details.').end(),
+							this.feedItems().length ? (Imba.static([
+								(t2.$$e = t2.$$e || tag$.$br()).end(),
+								(t3 = t2.$$f=t2.$$f || tag$.$ul().flag('collection').flag('feed-items')).setContent(
+									(function(t3) {
 										for (var i = 0, ary = iter$(self.feedItems()), len = ary.length, res = []; i < len; i++) {
-											res.push((t5['$$a' + i] = t5['$$a' + i] || tag$.$feedItem()).setObject(ary[i]).end());
+											res.push((t3['$$a' + i] = t3['$$a' + i] || tag$.$feedItem()).setObject(ary[i]).end());
 										};
 										return res;
-									})(t5)
+									})(t3)
 								,3).end()
-							,2).end()
-						,2).end()
-						
-						// <.row.wide-section.grey.lighten-3.last-panel>
-						// 	<.col.s12>
-						// 		<p> 'Todo navigation'
-					) : (
-						(t6 = t0.$$c=t0.$$c || tag$.$div().flag('row').flag('wide-section').flag('grey').flag('lighten-3').flag('last-panel').flag('center-align')).setContent(
-							(t6.$$a = t6.$$a || tag$.$p()).setText('No Feeds Registered').end()
-						,2).end()
-					)
-				],1).end()
+								
+								// <.row.wide-section.grey.lighten-3.last-panel>
+								// 	<.col.s12>
+								// 		<p> 'Todo navigation'
+							],2)) : (
+								(t4 = t2.$$g=t2.$$g || tag$.$div().flag('row').flag('wide-section').flag('grey').flag('lighten-3').flag('last-panel').flag('center-align')).setContent(
+									(t4.$$a = t4.$$a || tag$.$p()).setText('No Feeds Registered').end()
+								,2).end()
+							)
+						],1).end()
+					,2).end()
+				,2).end()
 			,2).synced();
 		};
 	});
