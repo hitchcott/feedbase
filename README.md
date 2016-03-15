@@ -24,7 +24,8 @@ npm install -g dapple
 npm install -g gulp
 git clone https://github.com/hitchcott/feedbase/
 cd feedbase
-npm install i
+git submodule update --init --recursive
+npm i
 ```
 
 
