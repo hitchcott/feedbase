@@ -22,7 +22,7 @@ Visit: `TODO: add deployment url / IPFS hash`
 
 Requirements:
 
-* geth `brew install ethereum`
+* geth `brew install ethereum` (or [`apt-get` for ubuntu](https://github.com/ethereum/go-ethereum/wiki/Installation-Instructions-for-Ubuntu))
 * node.js 5.x `nvm install 5; nvm use 5;`
 * sass gem `gem install sass`
 * Global dapple, gulp, bower `npm install -g dapple gulp bower`
