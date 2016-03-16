@@ -5,3 +5,4 @@ node_modules
 bower_components
 scripts/blockchain/tmp
 dist
+npm-debug.log
