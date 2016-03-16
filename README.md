@@ -22,21 +22,19 @@ Visit: `TODO: add deployment url / IPFS hash`
 
 Requirements:
 
-* geth
-* node.js 5.x
-* sass gem
+* geth `brew install ethereum`
+* node.js 5.x `nvm install 5; nvm use 5;`
+* sass gem `gem install sass`
+* Global dapple, gulp, bower `npm install -g dapple gulp bower`
 
-Dependencies:
+Clone and install:
 
 ```bash
-npm install -g dapple
-npm install -g gulp
 git clone https://github.com/hitchcott/feedbase/
 cd feedbase
 git submodule update --init --recursive
 npm install
 ```
-
 
 ## Usage (for Developers)
 

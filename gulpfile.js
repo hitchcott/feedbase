@@ -58,7 +58,7 @@ gulp.task('bower', function() {
 })
 
 gulp.task('font', function() {
-    return gulp.src(paths.src.bower + '/materialize/font/**/*', { "base" : paths.src.bower + '/materialize/font' })
+    return gulp.src(paths.src.bower + '/Materialize/font/**/*', { "base" : paths.src.bower + '/Materialize/font' })
     .pipe(gulp.dest(paths.dest.root + '/font'));
 })
 
@@ -67,7 +67,7 @@ gulp.task('build-sass', function () {
     style: 'compressed',
     loadPath: [
       paths.src.sass,
-      paths.src.bower + '/materialize/sass'
+      paths.src.bower + '/Materialize/sass'
     ]
   })
   .on('error', util.log)
@@ -83,7 +83,7 @@ gulp.task('clean-js', function () {
 gulp.task('copy-js', ['clean-js'], function (){
   return gulp.src([
       paths.src.bower + '/jquery/dist/jquery.min.js',
-      paths.src.bower + '/materialize/dist/js/materialize.min.js',
+      paths.src.bower + '/Materialize/dist/js/Materialize.min.js',
       paths.src.js
   ])
   .pipe(config.production ? uglify() : util.noop())
