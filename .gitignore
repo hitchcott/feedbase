@@ -6,3 +6,4 @@ bower_components
 scripts/blockchain/tmp
 dist
 npm-debug.log
+nohup.out

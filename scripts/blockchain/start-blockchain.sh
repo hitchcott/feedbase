@@ -2,15 +2,17 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ACCOUNT_PASSWORD="$(cat "${DIR}/password")"
 NOHUP_LOCATION="${DIR}/nohup.out"
-# TODO randomize the network?
 
 # create start scripts
 baseCommand="geth \
---datadir=${DIR}/tmp/ --logfile=${DIR}/tmp/blockchain.log \
---rpc --rpcaddr localhost --rpccorsdomain \"*\" \
---networkid 58554 \
+--dev \
+--datadir=${DIR}/tmp/ \
+--logfile=${DIR}/tmp/blockchain.log \
+--rpc \
+--rpcaddr localhost \
+--rpccorsdomain \"*\" \
 --genesis=${DIR}/genesis.json \
---maxpeers 1 --password ${DIR}/password"
+--password ${DIR}/password"
 # append account details
 accountList="${baseCommand} account list"
 accountNew="${baseCommand} account new"
@@ -23,7 +25,7 @@ if [[ "$(${accountList})" =~ \{([^}]*)\} ]]; then
   ETH_ACCOUNT="${BASH_REMATCH[1]}"
 else
   echo "No Accounts found, creating a new one"
-  $accountNew
+  eval $accountNew
   # try agian
   if [[ "$(${accountList})" =~ \{([^}]*)\} ]]; then
     ETH_ACCOUNT="${BASH_REMATCH[1]}"
@@ -43,7 +45,10 @@ function cleanup () {
 
 trap cleanup INT
 
-nohup $miningScript > $NOHUP_LOCATION & tail -n 0 -f $NOHUP_LOCATION
+echo $miningScript
+echo ""
+
+nohup $(eval $miningScript) > $NOHUP_LOCATION & tail -n 0 -f $NOHUP_LOCATION
 
 
 
