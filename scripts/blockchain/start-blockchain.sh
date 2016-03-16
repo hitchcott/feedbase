@@ -19,13 +19,13 @@ accountNew="${baseCommand} account new"
 mkdir -p "${DIR}/tmp/" && touch "${DIR}/tmp/blockchain.log"
 
 # check if we have any accounts
-if [[ "$(${accountList})" =~ {(.*)} ]]; then
+if [[ "$(${accountList})" =~ \{([^}]*)\} ]]; then
   ETH_ACCOUNT="${BASH_REMATCH[1]}"
 else
   echo "No Accounts found, creating a new one"
   eval $accountNew
   # try agian
-  if [[ "$(${accountList})" =~ {(.*)} ]]; then
+  if [[ "$(${accountList})" =~ \{([^}]*)\} ]]; then
     ETH_ACCOUNT="${BASH_REMATCH[1]}"
   else
     echo "Failed creating account"
