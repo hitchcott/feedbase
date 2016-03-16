@@ -18,12 +18,13 @@ Visit: `TODO: add deployment url / IPFS hash`
 
 ## Installation (for Developers)
 
-Requriements:
+Requirements:
 
 * geth
 * node.js 5.x
+* sass gem
 
-Dependenceies:
+Dependencies:
 
 ```bash
 npm install -g dapple
@@ -31,13 +32,13 @@ npm install -g gulp
 git clone https://github.com/hitchcott/feedbase/
 cd feedbase
 git submodule update --init --recursive
-npm i
+npm install
 ```
 
 
 ## Usage (for Developers)
 
-There is a helpful blockchain script for devleopment, which will use a clever mining script similar to Embark. This is entirely optional; you can use any testnet config via RPC on port 8545 and deploy via dapple as normal.
+There is a helpful blockchain script for development, which will use a clever mining script similar to Embark. This is entirely optional; you can use any testnet config via RPC on port 8545 and deploy via dapple as normal.
 
 To start the blockchain script:
 
@@ -72,7 +73,7 @@ For development you can use the watching script:
 npm run watch
 ```
 
-This will autoamtically rebuild (but not deploy) contracts and run tests (in EVm) against them if they are changed. It will automatically rebuild all frontend files when they are changed, and uses liveReload to refresh the browser.
+This will automatically rebuild (but not deploy) contracts and run tests (in EVM) against them if they are changed. It will automatically rebuild all frontend files when they are changed, and uses liveReload to refresh the browser.
 
 You can use `npm run deploy` whilst the watcher is running.
 
@@ -82,7 +83,7 @@ For standalone EVM testing use:
 npm run test
 ```
 
-**NB** Currently all tests are ignored in `dappfile` becuasae dapple attempts to deploy them, so you will manually have to toggle the `ignore` value when testing between testing and deployment.
+**NB** Currently all tests are ignored in `dappfile` because dapple attempts to deploy them, so you will manually have to toggle the `ignore` value when testing between testing and deployment.
 
 ## TODOs
 
