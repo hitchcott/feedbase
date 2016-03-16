@@ -35,8 +35,7 @@ tag feedsNav
 							# 	<.col.s12>
 							# 		<p> 'Todo navigation'
 						else
-							<.row.wide-section.grey.lighten-3.last-panel.center-align>
-								<p> 'No Feeds Registered'
+							<p.center-align> 'No Feeds Registered'
 
 
 tag feedItem < li
