@@ -2,6 +2,8 @@
 
 This is a simple data feed dapp which lets you publish small pieces of data that can be updated at any time. Each time a feed is updated with a new value you may set an expiration date for that value. You are also able to put a price on your feed which must be paid by the first person who wants to read its value (for each update).
 
+![Feedbase Screenshot](https://ipfs.pics/ipfs/QmaYcHvkcWoE34eojwgQNx8v7iDrsBdKKc8NMDshGaiHw9)
+
 ## Overview
 
 This was a small project to attempt to combine `imba` and `dapple` in the search towards a reasonable boilerplate dapp. As I would typically use Meteor for dapps I wanted to try something different. The main things worked on here were:
@@ -88,6 +90,7 @@ npm run test
 ## TODOs
 
 ```
+- Feed Navigation if there are more than 5 feeds
 - Implement Maker User
 - URL Routing
 - IPFS Hash Get
