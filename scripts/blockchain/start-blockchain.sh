@@ -1,7 +1,7 @@
 #!/bin/bash
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ACCOUNT_PASSWORD="$(cat "${DIR}/password")"
-
+NOHUP_LOCATION="${DIR}/nohup.out"
 # TODO randomize the network?
 
 # create start scripts
@@ -23,7 +23,7 @@ if [[ "$(${accountList})" =~ \{([^}]*)\} ]]; then
   ETH_ACCOUNT="${BASH_REMATCH[1]}"
 else
   echo "No Accounts found, creating a new one"
-  eval $accountNew
+  $accountNew
   # try agian
   if [[ "$(${accountList})" =~ \{([^}]*)\} ]]; then
     ETH_ACCOUNT="${BASH_REMATCH[1]}"
@@ -35,7 +35,16 @@ fi
 
 # create minin command
 miningScript="${baseCommand} --unlock ${ETH_ACCOUNT} js ${DIR}/miner.js"
-echo $miningScript
 
-# start the mining script
-eval $miningScript
+function cleanup () {
+  echo ' Interrupted: killing geth'
+  pkill geth
+}
+
+trap cleanup INT
+
+nohup $miningScript > $NOHUP_LOCATION & tail -n 0 -f $NOHUP_LOCATION
+
+
+
+
