@@ -83,7 +83,7 @@ gulp.task('clean-js', function () {
 gulp.task('copy-js', ['clean-js'], function (){
   return gulp.src([
       paths.src.bower + '/jquery/dist/jquery.min.js',
-      paths.src.bower + '/Materialize/dist/js/Materialize.min.js',
+      paths.src.bower + '/Materialize/dist/js/materialize.min.js',
       paths.src.js
   ])
   .pipe(config.production ? uglify() : util.noop())
