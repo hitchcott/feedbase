@@ -1,8 +1,14 @@
 # Feedbase Dapp
 
-### A Dapple-Enriched Smart Contract
+This is a simple data feed dapp which lets you publish small pieces of data that can be updated at any time. Each time a feed is updated with a new value you may set an expiration date for that value. You are also able to put a price on your feed which must be paid by the first person who wants to read its value (for each update).
 
-This is a simple data feed contract which lets you publish small pieces of data that can be updated at any time. Each time a feed is updated with a new value you may set an expiration date for that value. You are also able to put a price on your feed which must be paid by the first person who wants to read its value (for each update).
+## Overview
+
+This was a small project to attempt to combine `imba` and `dapple` in the search towards a reasonable boilerplate dapp. As I would typically use Meteor for dapps I wanted to try something different. The main things worked on here were:
+
+* Gulp Script (with bower for frontend libs + browserify for dapple)
+* Blockchain Script (ultra stripped down version of embark with modified mining script)
+* An attempt to work with contracts the 'imba' way (check `app.imba` for the model)
 
 ## Usage (for Users)
 
@@ -16,6 +22,7 @@ Requirements:
 
 * geth
 * node.js 5.x
+* sass gem
 
 Dependencies:
 
@@ -76,19 +83,21 @@ For standalone EVM testing use:
 npm run test
 ```
 
-**NB** Currently all tests are ignored in `dappfile` becuase dapple attempts to deploy them, so you will manually have to toggle the `ignore` value when testing between testing and deployment.
+**NB** Currently all tests are ignored in `dappfile` because dapple attempts to deploy them, so you will manually have to toggle the `ignore` value when testing between testing and deployment.
 
 ## TODOs
 
 ```
-- Handle UI Events for transaction pending
+- Implement Maker User
 - URL Routing
+- IPFS Hash Get
+- Fix the blockchain script for linux
 ```
 
 ## vNext
 ```
+- Browser-baed Ethersim Option for Demos
 - Estimate gas properly
-- IPFS Hash Get
 - Configurable Currency
 - Mist integration
 - IPFS Deploy
