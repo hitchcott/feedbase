@@ -86,7 +86,6 @@ npm run test
 **NB** Currently all tests are ignored in `dappfile` because dapple attempts to deploy them, so you will manually have to toggle the `ignore` value when testing between testing and deployment.
 
 ## TODOs
-
 ```
 - Feed Navigation if there are more than 5 feeds
 - Implement Maker User
@@ -95,7 +94,7 @@ npm run test
 - Fix the blockchain script for linux
 ```
 
-## vNext
+## Icebox
 ```
 - Browser-baed Ethersim Option for Demos
 - Estimate gas properly

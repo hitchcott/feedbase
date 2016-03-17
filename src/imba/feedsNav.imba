@@ -1,4 +1,5 @@
 extern web3
+extern app
 
 tag feedsNav
 
@@ -42,7 +43,8 @@ tag feedItem < li
 
 	def setFeedId
 		if object.editable
-			up(%app).setFeedId object.id
+			app.setFeedId object.id
+			app.tick
 
 	def render
 		<self.collection-item :click='setFeedId' .editable=object.editable>

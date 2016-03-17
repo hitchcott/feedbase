@@ -1,5 +1,6 @@
 extern jQuery
 extern web3
+extern app
 
 tag smartInput < input
 
@@ -47,7 +48,8 @@ tag feedDetails
 
 
 	def goBack
-		up(%app).setFeedId 0
+		app.setFeedId 0
+		app.tick
 
 	def htmlDate date
 		if date

@@ -55,12 +55,14 @@ class Feed
 	def call kind, args
 		var params = [@id].concat(args).concat({'gas': 3000000})
 		transacting[kind] = true
+		window:app.tick
 		var newTx = @contract[kind].apply null, params
 		var interval = setInterval do
 			if web3:eth.getTransactionReceipt(newTx)
 				clearInterval interval
 				transacting[kind] = false
 				getData
+				window:app.tick
 		, 500
 
 class FeedBase
@@ -87,12 +89,14 @@ class FeedBase
 	def newFeed
 		var newTx = contract.claim
 		transacting:newFeed = true
+		window:app.tick
 		var interval = setInterval do
 			if web3:eth.getTransactionReceipt(newTx)
 				clearInterval interval
 				transacting:newFeed = false
 				# go to the newewst item
 				window:app.setFeedId feedCount - 1
+				window:app.tick
 		, 500
 
 tag app
@@ -103,7 +107,7 @@ tag app
 	def build
 		window:feedBase = @feedBase = FeedBase.new(dapple:objects:feedbase)
 		@feedId = 0
-		schedule
+		tick
 
 	def setFeedId id
 		window.scrollTo 0, 0
