@@ -84,7 +84,7 @@ class FeedBase
 		return feeds[id]
 
 	def feedCount
-		contract:claim.call.toNumber()
+		contract:claim.call.toNumber
 
 	def newFeed
 		var newTx = contract.claim
