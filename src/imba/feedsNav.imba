@@ -10,7 +10,7 @@ tag feedsNav
 		var items = []
 		var totalItems = object.feedCount
 		var minimum = if (totalItems - 5 < 1) then 1 else (totalItems - 5)
-		for i in [minimum ... totalItems]
+		for i in [minimum ... totalItems + 1]
 			items.unshift(object.feed(i))
 		return items
 
@@ -73,4 +73,3 @@ tag feedItem < li
 				<tr>
 					<td> 'Paid'
 					<td> object.paid
-

@@ -1,7 +1,7 @@
 import 'dapple/debug.sol';
 import 'makeruser/user.sol';
 
-contract FeedBase is MakerUser 
+contract FeedBase is MakerUser
 //, Debug
 {
     function FeedBase( MakerUserLinkType M )
@@ -20,7 +20,7 @@ contract FeedBase is MakerUser
 
     event FeedUpdate( uint64 indexed id );
 
-    uint32 last_id;
+    uint32 public last_id;
     mapping( uint64 => bytes32 ) _values;
     mapping( uint64 => FeedEntry ) public feeds;
 
@@ -89,8 +89,3 @@ contract FeedBase is MakerUser
 
 contract FeedBaseMainnet is FeedBase(MakerUserLinkType(0x0)) {}
 contract FeedBaseMorden is FeedBase(MakerUserLinkType(0x1)) {}
-
-
-
-
-
